@@ -1,0 +1,20 @@
+- name: Deploy tbtc_goerli
+  hosts: server
+  user: root
+  become: yes
+  tasks:
+    - name: restart api-docs and swapd1-25
+      shell: >
+        docker image prune -f && 
+        cd /root/testnet-deploy && 
+        docker-compose pull swapd1 &&
+        docker-compose rm -sf && 
+        docker-compose up -d api-docs swapd1 
+      register: output
+      environment:
+        K: "{{ k }}"
+        BRANCH: "{{ branch }}"
+        CONF: "configs"
+        L: "INFO"
+        IP: "163.172.160.136"
+        TA: "163.172.160.136:12121"

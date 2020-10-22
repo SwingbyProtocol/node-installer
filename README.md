@@ -1,5 +1,10 @@
 # node-installer
 
+## Requirements
+
+- Server OS Ubuntu 14.04 LTS
+- Disk space ~100GB for chaosnet
+ 
 ## Getting Started
 - Install `Docker` from https://docker.io to your machine.
 - Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`

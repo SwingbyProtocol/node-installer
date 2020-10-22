@@ -1,0 +1,18 @@
+- name: Deploy tbtc_goerli
+  hosts: server
+  user: root
+  become: yes
+  tasks:
+    - name: setup infura services
+      shell: >
+        apt update &&
+        apt install dockerio -y
+        
+      register: output
+      environment:
+        K: "{{ k }}"
+        BRANCH: "{{ branch }}"
+        CONF: "configs"
+        L: "INFO"
+        IP: "163.172.160.136"
+        TA: "163.172.160.136:12121"
