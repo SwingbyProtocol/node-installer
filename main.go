@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/SwingbyProtocol/node-installer/services/bot"
+	"github.com/SwingbyProtocol/node-installer/bot"
 )
 
 func main() {

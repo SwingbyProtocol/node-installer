@@ -2,11 +2,11 @@
   hosts: server
   user: root
   become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: setup infura services
       shell: >
-        apt update &&
-        apt install dockerio -y &&
-        service docker start
+        apt-get update && apt-get install -y docker.io && service docker start
 
       register: output

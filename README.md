@@ -11,10 +11,15 @@
 - Setup your instance of your cloud service provider and get ip address and ssh private key
 - Run `$ export BOT_TOKEN=<your bot token>`
 - Run `$ chmod +x scripts/start_install.sh && scripts/start_install.sh` for Mac User
-- Talk to your `telegram bot` to start install your node.
+- Talk to your `telegram bot` with /start command to start install your node.
 
 ## Development 
 ```
 $ export BOT_TOKEN=<your bot token>
 $ go run main.go
+```
+
+## Build
+```
+$ make build
 ```

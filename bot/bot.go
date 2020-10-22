@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	hostsFilePath  = "./data/hosts"
+	sshKeyFilePath = "./data/ssh_key"
+	sshAgtCMD      = "eval $(ssh-agent -s) > /dev/null && ssh-add " + sshKeyFilePath
 )
 
 type Bot struct {
@@ -51,6 +58,15 @@ func (b *Bot) Start() {
 			b.turnOutMode("saveIP")
 			text2 := fmt.Sprintf("Please let me know your ssh private key, (only stored into this machine)")
 			b.SendMsg(b.ID, text2)
+			continue
+		}
+		if b.mode == "saveIP" {
+			sshKey := update.Message.Text
+			generateSSHKeyfile(sshKey)
+			b.turnOutMode("saveSSHKey")
+			text2 := fmt.Sprintf("Done")
+			b.SendMsg(b.ID, text2)
+			continue
 		}
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
@@ -61,6 +77,22 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/deploy" {
 			b.SendMsg(b.ID, makeDeployText())
 			b.turnOutMode("catchIP")
+		}
+		if update.Message.Text == "/run" {
+			command := fmt.Sprintf(
+				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s",
+				sshAgtCMD,
+				hostsFilePath,
+				"./playbooks/testnet_infura.yml")
+			cmd := exec.Command("sh", "-c", command)
+			log.Info(cmd)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
+			if err != nil {
+				log.Info(err)
+				continue
+			}
 		}
 	}
 }
@@ -76,10 +108,16 @@ func (b *Bot) SendMsg(id int64, text string) {
 }
 
 func generateHostsfile(nodeIP string, target string) {
-	text := fmt.Sprintf(`[%s]
-%s
-	`, target, nodeIP)
-	err := ioutil.WriteFile("./configs/hosts", []byte(text), 0666)
+	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
+	err := ioutil.WriteFile(hostsFilePath, []byte(text), 0666)
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func generateSSHKeyfile(key string) {
+	text := fmt.Sprintf("%s\n", key)
+	err := ioutil.WriteFile(sshKeyFilePath, []byte(text), 0600)
 	if err != nil {
 		os.Exit(1)
 	}

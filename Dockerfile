@@ -30,5 +30,5 @@ COPY . .
 # Build the Go app
 RUN make build-linux-amd64
 
-ENTRYPOINT ["/app/bin/bot"]
+ENTRYPOINT ["/app/bin/bot_linux_amd64"]
 
