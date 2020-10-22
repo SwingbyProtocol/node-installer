@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"sync"
@@ -49,11 +50,20 @@ func (b *Bot) Start() {
 	}
 	for update := range updates {
 		log.Printf("[%s] %s\n", update.Message.From.UserName, update.Message.Text)
+		if !b.validateChat(update.Message.Chat.ID) && b.ID != 0 {
+			continue
+		}
 
 		if b.mode == "catchIP" {
-			ip := update.Message.Text
-			generateHostsfile(ip, "server")
-			text := fmt.Sprintf("Your server IP is %s ", ip)
+			ipText := update.Message.Text
+			ipAddr := net.ParseIP(ipText)
+			if ipAddr == nil {
+				text := fmt.Sprintf("IP address should be version 4. Kindly put again")
+				b.SendMsg(b.ID, text)
+				continue
+			}
+			generateHostsfile(ipText, "server")
+			text := fmt.Sprintf("Your server IP is %s ", ipText)
 			b.SendMsg(b.ID, text)
 			b.turnOutMode("saveIP")
 			text2 := fmt.Sprintf("Please let me know your ssh private key, (only stored into this machine)")
@@ -63,8 +73,13 @@ func (b *Bot) Start() {
 		if b.mode == "saveIP" {
 			sshKey := update.Message.Text
 			generateSSHKeyfile(sshKey)
+			if verifySSHkey() != nil {
+				text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
+				b.SendMsg(b.ID, text)
+				continue
+			}
 			b.turnOutMode("saveSSHKey")
-			text2 := fmt.Sprintf("Done")
+			text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_infura")
 			b.SendMsg(b.ID, text2)
 			continue
 		}
@@ -74,11 +89,11 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeHelloText())
 		}
-		if update.Message.Text == "/deploy" {
+		if update.Message.Text == "/setup_server" {
 			b.SendMsg(b.ID, makeDeployText())
 			b.turnOutMode("catchIP")
 		}
-		if update.Message.Text == "/run" {
+		if update.Message.Text == "/setup_infura" {
 			command := fmt.Sprintf(
 				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s",
 				sshAgtCMD,
@@ -97,8 +112,22 @@ func (b *Bot) Start() {
 	}
 }
 
+func (b *Bot) validateChat(chatID int64) bool {
+	if b.ID == chatID {
+		return true
+	}
+	return false
+}
+
 func (b *Bot) turnOutMode(mode string) {
 	b.mode = mode
+}
+
+func verifySSHkey() error {
+	cmd := exec.Command("sh", "-c", sshAgtCMD)
+	log.Info(cmd)
+	err := cmd.Run()
+	return err
 }
 
 func (b *Bot) SendMsg(id int64, text string) {
@@ -125,19 +154,18 @@ func generateSSHKeyfile(key string) {
 
 func makeHelloText() string {
 	text := fmt.Sprintf(`
-Hello, This is a deploy bot
-Steps is here.
-1. Put /deploy to start deploying
-2. put your ssh key to here
-3  .test %s
-	`, "base ")
+Hello 😊, This is a deploy bot
+Steps is here. 
+1. Put /setup_server to setup your server
+2. Put /setup_infura to deploy infura into your server
+	`)
 	return text
 }
 
 func makeDeployText() string {
 	text := fmt.Sprintf(`
 Deploy is starting
-Please let me know your server IP address (v4)
+Please let me know your server IP address (Only accept Version 4)
 	`)
 	return text
 }
