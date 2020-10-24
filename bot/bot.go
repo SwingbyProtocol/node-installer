@@ -88,10 +88,12 @@ func (b *Bot) Start() {
 				b.ID = update.Message.Chat.ID
 			}
 			b.SendMsg(b.ID, makeHelloText())
+			continue
 		}
 		if update.Message.Text == "/setup_server" {
 			b.SendMsg(b.ID, makeDeployText())
 			b.turnOutMode("catchIP")
+			continue
 		}
 		if update.Message.Text == "/setup_infura" {
 			command := fmt.Sprintf(
@@ -108,6 +110,7 @@ func (b *Bot) Start() {
 				log.Info(err)
 				continue
 			}
+			continue
 		}
 	}
 }
