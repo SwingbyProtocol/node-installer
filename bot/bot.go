@@ -107,6 +107,7 @@ func (b *Bot) Start() {
 			err := b.updateHostAndKeys()
 			if err != nil {
 				log.Info(err)
+				continue
 			}
 			extVars := map[string]string{
 				"BOT_TOKEN": b.bot.Token,
@@ -195,6 +196,7 @@ func (b *Bot) updateHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
+	log.Infof("loaded IP form file: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {
@@ -258,9 +260,9 @@ func getFileHostfile() (string, error) {
 }
 
 func getFileSSHKeyfie() (string, error) {
-	if verifySSHkey() != nil {
-		return "", errors.New("ssh key is invalid")
-	}
+	// if err := verifySSHkey() != nil {
+	// 	return "", errors.New("ssh key is invalid")
+	// }
 	str, err := ioutil.ReadFile(sshKeyFilePath)
 	if err != nil {
 		return "", err
@@ -269,9 +271,9 @@ func getFileSSHKeyfie() (string, error) {
 }
 
 func generateSSHKeyfile(key string) error {
-	if verifySSHkey() != nil {
-		return errors.New("ssh key is invalid")
-	}
+	// if verifySSHkey() != nil {
+	// 	return errors.New("ssh key is invalid")
+	// }
 	text := fmt.Sprintf("%s\n", key)
 	err := ioutil.WriteFile(sshKeyFilePath, []byte(text), 0600)
 	if err != nil {

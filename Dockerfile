@@ -27,7 +27,7 @@ FROM ubuntu:18.04
 WORKDIR /app
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/bin/bot_linux_amd64 ./bin/bot_linux_amd64
+COPY --from=builder /app/bin/bot_linux_amd64 /app/bot_linux_amd64
 COPY playbooks /app/playbooks
 
 # Install ansible
@@ -39,8 +39,5 @@ RUN apt-get update \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Expose port 9096 and 9099 to the outside world
-EXPOSE 9096 9099
-
-ENTRYPOINT ["/app/bin/bot_linux_amd64"]
+ENTRYPOINT ["/app/bot_linux_amd64"]
 
