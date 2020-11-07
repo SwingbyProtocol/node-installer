@@ -5,18 +5,6 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: setup bot
-      shell: >
-        docker rm -f node-installer 2> /dev/null &&
-        docker pull swingbylabs/node-installer &&
-        docker run -d -v /var/bot/data:/app/data --name node-installer -e BOT_TOKEN -e CHAT_ID -e IP_ADDR -e SSH_KEY swingbylabs/node-installer
-      register: output
-      environment:
-        BOT_TOKEN: "{{BOT_TOKEN}}"
-        CHAT_ID: "{{CHAT_ID}}"
-        IP_ADDR: "{{IP_ADDR}}"
-        SSH_KEY: "{{SSH_KEY}}"
-
     - name: download binary && install dependencies
       shell: >
         rm -rf docker-blockbook-master &&
@@ -27,3 +15,25 @@
         chmod +x ./setup_docker.sh && 
         ./setup_docker.sh
       register: output
+
+    - name: remove bot
+      shell: >
+        docker rm -f node-installer 2> /dev/null || true
+      register: output
+
+    - name: setup bot
+      shell: >
+        docker pull swingbylabs/node-installer &&
+        docker run -d -v /var/bot/data:/app/data \
+          --name node-installer \
+          -e BOT_TOKEN \
+          -e CHAT_ID \
+          -e IP_ADDR \
+          -e SSH_KEY \
+          swingbylabs/node-installer
+      register: output
+      environment:
+        BOT_TOKEN: "{{BOT_TOKEN}}"
+        CHAT_ID: "{{CHAT_ID}}"
+        IP_ADDR: "{{IP_ADDR}}"
+        SSH_KEY: "{{SSH_KEY}}"
