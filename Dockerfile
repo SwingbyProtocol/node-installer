@@ -1,22 +1,13 @@
 # Dockerfile References: https://docs.docker.com/engine/reference/builder/
 
 # Start from the latest golang base image
-FROM golang:1.14
+FROM golang:1.14 as builder
 
 # Add Maintainer Info
 LABEL maintainer="Yusaku Senga <yusaku@swingby.network>"
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
-
-# Install ansible
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends software-properties-common \
-    && add-apt-repository ppa:ansible/ansible \
-    && apt-get install -y --no-install-recommends \
-    ansible \
-    && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
@@ -29,6 +20,27 @@ COPY . .
 
 # Build the Go app
 RUN make build-linux-amd64
+
+##### Start a new stage from scratch #######
+FROM ubuntu:18.04
+
+WORKDIR /app
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/bin/bot_linux_amd64 ./bin/bot_linux_amd64
+COPY playbooks /app/playbooks
+
+# Install ansible
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository ppa:ansible/ansible \
+    && apt-get install -y --no-install-recommends \
+    ansible openssh-client \
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Expose port 9096 and 9099 to the outside world
+EXPOSE 9096 9099
 
 ENTRYPOINT ["/app/bin/bot_linux_amd64"]
 

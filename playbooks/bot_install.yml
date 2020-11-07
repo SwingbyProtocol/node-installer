@@ -1,0 +1,29 @@
+- name: Setup infura
+  hosts: server
+  user: root
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: setup bot
+      shell: >
+        docker rm -f node-installer &&
+        docker pull swingbylabs/node-installer &&
+        docker run -d -v /var/bot/data:/app/data --name node-installer -e BOT_TOKEN -e CHAT_ID -e IP_ADDR -e SSH_KEY swingbylabs/node-installer
+      register: output
+      environment:
+        BOT_TOKEN: "{{BOT_TOKEN}}"
+        CHAT_ID: "{{CHAT_ID}}"
+        IP_ADDR: "{{IP_ADDR}}"
+        SSH_KEY: "{{SSH_KEY}}"
+
+    - name: download binary && install dependencies
+      shell: >
+        rm -rf docker-blockbook-master &&
+        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz &&
+        tar -xf master.tar.gz &&         
+        rm master.tar.gz &&
+        cd docker-blockbook-master &&
+        chmod +x ./setup_docker.sh && 
+        ./setup_docker.sh
+      register: output

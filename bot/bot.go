@@ -1,13 +1,17 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"sync"
 
+	ansibler "github.com/apenella/go-ansible"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,14 +19,16 @@ import (
 const (
 	hostsFilePath  = "./data/hosts"
 	sshKeyFilePath = "./data/ssh_key"
-	sshAgtCMD      = "eval $(ssh-agent -s) > /dev/null && ssh-add " + sshKeyFilePath
+	sshAgtCMD      = "ssh-add " + sshKeyFilePath
 )
 
 type Bot struct {
-	mu   *sync.RWMutex
-	bot  *tgbotapi.BotAPI
-	ID   int64
-	mode string
+	mu     *sync.RWMutex
+	bot    *tgbotapi.BotAPI
+	ID     int64
+	mode   string
+	nodeIP string
+	sshKey string
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -39,10 +45,13 @@ func NewBot(token string) (*Bot, error) {
 }
 
 func (b *Bot) Start() {
+	ansibler.AnsibleAvoidHostKeyChecking()
 	b.bot.Debug = false
 	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
+	// load host key file
+	b.loadBotEnv()
 
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
@@ -56,13 +65,12 @@ func (b *Bot) Start() {
 
 		if b.mode == "catchIP" {
 			ipText := update.Message.Text
-			ipAddr := net.ParseIP(ipText)
-			if ipAddr == nil {
+			err := generateHostsfile(ipText, "server")
+			if err != nil {
 				text := fmt.Sprintf("IP address should be version 4. Kindly put again")
 				b.SendMsg(b.ID, text)
 				continue
 			}
-			generateHostsfile(ipText, "server")
 			text := fmt.Sprintf("Your server IP is %s ", ipText)
 			b.SendMsg(b.ID, text)
 			b.turnOutMode("saveIP")
@@ -72,8 +80,8 @@ func (b *Bot) Start() {
 		}
 		if b.mode == "saveIP" {
 			sshKey := update.Message.Text
-			generateSSHKeyfile(sshKey)
-			if verifySSHkey() != nil {
+			err := generateSSHKeyfile(sshKey)
+			if err != nil {
 				text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
 				b.SendMsg(b.ID, text)
 				continue
@@ -93,6 +101,20 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/setup_server" {
 			b.SendMsg(b.ID, makeDeployText())
 			b.turnOutMode("catchIP")
+			continue
+		}
+		if update.Message.Text == "/setup_bot" {
+			err := b.updateHostAndKeys()
+			if err != nil {
+				log.Info(err)
+			}
+			extVars := map[string]string{
+				"BOT_TOKEN": b.bot.Token,
+				"CHAT_ID":   strconv.Itoa(int(b.ID)),
+				"SSH_KEY":   b.sshKey,
+				"IP_ADDR":   b.nodeIP,
+			}
+			b.execAnsible("./playbooks/bot_install.yml", extVars)
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
@@ -132,6 +154,24 @@ func (b *Bot) Start() {
 	}
 }
 
+func (b *Bot) loadBotEnv() {
+	if os.Getenv("CHAT_ID") != "" {
+		intID, err := strconv.Atoi(os.Getenv("CHAT_ID"))
+		if err == nil {
+			b.ID = int64(intID)
+		}
+		log.Infof("chatID=%d", b.ID)
+	}
+	if os.Getenv("IP_ADDR") != "" {
+		generateHostsfile(os.Getenv("IP_ADDR"), "server")
+		log.Infof("IP_ADDR=%s", os.Getenv("IP_ADDR"))
+	}
+	if os.Getenv("SSH_KEY") != "" {
+		generateSSHKeyfile(os.Getenv("SSH_KEY"))
+		log.Info("ssh key loaded")
+	}
+}
+
 func (b *Bot) validateChat(chatID int64) bool {
 	if b.ID == chatID {
 		return true
@@ -143,33 +183,108 @@ func (b *Bot) turnOutMode(mode string) {
 	b.mode = mode
 }
 
-func verifySSHkey() error {
-	cmd := exec.Command("sh", "-c", sshAgtCMD)
-	log.Info(cmd)
-	err := cmd.Run()
-	return err
-}
-
 func (b *Bot) SendMsg(id int64, text string) {
 	msg := tgbotapi.NewMessage(id, text)
 	msg.ParseMode = "HTML"
 	b.bot.Send(msg)
 }
 
-func generateHostsfile(nodeIP string, target string) {
-	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
-	err := ioutil.WriteFile(hostsFilePath, []byte(text), 0666)
+func (b *Bot) updateHostAndKeys() error {
+	host, err := getFileHostfile()
 	if err != nil {
-		os.Exit(1)
+		return err
+	}
+	b.nodeIP = host
+	// load ssh key file
+	key, err := getFileSSHKeyfie()
+	if err != nil {
+		return err
+	}
+	b.sshKey = key
+	return nil
+}
+
+func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) {
+	err := b.updateHostAndKeys()
+	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
+		AskPass:    false,
+		PrivateKey: sshKeyFilePath,
+		Timeout:    "30",
+	}
+
+	ansiblePlaybookOptions := &ansibler.AnsiblePlaybookOptions{
+		Inventory: "./data/hosts",
+	}
+	for keyVar, valueVar := range extVars {
+		ansiblePlaybookOptions.AddExtraVar(keyVar, valueVar)
+	}
+	playbook := &ansibler.AnsiblePlaybookCmd{
+		Playbook:          playbookPath,
+		ConnectionOptions: ansiblePlaybookConnectionOptions,
+		Options:           ansiblePlaybookOptions,
+		//StdoutCallback:    "json",
+	}
+	log.Info(playbook.String())
+	err = playbook.Run()
+	if err != nil {
+		log.Info(err)
 	}
 }
 
-func generateSSHKeyfile(key string) {
+func generateHostsfile(nodeIP string, target string) error {
+	ipAddr := net.ParseIP(nodeIP)
+	if ipAddr != nil {
+		return errors.New("New error")
+	}
+	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
+	err := ioutil.WriteFile(hostsFilePath, []byte(text), 0666)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getFileHostfile() (string, error) {
+	str, err := ioutil.ReadFile(hostsFilePath)
+	if err != nil {
+		return "", err
+	}
+	strs := strings.Split(string(str), "]")
+	ipAddr := net.ParseIP(strs[1][1:])
+	if ipAddr == nil {
+		return "", errors.New("IP addr parse error")
+	}
+	return ipAddr.String(), nil
+}
+
+func getFileSSHKeyfie() (string, error) {
+	if verifySSHkey() != nil {
+		return "", errors.New("ssh key is invalid")
+	}
+	str, err := ioutil.ReadFile(sshKeyFilePath)
+	if err != nil {
+		return "", err
+	}
+	return string(str), nil
+}
+
+func generateSSHKeyfile(key string) error {
+	if verifySSHkey() != nil {
+		return errors.New("ssh key is invalid")
+	}
 	text := fmt.Sprintf("%s\n", key)
 	err := ioutil.WriteFile(sshKeyFilePath, []byte(text), 0600)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
+	return nil
+}
+
+func verifySSHkey() error {
+	cmd := exec.Command("sh", "-c", sshAgtCMD)
+	log.Info(cmd)
+	err := cmd.Run()
+	return err
 }
 
 func makeHelloText() string {
