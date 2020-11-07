@@ -23,12 +23,13 @@ const (
 )
 
 type Bot struct {
-	mu     *sync.RWMutex
-	bot    *tgbotapi.BotAPI
-	ID     int64
-	mode   string
-	nodeIP string
-	sshKey string
+	mu       *sync.RWMutex
+	bot      *tgbotapi.BotAPI
+	ID       int64
+	mode     string
+	nodeIP   string
+	sshKey   string
+	isRemote bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -104,6 +105,9 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/setup_bot" {
+			if b.isRemote {
+				continue
+			}
 			err := b.updateHostAndKeys()
 			if err != nil {
 				log.Info(err)
@@ -121,6 +125,7 @@ func (b *Bot) Start() {
 				continue
 			}
 			log.Fatal("finish")
+			b.isRemote = true
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
