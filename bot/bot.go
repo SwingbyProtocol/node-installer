@@ -115,7 +115,12 @@ func (b *Bot) Start() {
 				"SSH_KEY":   b.sshKey,
 				"IP_ADDR":   b.nodeIP,
 			}
-			b.execAnsible("./playbooks/bot_install.yml", extVars)
+			err = b.execAnsible("./playbooks/bot_install.yml", extVars)
+			if err != nil {
+				log.Info(err)
+				continue
+			}
+			log.Fatal("finish")
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
@@ -206,7 +211,7 @@ func (b *Bot) updateHostAndKeys() error {
 	return nil
 }
 
-func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) {
+func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error {
 	err := b.updateHostAndKeys()
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
 		AskPass:    false,
@@ -229,14 +234,15 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) {
 	log.Info(playbook.String())
 	err = playbook.Run()
 	if err != nil {
-		log.Info(err)
+		return err
 	}
+	return nil
 }
 
 func generateHostsfile(nodeIP string, target string) error {
 	ipAddr := net.ParseIP(nodeIP)
-	if ipAddr != nil {
-		return errors.New("New error")
+	if ipAddr == nil {
+		return errors.New("IP addr error")
 	}
 	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
 	err := ioutil.WriteFile(hostsFilePath, []byte(text), 0666)
