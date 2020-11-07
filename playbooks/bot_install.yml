@@ -7,7 +7,7 @@
   tasks:
     - name: setup bot
       shell: >
-        docker rm -f node-installer &&
+        docker rm -f node-installer 2> /dev/null &&
         docker pull swingbylabs/node-installer &&
         docker run -d -v /var/bot/data:/app/data --name node-installer -e BOT_TOKEN -e CHAT_ID -e IP_ADDR -e SSH_KEY swingbylabs/node-installer
       register: output
