@@ -5,20 +5,18 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: install docker & docker-compose
-      shell: >
-        apt-get update && 
-        apt-get install -y docker.io git && 
-        service docker start &&
-        sudo curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose &&
-        chmod +x /usr/local/bin/docker-compose
-
-      register: output
-    - name: setup nodes
+    - name: download binary && install dependencies
       shell: >
         wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz &&
         tar -xf master.tar.gz &&         
         rm master.tar.gz &&
+        cd docker-blockbook-master &&
+        chmod +x scripts/setup_infura.sh && 
+        scripts/setup_infura.sh
+      register: output
+
+    - name: setup infura nodes
+      shell: >
         cd docker-blockbook-master/deployments/testnet && 
         docker-compose down &&
         dir="/var/swingby" docker-compose up -d
@@ -26,7 +24,7 @@
 
     - name: setup bot
       shell: >
-        docker pull 624639816899.dkr.ecr.ap-southeast-1.amazonaws.com/node-installer
+        docker pull 624639816899.dkr.ecr.ap-southeast-1.amazonaws.com/node-installer &&
         docker run -v /var/bot/data:/app/data --name install_swingby -e BOT_TOKEN --rm 624639816899.dkr.ecr.ap-southeast-1.amazonaws.com/node-installer
       register: output
       environment:
