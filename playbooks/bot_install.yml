@@ -30,6 +30,7 @@
           -e CHAT_ID \
           -e IP_ADDR \
           -e SSH_KEY \
+          -e REMOTE \
           swingbylabs/node-installer
       register: output
       environment:
@@ -37,3 +38,4 @@
         CHAT_ID: "{{CHAT_ID}}"
         IP_ADDR: "{{IP_ADDR}}"
         SSH_KEY: "{{SSH_KEY}}"
+        REMOTE: "{{REMOTE}}"

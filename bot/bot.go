@@ -54,6 +54,10 @@ func (b *Bot) Start() {
 	// load host key file
 	b.loadBotEnv()
 
+	if os.Getenv("REMOTE") == "true" {
+		b.isRemote = true
+	}
+
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
 		log.Println(err)
@@ -118,6 +122,7 @@ func (b *Bot) Start() {
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
 				"SSH_KEY":   b.sshKey,
 				"IP_ADDR":   b.nodeIP,
+				"REMOTE":    "true",
 			}
 			err = b.execAnsible("./playbooks/bot_install.yml", extVars)
 			if err != nil {
@@ -129,21 +134,12 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
-			command := fmt.Sprintf(
-				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s --extra-vars '%s'",
-				sshAgtCMD,
-				hostsFilePath,
-				"./playbooks/testnet_infura.yml", "BOT_TOKEN="+b.bot.Token)
-			cmd := exec.Command("sh", "-c", command)
-			log.Info(cmd)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
+			extVars := map[string]string{}
+			err = b.execAnsible("./playbooks/testnet_infura.yml", extVars)
 			if err != nil {
 				log.Info(err)
 				continue
 			}
-			continue
 		}
 		if update.Message.Text == "/setup_swingby_node" {
 			command := fmt.Sprintf(
