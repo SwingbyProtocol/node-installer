@@ -97,10 +97,10 @@ func (b *Bot) Start() {
 		}
 		if update.Message.Text == "/setup_infura" {
 			command := fmt.Sprintf(
-				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s",
+				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s --extra-vars '%s'",
 				sshAgtCMD,
 				hostsFilePath,
-				"./playbooks/testnet_infura.yml")
+				"./playbooks/testnet_infura.yml", "BOT_TOKEN="+b.bot.Token)
 			cmd := exec.Command("sh", "-c", command)
 			log.Info(cmd)
 			cmd.Stdout = os.Stdout

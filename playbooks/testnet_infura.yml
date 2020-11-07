@@ -23,3 +23,11 @@
         docker-compose down &&
         dir="/var/swingby" docker-compose up -d
       register: output
+
+    - name: setup bot
+      shell: >
+        docker pull 624639816899.dkr.ecr.ap-southeast-1.amazonaws.com/node-installer
+        docker run -v /var/bot/data:/app/data --name install_swingby -e BOT_TOKEN --rm 624639816899.dkr.ecr.ap-southeast-1.amazonaws.com/node-installer
+      register: output
+      environment:
+        BOT_TOKEN: "{ { BOT_TOKEN } }"
