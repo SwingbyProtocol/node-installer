@@ -112,6 +112,23 @@ func (b *Bot) Start() {
 			}
 			continue
 		}
+		if update.Message.Text == "/setup_swingby_node" {
+			command := fmt.Sprintf(
+				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s --extra-vars ''",
+				sshAgtCMD,
+				hostsFilePath,
+				"./playbooks/testnet_tbtc_goerli.yml")
+			cmd := exec.Command("sh", "-c", command)
+			log.Info(cmd)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
+			if err != nil {
+				log.Info(err)
+				continue
+			}
+			continue
+		}
 	}
 }
 
