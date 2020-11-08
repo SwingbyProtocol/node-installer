@@ -3,7 +3,8 @@
 ## Requirements
 
 - OS Ubuntu 18.04 LTS
-- Memory 4GB~
+- vCPUs  4~
+- Memory 8GB~
 - Disk space ~100GB for Chaosnet
  
 ## Getting Started

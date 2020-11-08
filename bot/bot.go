@@ -300,8 +300,9 @@ func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
 Steps is here. 
-1. Put /setup_server to setup your server
-2. Put /setup_infura to deploy infura into your server
+1. Put /setup_server to configure your server
+2. Put /setup_bot to deploy your bot to your server. (using latest package)
+2. Put /setup_infura to deploy infura services into your server
 	`)
 	return text
 }
