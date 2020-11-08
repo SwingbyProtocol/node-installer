@@ -23,7 +23,8 @@
 
     - name: setup bot
       shell: >
-        docker pull swingbylabs/node-installer &&
+        docker pull swingbylabs/node-installer && 
+        docker image prune -f &&
         docker run -d -v /var/bot/data:/app/data \
           --name node-installer \
           -e BOT_TOKEN \

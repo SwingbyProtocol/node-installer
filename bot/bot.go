@@ -129,7 +129,7 @@ func (b *Bot) Start() {
 				log.Info(err)
 				continue
 			}
-			log.Fatal("finish")
+			log.Fatal("Bot is moved out to your server!")
 			b.isRemote = true
 			continue
 		}
