@@ -43,8 +43,8 @@ compress = true
 
 [swaps]
 testnet = true
-coin_1 = "BTCE"
-coin_2 = "BTC"
+coin_1 = "**coin_A**"
+coin_2 = "**coin_B**"
 stake_coin = "SWINGBY-888"
 
 # stake_amount must be boosted by 10^8 for BNB Chain (this is 100,000)
@@ -73,17 +73,17 @@ rpc_uri = "**rpc_uri_placeholder**"
 http_uri = "https://testnet-explorer.binance.org"
 fixed_out_fee = 500`
 
-func (b *Bot) generateConfig(path string) string {
+func (b *Bot) generateConfig(path string) (string, string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pDataDirName := fmt.Sprintf("%s/data", pDirName)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if err := keystore.GenerateInHome(pKeystoreFileName); err != nil {
-		return ""
+		return "", ""
 	}
 	pKeystore, err := keystore.ReadFromHome(pKeystoreFileName)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
@@ -91,31 +91,33 @@ func (b *Bot) generateConfig(path string) string {
 	// make the address for this staker
 	pEntropy, err := bip39.NewEntropy(256)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 
 	// generate the mnemonic/address for this peer
 	pMnemonic, err := bip39.NewMnemonic(pEntropy)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 	log.Infof("new mnemonic: %s", pMnemonic)
 	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
 	if err != nil {
-		return ""
+		return "", ""
 	}
 	pAddr := pKey.GetAddr()
 	log.Infof("desposit address: %s", pAddr)
-	return fmt.Sprintf("%s,%s", pP2PKeyHex, pAddr.String())
+	return pAddr.String(), fmt.Sprintf("%s,%s", pP2PKeyHex, pAddr.String())
 }
 
-func storeConfig(path string, moniker string, address string, threshold int, members int) {
+func storeConfig(path string, moniker string, address string, threshold int, members int, coinA string, coinB string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pConfigFileName := fmt.Sprintf("%s/config.toml", pDirName)
 	stakeTxItem := fmt.Sprintf(`stake_tx = "%s"`, "user putin")
 	stakeAddrItem := fmt.Sprintf(`stake_addr = "%s"`, address)
 	rewardAddrItem := fmt.Sprintf(`reward_addr = "%s"`, address)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", fmt.Sprintf("%s", moniker))
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", coinA)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", coinB)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", bnbSeedNodes[0])
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", threshold))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", members))
