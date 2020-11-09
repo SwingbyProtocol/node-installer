@@ -49,10 +49,21 @@ Steps is here.
 	return text
 }
 
-func makeDeployText() string {
+func makeHostText() string {
 	text := fmt.Sprintf(`
-Deploy is starting
+Cool. 
+[Configuration step 1/2]
 Please let me know your server IP address (Only accept Version 4)
 	`)
+	return text
+}
+
+func seutpSSHKeyText(ip string) string {
+	text := fmt.Sprintf(`
+Cool. Your server IP is %s, 
+[Configuration step 2/2]
+Please put your SSH private key.
+`, ip)
+
 	return text
 }

@@ -77,8 +77,7 @@ func (b *Bot) Start() {
 					b.Messages[newMsg.MessageID] = "setup_config_1"
 					continue
 				}
-				text := fmt.Sprintf("Your server IP is %s, Please put SSH private key.", msg)
-				newMsg, _ := b.SendMsg(b.ID, text, true)
+				newMsg, _ := b.SendMsg(b.ID, seutpSSHKeyText(msg), true)
 				b.Messages[newMsg.MessageID] = "setup_config_2"
 				continue
 			}
@@ -104,7 +103,7 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/setup_config" {
-			msg, err := b.SendMsg(b.ID, makeDeployText(), true)
+			msg, err := b.SendMsg(b.ID, makeHostText(), true)
 			if err != nil {
 				continue
 			}
@@ -165,6 +164,10 @@ func (b *Bot) Start() {
 				continue
 			}
 			continue
+		}
+		// default:
+		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
+			b.SendMsg(b.ID, `Start with /start`, false)
 		}
 	}
 }
