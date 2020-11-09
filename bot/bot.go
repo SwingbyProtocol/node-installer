@@ -25,6 +25,7 @@ const (
 type Bot struct {
 	mu       *sync.RWMutex
 	bot      *tgbotapi.BotAPI
+	Messages map[int]string
 	ID       int64
 	mode     string
 	nodeIP   string
@@ -38,9 +39,10 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 	bot := &Bot{
-		mu:  new(sync.RWMutex),
-		bot: b,
-		ID:  0,
+		mu:       new(sync.RWMutex),
+		Messages: make(map[int]string),
+		bot:      b,
+		ID:       0,
 	}
 	return bot, nil
 }
@@ -54,10 +56,6 @@ func (b *Bot) Start() {
 	// load host key file
 	b.loadBotEnv()
 
-	if os.Getenv("REMOTE") == "true" {
-		b.isRemote = true
-	}
-
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
 		log.Println(err)
@@ -67,20 +65,47 @@ func (b *Bot) Start() {
 		if !b.validateChat(update.Message.Chat.ID) && b.ID != 0 {
 			continue
 		}
+		if update.Message.ReplyToMessage != nil {
+			msg := update.Message.ReplyToMessage
+			mode := b.Messages[msg.MessageID]
+			if mode == "setup_server_1" {
+				err := generateHostsfile(msg.Text, "server")
+				if err != nil {
+					text := fmt.Sprintf("IP address should be version 4. Kindly put again")
+					b.SendMsg(b.ID, text, true)
+					b.Messages[msg.MessageID] = "setup_server_1"
+					continue
+				}
+				text := fmt.Sprintf("Your server IP is %s ", msg.Text)
+				b.SendMsg(b.ID, text, false)
+				b.Messages[msg.MessageID] = "setup_server_2"
+			}
+			if mode == "setup_server_2" {
+				err := generateSSHKeyfile(msg.Text)
+				if err != nil {
+					text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
+					b.SendMsg(b.ID, text, false)
+					continue
+				}
+				text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
+				b.SendMsg(b.ID, text2, false)
+			}
+
+		}
 
 		if b.mode == "catchIP" {
 			ipText := update.Message.Text
 			err := generateHostsfile(ipText, "server")
 			if err != nil {
 				text := fmt.Sprintf("IP address should be version 4. Kindly put again")
-				b.SendMsg(b.ID, text)
+				b.SendMsg(b.ID, text, false)
 				continue
 			}
 			text := fmt.Sprintf("Your server IP is %s ", ipText)
-			b.SendMsg(b.ID, text)
+			b.SendMsg(b.ID, text, false)
 			b.turnOutMode("saveIP")
 			text2 := fmt.Sprintf("Please let me know your ssh private key, (only stored into this machine)")
-			b.SendMsg(b.ID, text2)
+			b.SendMsg(b.ID, text2, false)
 			continue
 		}
 		if b.mode == "saveIP" {
@@ -88,24 +113,28 @@ func (b *Bot) Start() {
 			err := generateSSHKeyfile(sshKey)
 			if err != nil {
 				text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
-				b.SendMsg(b.ID, text)
+				b.SendMsg(b.ID, text, false)
 				continue
 			}
 			b.turnOutMode("saveSSHKey")
-			text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_infura")
-			b.SendMsg(b.ID, text2)
+			text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
+			b.SendMsg(b.ID, text2, false)
 			continue
 		}
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
 			}
-			b.SendMsg(b.ID, makeHelloText())
+			b.SendMsg(b.ID, makeHelloText(), false)
 			continue
 		}
 		if update.Message.Text == "/setup_server" {
-			b.SendMsg(b.ID, makeDeployText())
-			b.turnOutMode("catchIP")
+			msg, err := b.SendMsg(b.ID, makeDeployText(), true)
+			if err != nil {
+				continue
+			}
+			b.Messages[msg.MessageID] = "setup_server_1"
+			//b.turnOutMode("catchIP")
 			continue
 		}
 		if update.Message.Text == "/setup_bot" {
@@ -117,6 +146,7 @@ func (b *Bot) Start() {
 				log.Info(err)
 				continue
 			}
+			b.SendMsg(b.ID, makeDeployBotMessage(), false)
 			extVars := map[string]string{
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
@@ -129,17 +159,21 @@ func (b *Bot) Start() {
 				log.Info(err)
 				continue
 			}
-			log.Fatal("Bot is moved out to your server!")
+			b.SendMsg(b.ID, doneDeployBotMessage(), false)
+			log.Panicf("Bot is moved out to your server!")
 			b.isRemote = true
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
 			extVars := map[string]string{}
+			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
 			err = b.execAnsible("./playbooks/testnet_infura.yml", extVars)
 			if err != nil {
 				log.Info(err)
 				continue
 			}
+			b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+			continue
 		}
 		if update.Message.Text == "/setup_swingby_node" {
 			command := fmt.Sprintf(
@@ -162,6 +196,9 @@ func (b *Bot) Start() {
 }
 
 func (b *Bot) loadBotEnv() {
+	if os.Getenv("REMOTE") == "true" {
+		b.isRemote = true
+	}
 	if os.Getenv("CHAT_ID") != "" {
 		intID, err := strconv.Atoi(os.Getenv("CHAT_ID"))
 		if err == nil {
@@ -190,10 +227,13 @@ func (b *Bot) turnOutMode(mode string) {
 	b.mode = mode
 }
 
-func (b *Bot) SendMsg(id int64, text string) {
+func (b *Bot) SendMsg(id int64, text string, isReply bool) (tgbotapi.Message, error) {
 	msg := tgbotapi.NewMessage(id, text)
+	if isReply {
+		msg.ReplyMarkup = tgbotapi.ForceReply{ForceReply: true, Selective: true}
+	}
 	msg.ParseMode = "HTML"
-	b.bot.Send(msg)
+	return b.bot.Send(msg)
 }
 
 func (b *Bot) updateHostAndKeys() error {
@@ -294,23 +334,4 @@ func verifySSHkey() error {
 	log.Info(cmd)
 	err := cmd.Run()
 	return err
-}
-
-func makeHelloText() string {
-	text := fmt.Sprintf(`
-Hello 😊, This is a deploy bot
-Steps is here. 
-1. Put /setup_server to configure your server
-2. Put /setup_bot to deploy your bot to your server. (using latest package)
-2. Put /setup_infura to deploy infura services into your server
-	`)
-	return text
-}
-
-func makeDeployText() string {
-	text := fmt.Sprintf(`
-Deploy is starting
-Please let me know your server IP address (Only accept Version 4)
-	`)
-	return text
 }
