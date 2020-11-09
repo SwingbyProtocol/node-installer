@@ -226,10 +226,10 @@ func (b *Bot) updateHostAndKeys() error {
 	return nil
 }
 
-type Executer struct {
+type Executor struct {
 }
 
-func (e *Executer) Execute(command string, args []string, prefix string) error {
+func (e *Executor) Execute(command string, args []string, prefix string) error {
 	cmd := exec.Command(command, args...)
 	err := cmd.Run()
 	if err != nil {
@@ -255,7 +255,7 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		Playbook:          playbookPath,
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
 		Options:           ansiblePlaybookOptions,
-		Exec:              &Executer{},
+		Exec:              &Executor{},
 		StdoutCallback:    "json",
 	}
 	log.Info(playbook.String())
