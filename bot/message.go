@@ -18,14 +18,22 @@ Infura is upgraded.
 
 func makeDeployBotMessage() string {
 	text := fmt.Sprintf(`
-BOT is moving to your server.
+OK cool. Starting deployment... BOT is moved out to your server....
+
+	`)
+	return text
+}
+
+func errorDeployBotMessage() string {
+	text := fmt.Sprintf(`
+Oh something error is happened. Please kindly check your server IP address and SSH key again.
 	`)
 	return text
 }
 
 func doneDeployBotMessage() string {
 	text := fmt.Sprintf(`
-Starting deployment... BOT is moved out to your server....
+BOT is moved out to your server! please go ahead with /setup_infura
 	`)
 	return text
 }
@@ -34,7 +42,7 @@ func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
 Steps is here. 
-1. Put /setup_server to configure your server
+1. Put /setup_config to configure your server
 2. Put /setup_bot to deploy your bot to your server.
 2. Put /setup_infura to deploy infura services into your server
 	`)

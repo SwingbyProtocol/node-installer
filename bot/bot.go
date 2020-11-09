@@ -66,61 +66,36 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.ReplyToMessage != nil {
-			msg := update.Message.ReplyToMessage
-			mode := b.Messages[msg.MessageID]
-			if mode == "setup_server_1" {
-				err := generateHostsfile(msg.Text, "server")
+			msg := update.Message.Text
+			prevMsg := update.Message.ReplyToMessage
+			mode := b.Messages[prevMsg.MessageID]
+			if mode == "setup_config_1" {
+				err := generateHostsfile(msg, "server")
 				if err != nil {
 					text := fmt.Sprintf("IP address should be version 4. Kindly put again")
-					b.SendMsg(b.ID, text, true)
-					b.Messages[msg.MessageID] = "setup_server_1"
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_config_1"
 					continue
 				}
-				text := fmt.Sprintf("Your server IP is %s ", msg.Text)
-				b.SendMsg(b.ID, text, false)
-				b.Messages[msg.MessageID] = "setup_server_2"
+				text := fmt.Sprintf("Your server IP is %s, Please put SSH private key.", msg)
+				newMsg, _ := b.SendMsg(b.ID, text, true)
+				b.Messages[newMsg.MessageID] = "setup_config_2"
+				continue
 			}
-			if mode == "setup_server_2" {
-				err := generateSSHKeyfile(msg.Text)
+			if mode == "setup_config_2" {
+				err := generateSSHKeyfile(msg)
 				if err != nil {
 					text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
-					b.SendMsg(b.ID, text, false)
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_config_2"
 					continue
 				}
-				text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
-				b.SendMsg(b.ID, text2, false)
-			}
-
-		}
-
-		if b.mode == "catchIP" {
-			ipText := update.Message.Text
-			err := generateHostsfile(ipText, "server")
-			if err != nil {
-				text := fmt.Sprintf("IP address should be version 4. Kindly put again")
+				text := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
 				b.SendMsg(b.ID, text, false)
 				continue
 			}
-			text := fmt.Sprintf("Your server IP is %s ", ipText)
-			b.SendMsg(b.ID, text, false)
-			b.turnOutMode("saveIP")
-			text2 := fmt.Sprintf("Please let me know your ssh private key, (only stored into this machine)")
-			b.SendMsg(b.ID, text2, false)
-			continue
 		}
-		if b.mode == "saveIP" {
-			sshKey := update.Message.Text
-			err := generateSSHKeyfile(sshKey)
-			if err != nil {
-				text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
-				b.SendMsg(b.ID, text, false)
-				continue
-			}
-			b.turnOutMode("saveSSHKey")
-			text2 := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
-			b.SendMsg(b.ID, text2, false)
-			continue
-		}
+
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
@@ -128,13 +103,12 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, makeHelloText(), false)
 			continue
 		}
-		if update.Message.Text == "/setup_server" {
+		if update.Message.Text == "/setup_config" {
 			msg, err := b.SendMsg(b.ID, makeDeployText(), true)
 			if err != nil {
 				continue
 			}
-			b.Messages[msg.MessageID] = "setup_server_1"
-			//b.turnOutMode("catchIP")
+			b.Messages[msg.MessageID] = "setup_config_1"
 			continue
 		}
 		if update.Message.Text == "/setup_bot" {
@@ -156,12 +130,12 @@ func (b *Bot) Start() {
 			}
 			err = b.execAnsible("./playbooks/bot_install.yml", extVars)
 			if err != nil {
-				log.Info(err)
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployBotMessage(), false)
 				continue
 			}
 			b.SendMsg(b.ID, doneDeployBotMessage(), false)
 			log.Panicf("Bot is moved out to your server!")
-			b.isRemote = true
 			continue
 		}
 		if update.Message.Text == "/setup_infura" {
@@ -204,7 +178,7 @@ func (b *Bot) loadBotEnv() {
 		if err == nil {
 			b.ID = int64(intID)
 		}
-		log.Infof("chatID=%d", b.ID)
+		log.Infof("ChatID=%d", b.ID)
 	}
 	if os.Getenv("IP_ADDR") != "" {
 		generateHostsfile(os.Getenv("IP_ADDR"), "server")
@@ -252,6 +226,18 @@ func (b *Bot) updateHostAndKeys() error {
 	return nil
 }
 
+type Executer struct {
+}
+
+func (e *Executer) Execute(command string, args []string, prefix string) error {
+	cmd := exec.Command(command, args...)
+	err := cmd.Run()
+	if err != nil {
+		return errors.New("(DefaultExecute::Execute) -> " + err.Error())
+	}
+	return nil
+}
+
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error {
 	err := b.updateHostAndKeys()
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
@@ -259,7 +245,6 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		PrivateKey: sshKeyFilePath,
 		Timeout:    "30",
 	}
-
 	ansiblePlaybookOptions := &ansibler.AnsiblePlaybookOptions{
 		Inventory: "./data/hosts",
 	}
@@ -270,7 +255,8 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		Playbook:          playbookPath,
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
 		Options:           ansiblePlaybookOptions,
-		//StdoutCallback:    "json",
+		Exec:              &Executer{},
+		StdoutCallback:    "json",
 	}
 	log.Info(playbook.String())
 	err = playbook.Run()
