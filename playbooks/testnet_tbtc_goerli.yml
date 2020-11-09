@@ -1,20 +1,25 @@
-- name: Deploy tbtc_goerli
+- name: Deploy swingby node (tbtc_goerli)
   hosts: server
   user: root
   become: yes
   tasks:
-    - name: restart api-docs and swapd1-25
+    - name: restart swingby node
       shell: >
         docker image prune -f && 
-        cd /root/testnet-deploy && 
-        docker-compose pull swapd1 &&
-        docker-compose rm -sf && 
-        docker-compose up -d api-docs swapd1 
+        docker pull docker pull swingbylabs/swapd-go &&
+        docker run -d \
+          -v /var/swingby/testnet/node_data:/var/node_data \
+          -p 12121 \
+          -p 8067 \
+          --home "/var/node_data" \
+          --p2p.listen IP_ADDR \
+          --p2p.connect BOOTSTRAP_NODE \
+          --p2p.port 12121  \
+          --rest.listen 0.0.0.0 \
+          -k K_UNTIL 
       register: output
       environment:
-        K: "{{ k }}"
+        IP_ADDR: "{{IP_ADDR}}"
+        BOOTSTRAP_NODE: "{{BOOTSTRAP_NODE}}"
+        K_UNTIL: "{{ K_UNTIL }}"
         BRANCH: "{{ branch }}"
-        CONF: "configs"
-        L: "INFO"
-        IP: "163.172.160.136"
-        TA: "163.172.160.136:12121"

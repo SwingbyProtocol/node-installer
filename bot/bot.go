@@ -65,6 +65,7 @@ func (b *Bot) Start() {
 		if !b.validateChat(update.Message.Chat.ID) && b.ID != 0 {
 			continue
 		}
+		// Handle for reply messages
 		if update.Message.ReplyToMessage != nil {
 			msg := update.Message.Text
 			prevMsg := update.Message.ReplyToMessage
@@ -89,8 +90,24 @@ func (b *Bot) Start() {
 					b.Messages[newMsg.MessageID] = "setup_config_2"
 					continue
 				}
-				text := fmt.Sprintf("Your server is ready. Please kindly do /setup_bot")
-				b.SendMsg(b.ID, text, false)
+				newMsg, _ := b.SendMsg(b.ID, seutpServerConfigText(), true)
+				b.Messages[newMsg.MessageID] = "setup_config_3"
+				continue
+			}
+			if mode == "setup_config_3" {
+				network := networks[msg]
+				if network == "" {
+					continue
+				}
+				b.generateConfig(network)
+				if err != nil {
+					text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_config_2"
+					continue
+				}
+				newMsg, _ := b.SendMsg(b.ID, seutpServerConfigText(), true)
+				b.Messages[newMsg.MessageID] = "setup_config_3"
 				continue
 			}
 		}
@@ -148,22 +165,15 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
 			continue
 		}
-		if update.Message.Text == "/setup_swingby_node" {
-			command := fmt.Sprintf(
-				"%s && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -v -i %s %s --extra-vars ''",
-				sshAgtCMD,
-				hostsFilePath,
-				"./playbooks/testnet_tbtc_goerli.yml")
-			cmd := exec.Command("sh", "-c", command)
-			log.Info(cmd)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
+		if update.Message.Text == "/deploy_node" {
+			extVars := map[string]string{}
+			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
+			err = b.execAnsible("./playbooks/testnet_node.yml", extVars)
 			if err != nil {
 				log.Info(err)
 				continue
 			}
-			continue
+			b.SendMsg(b.ID, doneDeployNodeMessage(), false)
 		}
 		// Default response of say hi
 		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
