@@ -110,7 +110,7 @@ func (b *Bot) Start() {
 			b.Messages[msg.MessageID] = "setup_config_1"
 			continue
 		}
-		if update.Message.Text == "/setup_bot" {
+		if update.Message.Text == "/setup_your_bot" {
 			if b.isRemote {
 				continue
 			}

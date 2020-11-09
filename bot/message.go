@@ -43,7 +43,7 @@ func makeHelloText() string {
 Hello 😊, This is a deploy bot
 Steps is here. 
 1. Put /setup_config to configure your server
-2. Put /setup_bot to deploy your bot to your server.
+2. Put /setup_your_bot to deploy your bot to your server.
 2. Put /setup_infura to deploy infura services into your server
 	`)
 	return text
