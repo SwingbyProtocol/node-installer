@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- OS Ubuntu 18.04 LTS
+- OS Ubuntu 20.04 LTS
 - vCPUs  4~
 - Memory 8GB~
 - Disk space ~100GB for Chaosnet

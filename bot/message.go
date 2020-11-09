@@ -18,7 +18,7 @@ Infura is upgraded.
 
 func makeDeployBotMessage() string {
 	text := fmt.Sprintf(`
-OK cool. Starting deployment... BOT is moved out to your server....
+OK cool. Starting deployment... BOT is moving out to your server....
 
 	`)
 	return text

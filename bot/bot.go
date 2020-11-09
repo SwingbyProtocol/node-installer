@@ -165,7 +165,7 @@ func (b *Bot) Start() {
 			}
 			continue
 		}
-		// default:
+		// Default response of say hi
 		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
 			b.SendMsg(b.ID, `Start with /start`, false)
 		}
