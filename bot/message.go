@@ -105,9 +105,9 @@ Cool. Your server is ready.
 Next step is you can generate node config
 [Configuration step 1/6]
 What network will you using? put number.
-1) BTC_BTCB testnet 
-2) BTC_Ethereum testnet (goerli)
-3) BTC_Binance Smart Chain testnet
+1) BTC --- Binance chain testnet 
+2) BTC --- Ethereum testnet (goerli)
+3) BTC --- Binance Smart Chain testnet
 `)
 	return text
 }
@@ -141,17 +141,21 @@ Cool. Please put your ETH reward address.
 
 func makeStakeTxText(addr string, memo string) string {
 	text := fmt.Sprintf(`
-[Configuration step 5/6]
-You have to make stake tx. Please make a tx 
+Cool. Your new wallet is generated. and new mnemonic is stored.
 
-to: <b>%s</b>
+your address: <b>%s</b>
+
+You have to make stake tx to above address. Please make a tx 
 
 with memo:
 
 <b>%s</b>
 
 Send a timelock transaction to yourself with at least 1,000,000 SWINGBY 
+
 and take note of the transaction ID. Use our portal: https://timelock.swingby.network
+[Configuration step 5/6]
+
 `, addr, memo)
 	return text
 }

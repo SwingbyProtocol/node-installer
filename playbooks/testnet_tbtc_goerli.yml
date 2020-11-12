@@ -21,5 +21,5 @@
       environment:
         IP_ADDR: "{{IP_ADDR}}"
         BOOTSTRAP_NODE: "{{BOOTSTRAP_NODE}}"
-        K_UNTIL: "{{ K_UNTIL }}"
-        BRANCH: "{{ branch }}"
+        K_UNTIL: "{{K_UNTIL}}"
+        BRANCH: "{{BRANCH}}"

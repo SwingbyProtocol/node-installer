@@ -10,8 +10,8 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/perlin-network/noise v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.7.0
-	github.com/stretchr/testify v1.6.1
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+
 )
 
 replace github.com/perlin-network/noise => github.com/SwingbyProtocol/noise v1.1.1-0.20200203090125-898aaedd390e

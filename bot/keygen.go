@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/SwingbyProtocol/node-installer/keystore"
+	"github.com/binance-chain/go-sdk/common/types"
 	"github.com/binance-chain/go-sdk/keys"
 	"github.com/cosmos/go-bip39"
 	log "github.com/sirupsen/logrus"
@@ -78,7 +79,7 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-func generateKeys(path string, rewardAddress string) (string, string) {
+func generateKeys(path string, rewardAddress string, isTestnet bool) (string, string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pDataDirName := fmt.Sprintf("%s/data", pDirName)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
@@ -105,6 +106,9 @@ func generateKeys(path string, rewardAddress string) (string, string) {
 		return "", ""
 	}
 	log.Infof("new mnemonic: %s", pMnemonic)
+	if isTestnet {
+		types.Network = types.TestNetwork
+	}
 	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
 	if err != nil {
 		return "", ""
@@ -117,7 +121,6 @@ func generateKeys(path string, rewardAddress string) (string, string) {
 func storeConfig(path string, moniker string, threshold int, members int, coinA string, coinB string, blockBookBTCEndpoint string, blockBookETHndpoint string, addressBTC string, addressETH string, addressBNB string, stakeTx string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pConfigFileName := fmt.Sprintf("%s/config.toml", pDirName)
-	log.Info(pConfigFileName)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", moniker)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", coinA)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", coinB)
