@@ -20,17 +20,23 @@ const (
 	hostsFilePath  = "./data/hosts"
 	sshKeyFilePath = "./data/ssh_key"
 	sshAgtCMD      = "ssh-add " + sshKeyFilePath
+	network1       = "testnet_tbtc_bc"
+	network2       = "testnet_tbtc_goerli"
+	network3       = "testnet_tbtc_bsc"
 )
 
 type Bot struct {
-	mu       *sync.RWMutex
-	bot      *tgbotapi.BotAPI
-	Messages map[int]string
-	ID       int64
-	mode     string
-	nodeIP   string
-	sshKey   string
-	isRemote bool
+	mu               *sync.RWMutex
+	bot              *tgbotapi.BotAPI
+	Messages         map[int]string
+	ID               int64
+	nodeIP           string
+	sshKey           string
+	network          string
+	rewardAddressBTC string
+	rewardAddressETH string
+	rewardAddressBNB string
+	isRemote         bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -70,6 +76,60 @@ func (b *Bot) Start() {
 			msg := update.Message.Text
 			prevMsg := update.Message.ReplyToMessage
 			mode := b.Messages[prevMsg.MessageID]
+			if mode == "setup_node_set_network" {
+				network := networks[msg]
+				if network == "" {
+					text := fmt.Sprintf("network is not exist, Please type again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_node_set_network"
+					continue
+				}
+				b.network = network
+				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressBTC(), true)
+				b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
+				continue
+			}
+			if mode == "setup_node_btc_addr" {
+				address := msg
+				if address == "" {
+					text := fmt.Sprintf("address not exist, Please type again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
+					continue
+				}
+				b.rewardAddressBTC = address
+				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressBNB(), true)
+				b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
+				continue
+			}
+			if mode == "setup_node_bnb_addr" {
+				address := msg
+				if address == "" {
+					text := fmt.Sprintf("address not exist, Please type again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
+					continue
+				}
+				b.rewardAddressBNB = address
+				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressETH(), true)
+				b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+				continue
+			}
+			if mode == "setup_node_eth_addr" {
+				address := msg
+				if address == "" {
+					text := fmt.Sprintf("address not exist, Please type again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+					continue
+				}
+				b.rewardAddressETH = address
+				b.SendMsg(b.ID, makeStoreKeyText(), true)
+				addr, memo := generateKeys("./data", b.rewardAddressBNB)
+				newMsg, _ := b.SendMsg(b.ID, makeStakeTxText(addr, memo), true)
+				b.Messages[newMsg.MessageID] = "setup_node_4"
+				continue
+			}
 			if mode == "setup_config_1" {
 				err := generateHostsfile(msg, "server")
 				if err != nil {
@@ -90,24 +150,7 @@ func (b *Bot) Start() {
 					b.Messages[newMsg.MessageID] = "setup_config_2"
 					continue
 				}
-				newMsg, _ := b.SendMsg(b.ID, seutpServerConfigText(), true)
-				b.Messages[newMsg.MessageID] = "setup_config_3"
-				continue
-			}
-			if mode == "setup_config_3" {
-				network := networks[msg]
-				if network == "" {
-					continue
-				}
-				b.generateConfig(network)
-				if err != nil {
-					text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_config_2"
-					continue
-				}
-				newMsg, _ := b.SendMsg(b.ID, seutpServerConfigText(), true)
-				b.Messages[newMsg.MessageID] = "setup_config_3"
+				b.SendMsg(b.ID, doneSSHKeyText(), true)
 				continue
 			}
 		}
@@ -119,6 +162,15 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, makeHelloText(), false)
 			continue
 		}
+		if update.Message.Text == "/setup_node" {
+			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
+			log.Info(err)
+			if err != nil {
+				continue
+			}
+			b.Messages[msg.MessageID] = "setup_node_set_network"
+			continue
+		}
 		if update.Message.Text == "/setup_config" {
 			msg, err := b.SendMsg(b.ID, makeHostText(), true)
 			if err != nil {
@@ -127,6 +179,7 @@ func (b *Bot) Start() {
 			b.Messages[msg.MessageID] = "setup_config_1"
 			continue
 		}
+
 		if update.Message.Text == "/setup_your_bot" {
 			if b.isRemote {
 				continue
@@ -208,10 +261,6 @@ func (b *Bot) validateChat(chatID int64) bool {
 		return true
 	}
 	return false
-}
-
-func (b *Bot) turnOutMode(mode string) {
-	b.mode = mode
 }
 
 func (b *Bot) SendMsg(id int64, text string, isReply bool) (tgbotapi.Message, error) {

@@ -64,9 +64,10 @@ reward_addr = "**reward_address_btc**"
 fixed_out_fee = 30000
 
 [eth]
-rest_uri = "http://51.15.143.55:9131"
-ws_uri = "ws://51.15.143.55:9131/websocket"
+rest_uri = "**eth_blockbook_endpoint**"
+ws_uri = "ws://**eth_blockbook_endpoint**/websocket"
 wallet_contract_addr = "0xebbc1dad17a79fb0bba3152497389ac552c1c24f"
+reward_addr = "**reward_address_eth**"
 
 [bnb]
 rpc_uri = "**rpc_uri_placeholder**"
@@ -77,7 +78,7 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-func (b *Bot) generateConfig(path string) (string, string) {
+func generateKeys(path string, rewardAddress string) (string, string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pDataDirName := fmt.Sprintf("%s/data", pDirName)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
@@ -110,22 +111,30 @@ func (b *Bot) generateConfig(path string) (string, string) {
 	}
 	pAddr := pKey.GetAddr()
 	log.Infof("desposit address: %s", pAddr)
-	return pAddr.String(), fmt.Sprintf("%s,%s", pP2PKeyHex, pAddr.String())
+	return pAddr.String(), fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress)
 }
 
-func storeConfig(path string, moniker, stakeTx string, address string, threshold int, members int, coinA string, coinB string) {
+func storeConfig(path string, moniker string, threshold int, members int, coinA string, coinB string, blockBookBTCEndpoint string, blockBookETHndpoint string, addressBTC string, addressETH string, addressBNB string, stakeTx string) {
 	pDirName := fmt.Sprintf("%s/config", path)
 	pConfigFileName := fmt.Sprintf("%s/config.toml", pDirName)
+	log.Info(pConfigFileName)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", moniker)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", coinA)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", coinB)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_btc**", coinA)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", bnbSeedNodes[0])
+
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", threshold))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", members))
+
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", blockBookBTCEndpoint)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_btc**", addressBTC)
+
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_endpoint**", blockBookETHndpoint)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", addressETH)
+
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", bnbSeedNodes[0])
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_tx**", stakeTx)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", address)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", address)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", addressBNB)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", addressBNB)
 
 	newConfigToml := fmt.Sprintf("%s\n", newBaseConfig)
 	if err := ioutil.WriteFile(pConfigFileName, []byte(newConfigToml), os.ModePerm); err != nil {
