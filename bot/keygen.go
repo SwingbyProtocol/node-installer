@@ -105,7 +105,10 @@ func generateKeys(path string, rewardAddress string, isTestnet bool) (string, st
 	if err != nil {
 		return "", ""
 	}
-	log.Infof("new mnemonic: %s", pMnemonic)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/mnemonic", path), []byte(pMnemonic), 0666)
+	if err != nil {
+		return "", err.Error()
+	}
 	if isTestnet {
 		types.Network = types.TestNetwork
 	}
