@@ -125,7 +125,17 @@ func (b *Bot) Start() {
 				}
 				b.rewardAddressETH = address
 				b.SendMsg(b.ID, makeStoreKeyText(), true)
-				addr, memo := generateKeys("./data", b.rewardAddressBNB)
+				rewardAddr := ""
+				if b.network == network1 {
+					rewardAddr = b.rewardAddressBTC
+				}
+				if b.network == network2 {
+					rewardAddr = b.rewardAddressETH
+				}
+				if b.network == network3 {
+					rewardAddr = b.rewardAddressETH // BSC
+				}
+				addr, memo := generateKeys("./data", rewardAddr)
 				newMsg, _ := b.SendMsg(b.ID, makeStakeTxText(addr, memo), true)
 				b.Messages[newMsg.MessageID] = "setup_node_4"
 				continue

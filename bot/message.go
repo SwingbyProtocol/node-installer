@@ -103,7 +103,7 @@ func makeNodeText() string {
 	text := fmt.Sprintf(`
 Cool. Your server is ready. 
 Next step is you can generate node config
-[Configuration step 1/2]
+[Configuration step 1/6]
 What network will you using? put number.
 1) BTC_BTCB testnet 
 2) BTC_Ethereum testnet (goerli)
@@ -115,16 +115,7 @@ What network will you using? put number.
 func makeRewardAddressBTC() string {
 	text := fmt.Sprintf(`
 Cool. Please put your BTC reward address. 
-[Configuration step 2/3]
-`)
-
-	return text
-}
-
-func makeRewardAddressETH() string {
-	text := fmt.Sprintf(`
-Cool. Please put your ETH reward address. 
-[Configuration step 3/3]
+[Configuration step 2/6]
 `)
 
 	return text
@@ -133,7 +124,16 @@ Cool. Please put your ETH reward address.
 func makeRewardAddressBNB() string {
 	text := fmt.Sprintf(`
 Cool. Please put your BNB reward address. 
-[Configuration step 3/3]
+[Configuration step 3/6]
+`)
+
+	return text
+}
+
+func makeRewardAddressETH() string {
+	text := fmt.Sprintf(`
+Cool. Please put your ETH reward address. 
+[Configuration step 4/6]
 `)
 
 	return text
@@ -141,6 +141,7 @@ Cool. Please put your BNB reward address.
 
 func makeStakeTxText(addr string, memo string) string {
 	text := fmt.Sprintf(`
+[Configuration step 5/6]
 You have to make stake tx. Please make a tx 
 
 to: <b>%s</b>
