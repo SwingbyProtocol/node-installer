@@ -14,8 +14,8 @@ Hello 😊, This is a deploy bot
 Steps is here. 
 1. Put /setup_config to configure your server
 2. Put /setup_your_bot to deploy your bot to your server.
-3. Put /setup_node to configure your node
-4. Put /deploy_infura to deploy infura services into your server
+3. Put /deploy_infura to deploy infura services into your server
+4. Put /setup_node to configure your node
 5. Put /deploy_node to deploy your node
 
 	`)

@@ -6,7 +6,7 @@
     - name: restart swingby node
       shell: >
         docker image prune -f && 
-        docker pull docker pull swingbylabs/swapd-go:{{BRANCH}} &&
+        docker pull docker pull swingbylabs/swapd-go:{{TAG}} &&
         docker run -d \
           -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
           -p 12121 \
@@ -20,7 +20,7 @@
           -k K_UNTIL
       register: output
       environment:
-        BRANCH: "{{BRANCH}}"
+        TAG: "{{TAG}}"
         IP_ADDR: "{{IP_ADDR}}"
         BOOTSTRAP_NODE: "{{BOOTSTRAP_NODE}}"
         K_UNTIL: "{{K_UNTIL}}"

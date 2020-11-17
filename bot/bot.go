@@ -18,15 +18,12 @@ import (
 )
 
 const (
-	hostsFilePath  = "./data/hosts"
-	sshKeyFilePath = "./data/ssh_key"
-	dataPath       = "./data"
-	sshAgtCMD      = "ssh-add " + sshKeyFilePath
-	network1       = "testnet_tbtc_bc"
-	network2       = "testnet_tbtc_goerli"
-	network3       = "testnet_tbtc_bsc"
-	blockBookBTC   = "51.15.143.55:9130"
-	blockBookETH   = "51.15.143.55:9131"
+	dataPath     = "./data"
+	network1     = "testnet_tbtc_bc"
+	network2     = "testnet_tbtc_goerli"
+	network3     = "testnet_tbtc_bsc"
+	blockBookBTC = "51.15.143.55:9130"
+	blockBookETH = "51.15.143.55:9131"
 )
 
 type Bot struct {
@@ -80,6 +77,8 @@ func (b *Bot) Start() {
 	u.Timeout = 60
 	// load host key file
 	b.loadBotEnv()
+
+	b.loadHostAndKeys()
 
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
@@ -233,7 +232,7 @@ func (b *Bot) Start() {
 			if b.isRemote {
 				continue
 			}
-			err := b.updateHostAndKeys()
+			err := b.loadHostAndKeys()
 			if err != nil {
 				log.Info(err)
 				continue
@@ -269,7 +268,7 @@ func (b *Bot) Start() {
 		}
 		if update.Message.Text == "/deploy_node" {
 			extVars := map[string]string{
-				"BRANCH":         b.network,
+				"TAG":            b.network,
 				"IP_ADDR":        b.nodeIP,
 				"BOOTSTRAP_NODE": b.bootstrapNode,
 				"K_UNTIL":        b.keygenUntil,
@@ -307,7 +306,7 @@ func (b *Bot) loadBotEnv() {
 	}
 	if os.Getenv("SSH_KEY") != "" {
 		generateSSHKeyfile(os.Getenv("SSH_KEY"))
-		log.Info("ssh key loaded")
+		log.Info("ssh key stored")
 	}
 }
 
@@ -327,18 +326,19 @@ func (b *Bot) SendMsg(id int64, text string, isReply bool) (tgbotapi.Message, er
 	return b.bot.Send(msg)
 }
 
-func (b *Bot) updateHostAndKeys() error {
+func (b *Bot) loadHostAndKeys() error {
 	host, err := getFileHostfile()
 	if err != nil {
 		return err
 	}
 	b.nodeIP = host
-	log.Infof("loaded IP form file: %s", host)
+	log.Infof("Loaded IP form file: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {
 		return err
 	}
+	log.Infof("Loaded ssh keys")
 	b.sshKey = key
 	return nil
 }
@@ -356,7 +356,7 @@ func (e *Executor) Execute(command string, args []string, prefix string) error {
 }
 
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error {
-	err := b.updateHostAndKeys()
+	sshKeyFilePath := fmt.Sprintf("%s/ssh_key", dataPath)
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
 		AskPass:    false,
 		PrivateKey: sshKeyFilePath,
@@ -376,7 +376,7 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		StdoutCallback:    "json",
 	}
 	log.Info(playbook.String())
-	err = playbook.Run()
+	err := playbook.Run()
 	if err != nil {
 		return err
 	}
@@ -389,7 +389,8 @@ func generateHostsfile(nodeIP string, target string) error {
 		return errors.New("IP addr error")
 	}
 	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
-	err := ioutil.WriteFile(hostsFilePath, []byte(text), 0666)
+	path := fmt.Sprintf("%s/hosts", dataPath)
+	err := ioutil.WriteFile(path, []byte(text), 0666)
 	if err != nil {
 		return err
 	}
@@ -397,7 +398,8 @@ func generateHostsfile(nodeIP string, target string) error {
 }
 
 func getFileHostfile() (string, error) {
-	str, err := ioutil.ReadFile(hostsFilePath)
+	path := fmt.Sprintf("%s/hosts", dataPath)
+	str, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -410,10 +412,8 @@ func getFileHostfile() (string, error) {
 }
 
 func getFileSSHKeyfie() (string, error) {
-	// if err := verifySSHkey() != nil {
-	// 	return "", errors.New("ssh key is invalid")
-	// }
-	str, err := ioutil.ReadFile(sshKeyFilePath)
+	path := fmt.Sprintf("%s/ssh_key", dataPath)
+	str, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -421,20 +421,11 @@ func getFileSSHKeyfie() (string, error) {
 }
 
 func generateSSHKeyfile(key string) error {
-	// if verifySSHkey() != nil {
-	// 	return errors.New("ssh key is invalid")
-	// }
 	text := fmt.Sprintf("%s\n", key)
-	err := ioutil.WriteFile(sshKeyFilePath, []byte(text), 0600)
+	path := fmt.Sprintf("%s/ssh_key", dataPath)
+	err := ioutil.WriteFile(path, []byte(text), 0600)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func verifySSHkey() error {
-	cmd := exec.Command("sh", "-c", sshAgtCMD)
-	log.Info(cmd)
-	err := cmd.Run()
-	return err
 }
