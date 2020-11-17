@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	ansibler "github.com/apenella/go-ansible"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -36,6 +37,7 @@ type Bot struct {
 	nodeIP           string
 	sshKey           string
 	network          string
+	bootstrapNode    string
 	coinA            string
 	coinB            string
 	rewardAddressBTC string
@@ -45,6 +47,7 @@ type Bot struct {
 	blockBookETH     string
 	stakeAddr        string
 	stakeTx          string
+	keygenUntil      string
 	isRemote         bool
 }
 
@@ -53,15 +56,18 @@ func NewBot(token string) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
+	initTime := time.Date(2014, time.December, 31, 12, 13, 24, 0, time.UTC)
 	bot := &Bot{
-		mu:           new(sync.RWMutex),
-		Messages:     make(map[int]string),
-		bot:          b,
-		ID:           0,
-		coinA:        "BTC",
-		coinB:        "BTCE",
-		blockBookBTC: blockBookBTC,
-		blockBookETH: blockBookETH,
+		mu:            new(sync.RWMutex),
+		Messages:      make(map[int]string),
+		bot:           b,
+		ID:            0,
+		coinA:         "BTC",
+		coinB:         "BTCE",
+		blockBookBTC:  blockBookBTC,
+		blockBookETH:  blockBookETH,
+		keygenUntil:   initTime.Format(time.RFC3339),
+		bootstrapNode: "192.168.1.1",
 	}
 	return bot, nil
 }
@@ -147,7 +153,7 @@ func (b *Bot) Start() {
 					rewardAddr = b.rewardAddressETH
 				}
 				if b.network == network3 {
-					rewardAddr = b.rewardAddressETH // BSC
+					rewardAddr = b.rewardAddressETH
 				}
 				path := fmt.Sprintf("%s/%s", dataPath, b.network)
 				memo, err := b.generateKeys(path, rewardAddr, isTestnet)
@@ -262,11 +268,17 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/deploy_node" {
-			extVars := map[string]string{}
-			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
-			err = b.execAnsible("./playbooks/testnet_node.yml", extVars)
+			extVars := map[string]string{
+				"BRANCH":         b.network,
+				"IP_ADDR":        b.nodeIP,
+				"BOOTSTRAP_NODE": b.bootstrapNode,
+				"K_UNTIL":        b.keygenUntil,
+			}
+			path := fmt.Sprintf("./playbooks/%s.yml", b.network)
+			err = b.execAnsible(path, extVars)
 			if err != nil {
-				log.Info(err)
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployBotMessage(), false)
 				continue
 			}
 			b.SendMsg(b.ID, doneDeployNodeMessage(), false)

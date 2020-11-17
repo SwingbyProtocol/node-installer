@@ -6,20 +6,21 @@
     - name: restart swingby node
       shell: >
         docker image prune -f && 
-        docker pull docker pull swingbylabs/swapd-go &&
+        docker pull docker pull swingbylabs/swapd-go:{{BRANCH}} &&
         docker run -d \
-          -v /var/swingby/node/testnet_tbtc_goerli/node_data:/var/node_data \
+          -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
           -p 12121 \
           -p 8067 \
+          swingbylabs/swapd-go \
           --home "/var/node_data" \
           --p2p.listen IP_ADDR \
           --p2p.connect BOOTSTRAP_NODE \
           --p2p.port 12121  \
           --rest.listen 0.0.0.0 \
-          -k K_UNTIL 
+          -k K_UNTIL
       register: output
       environment:
+        BRANCH: "{{BRANCH}}"
         IP_ADDR: "{{IP_ADDR}}"
         BOOTSTRAP_NODE: "{{BOOTSTRAP_NODE}}"
         K_UNTIL: "{{K_UNTIL}}"
-        BRANCH: "{{BRANCH}}"
