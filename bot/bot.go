@@ -33,9 +33,14 @@ type Bot struct {
 	nodeIP           string
 	sshKey           string
 	network          string
+	coinA            string
+	coinB            string
 	rewardAddressBTC string
 	rewardAddressETH string
 	rewardAddressBNB string
+	blockBookBTC     string
+	blockBookETH     string
+	stakeTx          string
 	isRemote         bool
 }
 
@@ -49,6 +54,8 @@ func NewBot(token string) (*Bot, error) {
 		Messages: make(map[int]string),
 		bot:      b,
 		ID:       0,
+		coinA:    "BTC",
+		coinB:    "BTCE",
 	}
 	return bot, nil
 }
@@ -137,8 +144,22 @@ func (b *Bot) Start() {
 					rewardAddr = b.rewardAddressETH // BSC
 				}
 				addr, memo := generateKeys("./data", rewardAddr, isTestnet)
-				newMsg, _ := b.SendMsg(b.ID, makeStakeTxText(addr, memo), false)
-				b.Messages[newMsg.MessageID] = "setup_node_4"
+				b.SendMsg(b.ID, makeStakeTxText(addr, memo), false)
+				newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
+				b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+				continue
+			}
+			if mode == "setup_node_stake_tx" {
+				stakeTx := msg
+				if stakeTx == "" {
+					text := fmt.Sprintf("stakeTx not exist, Please type again")
+					newMsg, _ := b.SendMsg(b.ID, text, true)
+					b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+					continue
+				}
+				b.stakeTx = stakeTx
+				b.storeConfig("./data", "testMoniker")
+				b.SendMsg(b.ID, doneConfigGenerateText(), false)
 				continue
 			}
 			if mode == "setup_config_1" {
@@ -173,6 +194,15 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, makeHelloText(), false)
 			continue
 		}
+		if update.Message.Text == "/setup_config" {
+			msg, err := b.SendMsg(b.ID, makeHostText(), true)
+			if err != nil {
+				continue
+			}
+			b.Messages[msg.MessageID] = "setup_config_1"
+			continue
+		}
+
 		if update.Message.Text == "/setup_node" {
 			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
 			log.Info(err)
@@ -180,14 +210,6 @@ func (b *Bot) Start() {
 				continue
 			}
 			b.Messages[msg.MessageID] = "setup_node_set_network"
-			continue
-		}
-		if update.Message.Text == "/setup_config" {
-			msg, err := b.SendMsg(b.ID, makeHostText(), true)
-			if err != nil {
-				continue
-			}
-			b.Messages[msg.MessageID] = "setup_config_1"
 			continue
 		}
 
@@ -244,6 +266,10 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, `Start with /start`, false)
 		}
 	}
+}
+
+func (b *Bot) storeConfig(path string, moniker string) {
+	storeConfig(path, moniker, 15, 25, b.coinA, b.coinB, b.blockBookBTC, b.blockBookETH, b.rewardAddressBTC, b.rewardAddressETH, b.rewardAddressBNB, b.stakeTx)
 }
 
 func (b *Bot) loadBotEnv() {

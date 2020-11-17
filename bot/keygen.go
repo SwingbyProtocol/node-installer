@@ -59,13 +59,13 @@ threshold = **threshold_placeholder**
 keygen_until = "2020-07-23T12:00:00Z"
 
 [btc]
-rest_uri = "**btc_blockbook_endpoint**"
+rest_uri = "http://**btc_blockbook_endpoint**"
 ws_uri = "ws://**btc_blockbook_endpoint**/websocket"
 reward_addr = "**reward_address_btc**"
 fixed_out_fee = 30000
 
 [eth]
-rest_uri = "**eth_blockbook_endpoint**"
+rest_uri = "http://**eth_blockbook_endpoint**"
 ws_uri = "ws://**eth_blockbook_endpoint**/websocket"
 wallet_contract_addr = "0xebbc1dad17a79fb0bba3152497389ac552c1c24f"
 reward_addr = "**reward_address_eth**"
@@ -105,7 +105,7 @@ func generateKeys(path string, rewardAddress string, isTestnet bool) (string, st
 	if err != nil {
 		return "", ""
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/mnemonic", path), []byte(pMnemonic), 0666)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/data/mnemonic", path), []byte(pMnemonic), 0666)
 	if err != nil {
 		return "", err.Error()
 	}
