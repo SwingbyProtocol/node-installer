@@ -75,7 +75,7 @@ func makeNodeText() string {
 	text := fmt.Sprintf(`
 Cool. Your server is ready. 
 Next step is you can generate node config
-What network will you using? put number.
+What network will you using? Please put number.
 1) BTC --- Binance chain testnet 
 2) BTC --- Ethereum testnet (goerli)
 3) BTC --- Binance Smart Chain testnet

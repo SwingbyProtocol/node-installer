@@ -79,17 +79,16 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-func generateKeys(path string, rewardAddress string, isTestnet bool) (string, string) {
-	pDirName := fmt.Sprintf("%s/config", path)
-	pDataDirName := fmt.Sprintf("%s/data", pDirName)
+func (b *Bot) generateKeys(network string, rewardAddress string, isTestnet bool) (string, error) {
+	pDataDirName := fmt.Sprintf("%s/data", network)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if err := keystore.GenerateInHome(pKeystoreFileName); err != nil {
-		return "", ""
+		return "", err
 	}
 	pKeystore, err := keystore.ReadFromHome(pKeystoreFileName)
 	if err != nil {
-		return "", ""
+		return "", err
 	}
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
@@ -97,53 +96,54 @@ func generateKeys(path string, rewardAddress string, isTestnet bool) (string, st
 	// make the address for this staker
 	pEntropy, err := bip39.NewEntropy(256)
 	if err != nil {
-		return "", ""
+		return "", err
 	}
 
 	// generate the mnemonic/address for this peer
 	pMnemonic, err := bip39.NewMnemonic(pEntropy)
 	if err != nil {
-		return "", ""
+		return "", err
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/data/mnemonic", path), []byte(pMnemonic), 0666)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/data/mnemonic", network), []byte(pMnemonic), 0666)
 	if err != nil {
-		return "", err.Error()
+		return "", err
 	}
 	if isTestnet {
 		types.Network = types.TestNetwork
 	}
 	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
 	if err != nil {
-		return "", ""
+		return "", err
 	}
 	pAddr := pKey.GetAddr()
+	b.stakeAddr = pAddr.String()
 	log.Infof("desposit address: %s", pAddr)
-	return pAddr.String(), fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress)
+	return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
 }
 
-func storeConfig(path string, moniker string, threshold int, members int, coinA string, coinB string, blockBookBTCEndpoint string, blockBookETHndpoint string, addressBTC string, addressETH string, addressBNB string, stakeTx string) {
-	pDirName := fmt.Sprintf("%s/config", path)
-	pConfigFileName := fmt.Sprintf("%s/config.toml", pDirName)
+func (b *Bot) storeConfig(network string, moniker string, threshold int, members int) error {
+	pConfigFileName := fmt.Sprintf("%s/config.toml", network)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", moniker)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", coinA)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", coinB)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", b.coinA)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", b.coinB)
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", threshold))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", members))
 
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", blockBookBTCEndpoint)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_btc**", addressBTC)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", b.blockBookBTC)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_btc**", b.rewardAddressBTC)
 
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_endpoint**", blockBookETHndpoint)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", addressETH)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_endpoint**", b.blockBookETH)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", b.rewardAddressETH)
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", bnbSeedNodes[0])
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_tx**", stakeTx)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", addressBNB)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", addressBNB)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_tx**", b.stakeTx)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", b.stakeAddr)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", b.rewardAddressBNB)
 
 	newConfigToml := fmt.Sprintf("%s\n", newBaseConfig)
 	if err := ioutil.WriteFile(pConfigFileName, []byte(newConfigToml), os.ModePerm); err != nil {
-		return
+		return err
 	}
+	return nil
 }

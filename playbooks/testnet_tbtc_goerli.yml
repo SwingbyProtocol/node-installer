@@ -8,7 +8,7 @@
         docker image prune -f && 
         docker pull docker pull swingbylabs/swapd-go &&
         docker run -d \
-          -v /var/swingby/testnet/node_data:/var/node_data \
+          -v /var/swingby/node/testnet_tbtc_goerli/node_data:/var/node_data \
           -p 12121 \
           -p 8067 \
           --home "/var/node_data" \

@@ -19,10 +19,13 @@ import (
 const (
 	hostsFilePath  = "./data/hosts"
 	sshKeyFilePath = "./data/ssh_key"
+	dataPath       = "./data"
 	sshAgtCMD      = "ssh-add " + sshKeyFilePath
 	network1       = "testnet_tbtc_bc"
 	network2       = "testnet_tbtc_goerli"
 	network3       = "testnet_tbtc_bsc"
+	blockBookBTC   = "51.15.143.55:9130"
+	blockBookETH   = "51.15.143.55:9131"
 )
 
 type Bot struct {
@@ -40,6 +43,7 @@ type Bot struct {
 	rewardAddressBNB string
 	blockBookBTC     string
 	blockBookETH     string
+	stakeAddr        string
 	stakeTx          string
 	isRemote         bool
 }
@@ -50,12 +54,14 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 	bot := &Bot{
-		mu:       new(sync.RWMutex),
-		Messages: make(map[int]string),
-		bot:      b,
-		ID:       0,
-		coinA:    "BTC",
-		coinB:    "BTCE",
+		mu:           new(sync.RWMutex),
+		Messages:     make(map[int]string),
+		bot:          b,
+		ID:           0,
+		coinA:        "BTC",
+		coinB:        "BTCE",
+		blockBookBTC: blockBookBTC,
+		blockBookETH: blockBookETH,
 	}
 	return bot, nil
 }
@@ -143,8 +149,12 @@ func (b *Bot) Start() {
 				if b.network == network3 {
 					rewardAddr = b.rewardAddressETH // BSC
 				}
-				addr, memo := generateKeys("./data", rewardAddr, isTestnet)
-				b.SendMsg(b.ID, makeStakeTxText(addr, memo), false)
+				path := fmt.Sprintf("%s/%s", dataPath, b.network)
+				memo, err := b.generateKeys(path, rewardAddr, isTestnet)
+				if err != nil {
+					continue
+				}
+				b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
 				newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
 				b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
 				continue
@@ -158,7 +168,8 @@ func (b *Bot) Start() {
 					continue
 				}
 				b.stakeTx = stakeTx
-				b.storeConfig("./data", "testMoniker")
+				path := fmt.Sprintf("%s/%s", dataPath, b.network)
+				b.storeConfig(path, "testMoniker", 15, 25)
 				b.SendMsg(b.ID, doneConfigGenerateText(), false)
 				continue
 			}
@@ -205,7 +216,6 @@ func (b *Bot) Start() {
 
 		if update.Message.Text == "/setup_node" {
 			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
-			log.Info(err)
 			if err != nil {
 				continue
 			}
@@ -266,10 +276,6 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, `Start with /start`, false)
 		}
 	}
-}
-
-func (b *Bot) storeConfig(path string, moniker string) {
-	storeConfig(path, moniker, 15, 25, b.coinA, b.coinB, b.blockBookBTC, b.blockBookETH, b.rewardAddressBTC, b.rewardAddressETH, b.rewardAddressBNB, b.stakeTx)
 }
 
 func (b *Bot) loadBotEnv() {
