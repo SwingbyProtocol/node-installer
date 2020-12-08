@@ -8,7 +8,7 @@
         docker image prune -f && 
         docker pull swingbylabs/swapd-go:{{TAG}} &&
         docker run -d \
-          -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
+          -v /var/swingby/node/testnet_tbtc_bc:/var/node_data \
           -p 12121 \
           -p 8067 \
           --log-opt max-size=10m --log-opt max-file=5 \

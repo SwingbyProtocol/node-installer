@@ -77,7 +77,7 @@ func NewBot(token string) (*Bot, error) {
 		blockBookBTC:  blockBookBTC,
 		blockBookETH:  blockBookETH,
 		keygenUntil:   initTime.Format(time.RFC3339),
-		bootstrapNode: "192.168.1.1",
+		bootstrapNode: "https://tbtc-goerli-1.swingby.network",
 		network:       networks["1"],
 		moniker:       "Default Node",
 	}
@@ -212,7 +212,6 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, doneDeployBotMessage(), false)
 			log.Info("Bot is moved out to your server!")
 			os.Exit(0)
-
 			continue
 		}
 		if update.Message.Text == "/deploy_infura" {
@@ -237,7 +236,7 @@ func (b *Bot) Start() {
 		}
 		if update.Message.Text == "/deploy_node" {
 			extVars := map[string]string{
-				"TAG":            b.network,
+				"TAG":            "latest",
 				"IP_ADDR":        b.nodeIP,
 				"BOOTSTRAP_NODE": b.bootstrapNode,
 				"K_UNTIL":        b.keygenUntil,

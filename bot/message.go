@@ -127,7 +127,7 @@ if you want to skip, type 'none'
 
 func makeStakeTxText(addr string, memo string) string {
 	text := fmt.Sprintf(`
-OK. Your new wallet is generated. and new mnemonic is stored into server.
+OK. Your new wallet is generated.
 
 Your address: <b>%s</b>
 
