@@ -14,7 +14,7 @@
 - Store your ssh private key to accesss instance into `data/ssh_key` 
 - Run `$ export BOT_TOKEN=<your bot token>`
 - Run `$ chmod +x scripts/start_build_and_install.sh && scripts/start_build_and_install.sh` for Mac User
-- Talk to your `telegram bot` with `/start` command to start install your node.
+- Talk to your `telegram bot` with `/start` command to start install node into your server.
 
 ## Development 
 ```
