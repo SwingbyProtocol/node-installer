@@ -25,7 +25,6 @@ Steps is here.
 func makeHostText() string {
 	text := fmt.Sprintf(`
 Cool. 
-[Configuration step 1/2]
 Please let me know your server IP address (Only accept Version 4)
 	`)
 	return text
@@ -43,7 +42,7 @@ Please put your SSH private key.
 
 func doneSSHKeyText() string {
 	text := fmt.Sprintf(`
-Cool. Your server is ready. 
+Cool. SSH_KEY is loaded. Your server is ready. 
 `)
 
 	return text

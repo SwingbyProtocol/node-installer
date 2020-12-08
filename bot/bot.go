@@ -186,8 +186,14 @@ func (b *Bot) Start() {
 					b.Messages[newMsg.MessageID] = "setup_config_1"
 					continue
 				}
-				newMsg, _ := b.SendMsg(b.ID, seutpSSHKeyText(msg), true)
-				b.Messages[newMsg.MessageID] = "setup_config_2"
+				err = b.loadHostAndKeys()
+				if err != nil {
+					text := fmt.Sprintf("Config are something wrong. please try again")
+					b.SendMsg(b.ID, text, false)
+					continue
+				}
+				b.SendMsg(b.ID, doneSSHKeyText(), false)
+				//b.Messages[newMsg.MessageID] = "setup_config_2"
 				continue
 			}
 			if mode == "setup_config_2" {
@@ -252,10 +258,12 @@ func (b *Bot) Start() {
 				continue
 			}
 			b.SendMsg(b.ID, doneDeployBotMessage(), false)
-			log.Panicf("Bot is moved out to your server!")
+			log.Info("Bot is moved out to your server!")
+			os.Exit(0)
+
 			continue
 		}
-		if update.Message.Text == "/setup_infura" {
+		if update.Message.Text == "/deploy_infura" {
 			extVars := map[string]string{}
 			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
 			err = b.execAnsible("./playbooks/testnet_infura.yml", extVars)
@@ -302,11 +310,11 @@ func (b *Bot) loadBotEnv() {
 	}
 	if os.Getenv("IP_ADDR") != "" {
 		generateHostsfile(os.Getenv("IP_ADDR"), "server")
-		log.Infof("IP_ADDR=%s", os.Getenv("IP_ADDR"))
+		log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
 	}
 	if os.Getenv("SSH_KEY") != "" {
 		generateSSHKeyfile(os.Getenv("SSH_KEY"))
-		log.Info("ssh key stored")
+		log.Info("A ssh key stored")
 	}
 }
 
@@ -372,8 +380,8 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		Playbook:          playbookPath,
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
 		Options:           ansiblePlaybookOptions,
-		Exec:              &Executor{},
-		StdoutCallback:    "json",
+		//Exec:              &Executor{},
+		//StdoutCallback:    "json",
 	}
 	log.Info(playbook.String())
 	err := playbook.Run()
