@@ -43,7 +43,7 @@ use_file_logger = true
 compress = true
 
 [swaps]
-testnet = true
+testnet = "**is_testnet**"
 coin_1 = "**coin_A**"
 coin_2 = "**coin_B**"
 stake_coin = "SWINGBY-888"
@@ -121,11 +121,13 @@ func (b *Bot) generateKeys(network string, rewardAddress string, isTestnet bool)
 	return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
 }
 
-func (b *Bot) storeConfig(network string, moniker string, threshold int, members int) error {
+func (b *Bot) storeConfig(network string, threshold int, members int) error {
 	pConfigFileName := fmt.Sprintf("%s/config.toml", network)
-	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", moniker)
+	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", b.moniker)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", b.coinA)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", b.coinB)
+
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**is_testnet**", fmt.Sprintf("%t", b.isTestnet))
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", threshold))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", members))

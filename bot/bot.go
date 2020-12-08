@@ -59,6 +59,7 @@ type Bot struct {
 	stakeTx          string
 	keygenUntil      string
 	isRemote         bool
+	isTestnet        bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -268,7 +269,7 @@ func (b *Bot) updateStakeTx(msg string) {
 	}
 	b.stakeTx = stakeTx
 	path := fmt.Sprintf("%s/%s", dataPath, b.network)
-	b.storeConfig(path, b.moniker, 15, 25)
+	b.storeConfig(path, 15, 25)
 	b.SendMsg(b.ID, doneConfigGenerateText(), false)
 }
 
@@ -283,24 +284,23 @@ func (b *Bot) updateETHAddr(msg string) {
 	}
 	b.SendMsg(b.ID, b.makeStoreKeyText(), false)
 	rewardAddr := ""
-	isTestnet := false
 	if b.network == network1 {
 		rewardAddr = b.rewardAddressBTC
-		isTestnet = true
+		b.isTestnet = true
 		b.coinB = "BTCB"
 	}
 	if b.network == network2 {
 		rewardAddr = b.rewardAddressETH
-		isTestnet = true
+		b.isTestnet = true
 		b.coinB = "BTCE"
 	}
 	if b.network == network3 {
 		rewardAddr = b.rewardAddressETH
-		isTestnet = true
+		b.isTestnet = true
 		b.coinB = "BTCK"
 	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.network)
-	memo, err := b.generateKeys(path, rewardAddr, isTestnet)
+	memo, err := b.generateKeys(path, rewardAddr, b.isTestnet)
 	if err != nil {
 		log.Info(err)
 		return
