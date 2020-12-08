@@ -76,7 +76,7 @@ func GenerateInHome(optPath ...string) error {
 		return err
 	}
 	p2pData := NewP2PSaveData(keys.PrivateKey(), c1, c2)
-	tssPreParams, err := keygen.GeneratePreParams(1 * time.Minute)
+	tssPreParams, err := keygen.GeneratePreParams(2 * time.Minute)
 	if err != nil {
 		return err
 	}
@@ -87,13 +87,13 @@ func GenerateInHome(optPath ...string) error {
 	return WriteToHome(saveData, optPath...)
 }
 
-func LoadOrGenerate() (data *SaveData, generated bool, err error) {
-	kstore, err := ReadFromHome()
+func LoadOrGenerate(optPath ...string) (data *SaveData, generated bool, err error) {
+	kstore, err := ReadFromHome(optPath...)
 	if err != nil {
 		if err = GenerateInHome(); err != nil {
 			return nil, false, err
 		}
-		kstore, err = ReadFromHome() // ensure that it can be read
+		kstore, err = ReadFromHome(optPath...) // ensure that it can be read
 		if err != nil {
 			return nil, false, err
 		}

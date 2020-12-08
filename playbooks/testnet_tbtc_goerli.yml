@@ -3,14 +3,19 @@
   user: root
   become: yes
   tasks:
+    - name: remove swingby node
+      shell: >
+        docker rm -f swingby_node 2> /dev/null || true
+      register: output
+
     - name: restart swingby node
       shell: >
         docker image prune -f && 
         docker pull swingbylabs/swapd-go:{{TAG}} &&
-        docker run -d \
+        docker run -d --name swingby_node \
           -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
-          -p 12121 \
-          -p 8067 \
+          -p 12121:12121 \
+          -p 8067:8067 \
           --log-opt max-size=10m --log-opt max-file=5 \
           swingbylabs/swapd-go:{{TAG}} \
           --home "/var/node_data" \

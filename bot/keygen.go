@@ -87,7 +87,7 @@ func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
 	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.network)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
-	if err := keystore.GenerateInHome(pKeystoreFileName); err != nil {
+	if _, _, err := keystore.LoadOrGenerate(pKeystoreFileName); err != nil {
 		return "", err
 	}
 	pKeystore, err := keystore.ReadFromHome(pKeystoreFileName)

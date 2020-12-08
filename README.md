@@ -3,9 +3,9 @@
 ## Requirements
 
 - OS Ubuntu 20.04 LTS
-- vCPUs  4~
-- Memory 8GB~
-- Disk space ~100GB for Chaosnet
+- vCPUs >= 4
+- Memory >= 8GB
+- Disk space >= 130GB for Mainnet environment
  
 ## Getting Started
 - Install `Docker` from https://docker.io to your machine.

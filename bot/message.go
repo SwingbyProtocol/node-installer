@@ -162,7 +162,8 @@ OK. Generating new your wallet and store your new mnemonic key...
 func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
-Your Node configs are updated.
+Your Node configs are updated. 
+Let's start deploy => /deploy_node
 	`)
 	return text
 }
