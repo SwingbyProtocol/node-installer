@@ -22,9 +22,21 @@ const (
 	network1     = "testnet_tbtc_bc"
 	network2     = "testnet_tbtc_goerli"
 	network3     = "testnet_tbtc_bsc"
+	network4     = "mainnet_btc_bc"
+	network5     = "mainnet_btc_eth"
+	network6     = "mainnet_btc_bsc"
 	blockBookBTC = "51.15.143.55:9130"
 	blockBookETH = "51.15.143.55:9131"
 )
+
+var networks = map[string]string{
+	"1": network1,
+	"2": network2,
+	"3": network3,
+	"4": network4,
+	"5": network5,
+	"6": network6,
+}
 
 type Bot struct {
 	mu               *sync.RWMutex
@@ -34,6 +46,7 @@ type Bot struct {
 	nodeIP           string
 	sshKey           string
 	network          string
+	moniker          string
 	bootstrapNode    string
 	coinA            string
 	coinB            string
@@ -60,11 +73,13 @@ func NewBot(token string) (*Bot, error) {
 		bot:           b,
 		ID:            0,
 		coinA:         "BTC",
-		coinB:         "BTCE",
+		coinB:         "BTCB",
 		blockBookBTC:  blockBookBTC,
 		blockBookETH:  blockBookETH,
 		keygenUntil:   initTime.Format(time.RFC3339),
 		bootstrapNode: "192.168.1.1",
+		network:       networks["1"],
+		moniker:       "Default Node",
 	}
 	return bot, nil
 }
@@ -95,93 +110,30 @@ func (b *Bot) Start() {
 			prevMsg := update.Message.ReplyToMessage
 			mode := b.Messages[prevMsg.MessageID]
 			if mode == "setup_node_set_network" {
-				network := networks[msg]
-				if network == "" {
-					text := fmt.Sprintf("network is not exist, Please type again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_node_set_network"
-					continue
-				}
-				b.network = network
-				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressBTC(), true)
-				b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
+				b.updateNetwork(msg)
 				continue
 			}
+			if mode == "setup_node_moniker" {
+				b.updateNodeMoniker(msg)
+			}
 			if mode == "setup_node_btc_addr" {
-				address := msg
-				if address == "" {
-					text := fmt.Sprintf("address not exist, Please type again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
-					continue
-				}
-				b.rewardAddressBTC = address
-				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressBNB(), true)
-				b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
+				b.updateBTCAddr(msg)
 				continue
 			}
 			if mode == "setup_node_bnb_addr" {
-				address := msg
-				if address == "" {
-					text := fmt.Sprintf("address not exist, Please type again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
-					continue
-				}
-				b.rewardAddressBNB = address
-				newMsg, _ := b.SendMsg(b.ID, makeRewardAddressETH(), true)
-				b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+				b.updateBNBAddr(msg)
 				continue
 			}
 			if mode == "setup_node_eth_addr" {
-				address := msg
-				if address == "" {
-					text := fmt.Sprintf("address not exist, Please type again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
-					continue
-				}
-				b.rewardAddressETH = address
-				b.SendMsg(b.ID, makeStoreKeyText(), false)
-				rewardAddr := ""
-				isTestnet := false
-				if b.network == network1 {
-					rewardAddr = b.rewardAddressBTC
-					isTestnet = true
-				}
-				if b.network == network2 {
-					rewardAddr = b.rewardAddressETH
-					isTestnet = true
-				}
-				if b.network == network3 {
-					rewardAddr = b.rewardAddressETH
-					isTestnet = true
-				}
-				path := fmt.Sprintf("%s/%s", dataPath, b.network)
-				memo, err := b.generateKeys(path, rewardAddr, isTestnet)
-				if err != nil {
-					log.Info(err)
-					continue
-				}
-				b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
-				newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
-				b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+				b.updateETHAddr(msg)
 				continue
 			}
 			if mode == "setup_node_stake_tx" {
-				stakeTx := msg
-				if stakeTx == "" {
-					text := fmt.Sprintf("stakeTx not exist, Please type again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
-					continue
-				}
-				b.stakeTx = stakeTx
-				path := fmt.Sprintf("%s/%s", dataPath, b.network)
-				b.storeConfig(path, "testMoniker", 15, 25)
-				b.SendMsg(b.ID, doneConfigGenerateText(), false)
+				b.updateStakeTx(msg)
 				continue
 			}
+
+			// Set node config
 			if mode == "setup_config_1" {
 				err := generateHostsfile(msg, "server")
 				if err != nil {
@@ -276,7 +228,7 @@ func (b *Bot) Start() {
 		}
 
 		if update.Message.Text == "/setup_node" {
-			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
+			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true)
 			if err != nil {
 				continue
 			}
@@ -304,6 +256,123 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, `Start with /start`, false)
 		}
 	}
+}
+
+func (b *Bot) updateStakeTx(msg string) {
+	stakeTx := msg
+	if stakeTx == "" {
+		text := fmt.Sprintf("stakeTx not exist, Please type again")
+		newMsg, _ := b.SendMsg(b.ID, text, true)
+		b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+		return
+	}
+	b.stakeTx = stakeTx
+	path := fmt.Sprintf("%s/%s", dataPath, b.network)
+	b.storeConfig(path, b.moniker, 15, 25)
+	b.SendMsg(b.ID, doneConfigGenerateText(), false)
+}
+
+func (b *Bot) updateETHAddr(msg string) {
+	address := msg
+	check := b.checkInput(address, "setup_node_eth_addr")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.rewardAddressETH = address
+	}
+	b.SendMsg(b.ID, b.makeStoreKeyText(), false)
+	rewardAddr := ""
+	isTestnet := false
+	if b.network == network1 {
+		rewardAddr = b.rewardAddressBTC
+		isTestnet = true
+		b.coinB = "BTCB"
+	}
+	if b.network == network2 {
+		rewardAddr = b.rewardAddressETH
+		isTestnet = true
+		b.coinB = "BTCE"
+	}
+	if b.network == network3 {
+		rewardAddr = b.rewardAddressETH
+		isTestnet = true
+		b.coinB = "BTCK"
+	}
+	path := fmt.Sprintf("%s/%s", dataPath, b.network)
+	memo, err := b.generateKeys(path, rewardAddr, isTestnet)
+	if err != nil {
+		log.Info(err)
+		return
+	}
+	b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
+	newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
+	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+}
+
+func (b *Bot) updateBNBAddr(msg string) {
+	address := msg
+	check := b.checkInput(address, "setup_node_bnb_addr")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.rewardAddressBNB = address
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true)
+	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+}
+
+func (b *Bot) updateBTCAddr(msg string) {
+	address := msg
+	check := b.checkInput(address, "setup_node_btc_addr")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.rewardAddressBTC = address
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBNB(), true)
+	b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
+}
+
+func (b *Bot) updateNodeMoniker(msg string) {
+	moniker := msg
+	check := b.checkInput(moniker, "setup_node_moniker")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.moniker = moniker
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBTC(), true)
+	b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
+}
+
+func (b *Bot) updateNetwork(msg string) {
+	network := networks[msg]
+	check := b.checkInput(network, "setup_node_set_network")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.network = network
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true)
+	b.Messages[newMsg.MessageID] = "setup_node_moniker"
+}
+
+func (b *Bot) checkInput(input string, keepMode string) int {
+	if input == "" {
+		text := fmt.Sprintf("input is wrong, Please type again")
+		newMsg, _ := b.SendMsg(b.ID, text, true)
+		b.Messages[newMsg.MessageID] = keepMode
+		return 0
+	}
+	if input == "none" {
+		return 2
+	}
+	return 1
 }
 
 func (b *Bot) loadBotEnv() {
@@ -349,6 +418,9 @@ func (b *Bot) loadHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
+	b.blockBookBTC = fmt.Sprintf("%s:9130", b.nodeIP)
+	b.blockBookETH = fmt.Sprintf("%s:9131", b.nodeIP)
+
 	log.Infof("Loaded IP form file: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()

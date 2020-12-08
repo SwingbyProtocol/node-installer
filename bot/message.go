@@ -2,12 +2,6 @@ package bot
 
 import "fmt"
 
-var networks = map[string]string{
-	"1": network1,
-	"2": network2,
-	"3": network3,
-}
-
 func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
@@ -17,7 +11,6 @@ Steps is here.
 3. Put /deploy_infura to deploy infura services into your server
 4. Put /setup_node to configure your node
 5. Put /deploy_node to deploy your node
-
 	`)
 	return text
 }
@@ -71,42 +64,63 @@ BOT is moved out to your server! please go ahead with /setup_node
 	return text
 }
 
-func makeNodeText() string {
+func (b *Bot) makeNodeText() string {
 	text := fmt.Sprintf(`
-Cool. Your server is ready. 
+Cool. 
 Next step is you can generate node config
-What network will you using? Please put number.
+Please put network number from following list.
+
+now: <b>%s</b>
+
 1) BTC --- Binance chain testnet 
 2) BTC --- Ethereum testnet (goerli)
 3) BTC --- Binance Smart Chain testnet
 [Configuration step 1/6]
-`)
+`, b.network)
 	return text
 }
 
-func makeRewardAddressBTC() string {
+func (b *Bot) makeUpdateMoniker() string {
+	text := fmt.Sprintf(`
+Cool. What is your Node moniker?
+
+now: <b>%s</b>
+
+[Configuration step 2/6]
+if you want to skip, type 'none'
+default will be set 'Default Node'
+`, b.moniker)
+	return text
+}
+
+func (b *Bot) makeRewardAddressBTC() string {
 	text := fmt.Sprintf(`
 Cool. Please put your BTC reward address. 
-[Configuration step 2/6]
-`)
+now: <b>%s</b>
+[Configuration step 3/6]
+if you want to skip, type 'none'
+`, b.rewardAddressBTC)
 
 	return text
 }
 
-func makeRewardAddressBNB() string {
+func (b *Bot) makeRewardAddressBNB() string {
 	text := fmt.Sprintf(`
 Cool. Please put your BNB reward address. 
-[Configuration step 3/6]
-`)
-
+now: <b>%s</b>
+[Configuration step 4/6]
+if you want to skip, type 'none'
+`, b.rewardAddressBNB)
 	return text
 }
 
-func makeRewardAddressETH() string {
+func (b *Bot) makeRewardAddressETH() string {
 	text := fmt.Sprintf(`
 Cool. Please put your ETH reward address. 
-[Configuration step 4/6]
-`)
+now: <b>%s</b>
+[Configuration step 5/6]
+if you want to skip, type 'none'
+`, b.rewardAddressETH)
 
 	return text
 }
@@ -126,7 +140,7 @@ with memo:
 Send a timelock transaction to yourself with at least 1,000,000 SWINGBY 
 
 and take note of the transaction ID. Use our portal: https://timelock.swingby.network
-[Configuration step 5/6]
+[Configuration step 6/6]
 `, addr, memo)
 	return text
 }
@@ -138,7 +152,7 @@ What is your Transaction ID? Please put your stake tx Hash
 	return text
 }
 
-func makeStoreKeyText() string {
+func (b *Bot) makeStoreKeyText() string {
 	text := fmt.Sprintf(`
 Cool. Generating new your wallet and store your new mnemonic key... 
 `)
