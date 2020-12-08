@@ -11,6 +11,7 @@ require (
 	github.com/perlin-network/noise v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.7.0
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 
 )
 
