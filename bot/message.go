@@ -43,6 +43,7 @@ Please put your SSH private key.
 func doneSSHKeyText() string {
 	text := fmt.Sprintf(`
 Cool. SSH_KEY is loaded. Your server is ready. 
+Let's setup your bot => /setup_your_bot
 `)
 
 	return text
@@ -112,7 +113,7 @@ Cool. Please put your ETH reward address.
 
 func makeStakeTxText(addr string, memo string) string {
 	text := fmt.Sprintf(`
-Cool. Your new wallet is generated. and new mnemonic is stored.
+Cool. Your new wallet is generated. and new mnemonic is stored into server.
 
 Your address: <b>%s</b>
 

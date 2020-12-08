@@ -25,11 +25,11 @@ var bnbSeedNodes = []string{
 const baseConfig = `
 [p2p]
 moniker = "**node_moniker_placeholder**"
-listen = "127.0.0.1"
+listen = "0.0.0.0"
 port = 12121
 
 [rest]
-listen = "127.0.0.1"
+listen = "0.0.0.0"
 port = 8067
 tls_enabled = false
 

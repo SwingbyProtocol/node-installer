@@ -144,19 +144,23 @@ func (b *Bot) Start() {
 				b.rewardAddressETH = address
 				b.SendMsg(b.ID, makeStoreKeyText(), false)
 				rewardAddr := ""
-				isTestnet := true
+				isTestnet := false
 				if b.network == network1 {
 					rewardAddr = b.rewardAddressBTC
+					isTestnet = true
 				}
 				if b.network == network2 {
 					rewardAddr = b.rewardAddressETH
+					isTestnet = true
 				}
 				if b.network == network3 {
 					rewardAddr = b.rewardAddressETH
+					isTestnet = true
 				}
 				path := fmt.Sprintf("%s/%s", dataPath, b.network)
 				memo, err := b.generateKeys(path, rewardAddr, isTestnet)
 				if err != nil {
+					log.Info(err)
 					continue
 				}
 				b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
@@ -217,6 +221,10 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/setup_config" {
+			// Disable if remote is `true`
+			if b.isRemote {
+				continue
+			}
 			msg, err := b.SendMsg(b.ID, makeHostText(), true)
 			if err != nil {
 				continue
@@ -225,16 +233,8 @@ func (b *Bot) Start() {
 			continue
 		}
 
-		if update.Message.Text == "/setup_node" {
-			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
-			if err != nil {
-				continue
-			}
-			b.Messages[msg.MessageID] = "setup_node_set_network"
-			continue
-		}
-
 		if update.Message.Text == "/setup_your_bot" {
+			// Disable if remote is `true`
 			if b.isRemote {
 				continue
 			}
@@ -272,6 +272,15 @@ func (b *Bot) Start() {
 				continue
 			}
 			b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+			continue
+		}
+
+		if update.Message.Text == "/setup_node" {
+			msg, err := b.SendMsg(b.ID, makeNodeText(), true)
+			if err != nil {
+				continue
+			}
+			b.Messages[msg.MessageID] = "setup_node_set_network"
 			continue
 		}
 		if update.Message.Text == "/deploy_node" {
