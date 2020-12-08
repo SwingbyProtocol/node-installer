@@ -17,7 +17,7 @@ Steps is here.
 
 func makeHostText() string {
 	text := fmt.Sprintf(`
-Cool. 
+OK. 
 Please let me know your server IP address (Only accept Version 4)
 	`)
 	return text
@@ -25,7 +25,7 @@ Please let me know your server IP address (Only accept Version 4)
 
 func seutpSSHKeyText(ip string) string {
 	text := fmt.Sprintf(`
-Cool. Your server IP is %s, 
+OK. Your server IP is %s, 
 [Configuration step 2/2]
 Please put your SSH private key.
 `, ip)
@@ -35,7 +35,7 @@ Please put your SSH private key.
 
 func doneSSHKeyText() string {
 	text := fmt.Sprintf(`
-Cool. SSH_KEY is loaded. Your server is ready. 
+OK. SSH_KEY is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
 `)
 
@@ -44,7 +44,7 @@ Let's setup your bot => /setup_your_bot
 
 func makeDeployBotMessage() string {
 	text := fmt.Sprintf(`
-OK cool. Starting deployment... BOT is moving out to your server....
+OK. Starting deployment... BOT is moving out to your server....
 
 	`)
 	return text
@@ -66,7 +66,7 @@ BOT is moved out to your server! please go ahead with /setup_node
 
 func (b *Bot) makeNodeText() string {
 	text := fmt.Sprintf(`
-Cool. 
+OK. 
 Next step is you can generate node config
 Please put network number from following list.
 
@@ -82,7 +82,7 @@ now: <b>%s</b>
 
 func (b *Bot) makeUpdateMoniker() string {
 	text := fmt.Sprintf(`
-Cool. What is your Node moniker?
+OK. What is your Node moniker?
 
 now: <b>%s</b>
 
@@ -95,7 +95,7 @@ default will be set 'Default Node'
 
 func (b *Bot) makeRewardAddressBTC() string {
 	text := fmt.Sprintf(`
-Cool. Please put your BTC reward address. 
+OK. Please put your BTC reward address. 
 now: <b>%s</b>
 [Configuration step 3/6]
 if you want to skip, type 'none'
@@ -106,7 +106,7 @@ if you want to skip, type 'none'
 
 func (b *Bot) makeRewardAddressBNB() string {
 	text := fmt.Sprintf(`
-Cool. Please put your BNB reward address. 
+OK. Please put your BNB reward address. 
 now: <b>%s</b>
 [Configuration step 4/6]
 if you want to skip, type 'none'
@@ -116,7 +116,7 @@ if you want to skip, type 'none'
 
 func (b *Bot) makeRewardAddressETH() string {
 	text := fmt.Sprintf(`
-Cool. Please put your ETH reward address. 
+OK. Please put your ETH reward address. 
 now: <b>%s</b>
 [Configuration step 5/6]
 if you want to skip, type 'none'
@@ -127,7 +127,7 @@ if you want to skip, type 'none'
 
 func makeStakeTxText(addr string, memo string) string {
 	text := fmt.Sprintf(`
-Cool. Your new wallet is generated. and new mnemonic is stored into server.
+OK. Your new wallet is generated. and new mnemonic is stored into server.
 
 Your address: <b>%s</b>
 
@@ -154,7 +154,7 @@ What is your Transaction ID? Please put your stake tx Hash
 
 func (b *Bot) makeStoreKeyText() string {
 	text := fmt.Sprintf(`
-Cool. Generating new your wallet and store your new mnemonic key... 
+OK. Generating new your wallet and store your new mnemonic key... 
 `)
 	return text
 }

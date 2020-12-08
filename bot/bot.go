@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -305,6 +304,7 @@ func (b *Bot) updateETHAddr(msg string) {
 		log.Info(err)
 		return
 	}
+	b.sendKeyStoreFile(path)
 	b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
 	newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
@@ -432,16 +432,10 @@ func (b *Bot) loadHostAndKeys() error {
 	return nil
 }
 
-type Executor struct {
-}
-
-func (e *Executor) Execute(command string, args []string, prefix string) error {
-	cmd := exec.Command(command, args...)
-	err := cmd.Run()
-	if err != nil {
-		return errors.New("(DefaultExecute::Execute) -> " + err.Error())
-	}
-	return nil
+func (b *Bot) sendKeyStoreFile(path string) {
+	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", path, b.network)
+	msg := tgbotapi.NewDocumentUpload(b.ID, stakeKeyPath)
+	b.bot.Send(msg)
 }
 
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error {
@@ -461,8 +455,6 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		Playbook:          playbookPath,
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
 		Options:           ansiblePlaybookOptions,
-		//Exec:              &Executor{},
-		//StdoutCallback:    "json",
 	}
 	log.Info(playbook.String())
 	err := playbook.Run()

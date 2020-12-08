@@ -1,12 +1,10 @@
 package bot
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,12 +12,9 @@ import (
 
 	"github.com/SwingbyProtocol/node-installer/keystore"
 	"github.com/binance-chain/go-sdk/common/types"
-	"github.com/binance-chain/go-sdk/common/uuid"
 	"github.com/binance-chain/go-sdk/keys"
 	"github.com/cosmos/go-bip39"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/crypto/sha3"
 )
 
 var bnbSeedNodes = []string{
@@ -87,28 +82,10 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-type cipherParams struct {
-	IV string `json:"iv"`
-}
-
-type CryptoJSON struct {
-	Cipher       string                 `json:"cipher"`
-	CipherText   string                 `json:"ciphertext"`
-	CipherParams cipherParams           `json:"cipherparams"`
-	KDF          string                 `json:"kdf"`
-	KDFParams    map[string]interface{} `json:"kdfparams"`
-	MAC          string                 `json:"mac"`
-}
-
-type EncryptedKey struct {
-	Crypto  CryptoJSON `json:"crypto"`
-	Id      string     `json:"id"`
-	Version int        `json:"version"`
-}
-
-func (b *Bot) generateKeys(network string, rewardAddress string, isTestnet bool) (string, error) {
-	pDataDirName := fmt.Sprintf("%s/data", network)
+func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool) (string, error) {
+	pDataDirName := fmt.Sprintf("%s/data", basePath)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
+	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.network)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if err := keystore.GenerateInHome(pKeystoreFileName); err != nil {
 		return "", err
@@ -120,18 +97,18 @@ func (b *Bot) generateKeys(network string, rewardAddress string, isTestnet bool)
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
 
-	// make the address for this staker
+	addr, err := loadStakeKey(stakeKeyPath)
+	if err == nil {
+		b.stakeAddr = addr
+		return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
+	}
+
 	pEntropy, err := bip39.NewEntropy(256)
 	if err != nil {
 		return "", err
 	}
-
-	// generate the mnemonic/address for this peer
+	// Gen a new address from new entropy
 	pMnemonic, err := bip39.NewMnemonic(pEntropy)
-	if err != nil {
-		return "", err
-	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/data/mnemonic", network), []byte(pMnemonic), 0666)
 	if err != nil {
 		return "", err
 	}
@@ -142,9 +119,24 @@ func (b *Bot) generateKeys(network string, rewardAddress string, isTestnet bool)
 	if err != nil {
 		return "", err
 	}
-	pAddr := pKey.GetAddr()
-	b.stakeAddr = pAddr.String()
-	log.Infof("desposit address: %s", pAddr)
+	log.Info(pMnemonic)
+	b.stakeAddr = pKey.GetAddr().String()
+	password, _ := generateRandomBytes(24)
+	log.Infof("Deposit address: %s, pass: %s", b.stakeAddr, hex.EncodeToString(password))
+	keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
+	if err != nil {
+		return "", err
+	}
+	data, _ := json.Marshal(keydata)
+	err = ioutil.WriteFile(stakeKeyPath, data, 0660)
+	if err != nil {
+		return "", err
+	}
+	// Check keystore
+	_, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
 }
 
@@ -187,75 +179,15 @@ func generateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-func exportKeystore(path string, text string, password string) error {
-	salt, err := generateRandomBytes(32)
+func loadStakeKey(path string) (string, error) {
+	data := keys.EncryptedKeyJSON{}
+	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return err
+		return "", errors.New("stake key is not exist")
 	}
-	iv, err := generateRandomBytes(16)
+	err = json.Unmarshal(file, &data)
 	if err != nil {
-		return err
+		return "", err
 	}
-	scryptParamsJSON := make(map[string]interface{}, 4)
-	scryptParamsJSON["prf"] = "hmac-sha256"
-	scryptParamsJSON["dklen"] = 32
-	scryptParamsJSON["salt"] = hex.EncodeToString(salt)
-	scryptParamsJSON["c"] = 262144
-
-	cipherParamsJSON := cipherParams{IV: hex.EncodeToString(iv)}
-	derivedKey := pbkdf2.Key([]byte(password), salt, 262144, 32, sha256.New)
-	encryptKey := derivedKey[:32]
-	cipherText, err := aesCTRXOR(encryptKey, []byte(text), iv)
-	if err != nil {
-		return err
-	}
-
-	hasher := sha3.NewLegacyKeccak512()
-	_, err = hasher.Write(derivedKey[16:32])
-	if err != nil {
-		return err
-	}
-	_, err = hasher.Write(cipherText)
-	if err != nil {
-		return err
-	}
-	mac := hasher.Sum(nil)
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return err
-	}
-	cryptoStruct := CryptoJSON{
-		Cipher:       "aes-256-ctr",
-		CipherText:   hex.EncodeToString(cipherText),
-		CipherParams: cipherParamsJSON,
-		KDF:          "pbkdf2",
-		KDFParams:    scryptParamsJSON,
-		MAC:          hex.EncodeToString(mac),
-	}
-
-	store := &EncryptedKey{
-		Crypto:  cryptoStruct,
-		Id:      id.String(),
-		Version: 1,
-	}
-
-	jsonString, _ := json.Marshal(store)
-	err = ioutil.WriteFile(path, jsonString, os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	return nil
-}
-
-func aesCTRXOR(key, inText, iv []byte) ([]byte, error) {
-	// AES-128 is selected due to size of encryptKey.
-	aesBlock, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCTR(aesBlock, iv)
-	outText := make([]byte, len(inText))
-	stream.XORKeyStream(outText, inText)
-	return outText, err
+	return data.Address, nil
 }
