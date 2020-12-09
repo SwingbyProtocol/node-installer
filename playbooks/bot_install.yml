@@ -1,6 +1,6 @@
 - name: Setup bot
   hosts: server
-  user: root
+  user: "{{USER}}"
   become: yes
   vars:
     ansible_python_interpreter: /usr/bin/python3

@@ -42,6 +42,7 @@ type Bot struct {
 	bot              *tgbotapi.BotAPI
 	Messages         map[int]string
 	ID               int64
+	hostUser         string
 	nodeIP           string
 	sshKey           string
 	network          string
@@ -197,6 +198,7 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeDeployBotMessage(), false)
 			extVars := map[string]string{
+				"USER":      b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
 				"SSH_KEY":   b.sshKey,
