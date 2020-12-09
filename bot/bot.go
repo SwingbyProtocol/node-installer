@@ -101,7 +101,14 @@ func (b *Bot) Start() {
 	}
 	for update := range updates {
 		log.Printf("[%s] %s\n", update.Message.From.UserName, update.Message.Text)
-		if !b.validateChat(update.Message.Chat.ID) && b.ID != 0 {
+		if update.Message.Text == "/start" {
+			if b.ID == 0 {
+				b.ID = update.Message.Chat.ID
+			}
+			b.SendMsg(b.ID, makeHelloText(), false)
+			continue
+		}
+		if !b.validateChat(update.Message.Chat.ID) {
 			continue
 		}
 		// Handle for reply messages
@@ -165,13 +172,6 @@ func (b *Bot) Start() {
 			}
 		}
 
-		if update.Message.Text == "/start" {
-			if b.ID == 0 {
-				b.ID = update.Message.Chat.ID
-			}
-			b.SendMsg(b.ID, makeHelloText(), false)
-			continue
-		}
 		if update.Message.Text == "/setup_config" {
 			// Disable if remote is `true`
 			if b.isRemote {

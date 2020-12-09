@@ -6,6 +6,12 @@
 - vCPUs >= 4
 - Memory >= 8GB
 - Disk space >= 130GB for Mainnet environment
+- Swap memory >= 5GB 
+
+The docker host should supports swap memory. More details 
+https://docs.docker.com/config/containers/resource_constraints/
+To enable swap memory, Setup the cnofigs and once reboot instance according to the this document.
+https://docs.docker.com/engine/install/linux-postinstall/#your-kernel-does-not-support-cgroup-swap-limit-capabilities
  
 ## Getting Started
 - Install `Docker` from https://docker.io to your machine.
