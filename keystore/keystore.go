@@ -90,7 +90,7 @@ func GenerateInHome(optPath ...string) error {
 func LoadOrGenerate(optPath ...string) (data *SaveData, generated bool, err error) {
 	kstore, err := ReadFromHome(optPath...)
 	if err != nil {
-		if err = GenerateInHome(); err != nil {
+		if err = GenerateInHome(optPath...); err != nil {
 			return nil, false, err
 		}
 		kstore, err = ReadFromHome(optPath...) // ensure that it can be read
