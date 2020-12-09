@@ -1,0 +1,13 @@
+- name: Setup infura
+  hosts: server
+  user: root
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: setup infura nodes
+      shell: >
+        cd docker-blockbook-master/deployments/mainnet && 
+        docker-compose down &&
+        dir="/var/swingby" docker-compose up -d
+      register: output

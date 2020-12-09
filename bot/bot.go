@@ -217,7 +217,11 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/deploy_infura" {
 			extVars := map[string]string{}
 			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
-			err = b.execAnsible("./playbooks/testnet_infura.yml", extVars)
+			targetPath := "./playbooks/testnet_infura.yml"
+			if b.network == networks["3"] || b.network == networks["4"] || b.network == networks["5"] {
+				targetPath = "./playbooks/mainet_infura.yml"
+			}
+			err = b.execAnsible(targetPath, extVars)
 			if err != nil {
 				log.Info(err)
 				continue
