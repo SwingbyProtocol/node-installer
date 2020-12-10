@@ -1,6 +1,6 @@
 - name: Deploy swingby node (tbtc_goerli)
   hosts: server
-  user: root
+  user: "{{HOST_USER}}"
   become: yes
   tasks:
     - name: remove swingby node

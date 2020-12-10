@@ -7,9 +7,9 @@ func makeHelloText() string {
 Hello 😊, This is a deploy bot
 Steps are here. 
 1. Put /setup_server_config to configure your server
-2. Put /setup_your_bot to deploy your bot to your server.
-4. Put /setup_node to configure your node
-3. Put /deploy_infura to deploy infura services into your server
+2. Put /setup_your_bot to move out your bot to your server.
+3. Put /setup_node to configure your node
+4. Put /deploy_infura to deploy infura services into your server
 5. Put /deploy_node to deploy your node
 	`)
 	return text
@@ -183,35 +183,49 @@ func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Node configs are updated. 
-Let's start deploy => /deploy_node
+Let's start deploy => /deploy_infura and /deploy_node
 	`)
 	return text
 }
 
 func makeDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Node upgrading....
+Upgrading your node....
 	`)
 	return text
 }
 
 func doneDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Node is upgraded.
+Your Node is upgraded. :-)
+	`)
+	return text
+}
+
+func errorDeployNodeMessage() string {
+	text := fmt.Sprintf(`
+Deployment is not completed. Please kindly check error logs
 	`)
 	return text
 }
 
 func makeDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Infura is upgrading....
+Upgrading infura containers....
 	`)
 	return text
 }
 
 func doneDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Infura is upgraded.
+Infura containers are upgraded. :-)
+	`)
+	return text
+}
+
+func errorDeployInfuraMessage() string {
+	text := fmt.Sprintf(`
+Deployment is not completed. Please kindly check error logs
 	`)
 	return text
 }

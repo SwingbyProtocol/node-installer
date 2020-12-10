@@ -180,15 +180,16 @@ func (b *Bot) Start() {
 				"IP_ADDR":   b.nodeIP,
 				"REMOTE":    "true",
 			}
-			err = b.execAnsible("./playbooks/bot_install.yml", extVars)
-			if err != nil {
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployBotMessage(), false)
+				log.Info("Bot is moved out to your server!")
+				os.Exit(0)
+			}
+			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDeployBotMessage(), false)
-				continue
 			}
-			b.SendMsg(b.ID, doneDeployBotMessage(), false)
-			log.Info("Bot is moved out to your server!")
-			os.Exit(0)
+			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 			continue
 		}
 		if update.Message.Text == "/deploy_infura" {
@@ -200,12 +201,14 @@ func (b *Bot) Start() {
 			if b.isTestnet {
 				targetPath = "./playbooks/testnet_infura.yml"
 			}
-			err = b.execAnsible(targetPath, extVars)
-			if err != nil {
-				log.Info(err)
-				continue
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
 			}
-			b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployInfuraMessage(), false)
+			}
+			b.execAnsible(targetPath, extVars, onSuccess, onError)
 			continue
 		}
 
@@ -219,19 +222,22 @@ func (b *Bot) Start() {
 		}
 		if update.Message.Text == "/deploy_node" {
 			extVars := map[string]string{
+				"HOST_USER":      b.hostUser,
 				"TAG":            "latest",
 				"IP_ADDR":        b.nodeIP,
 				"BOOTSTRAP_NODE": b.bootstrapNode,
 				"K_UNTIL":        b.keygenUntil,
 			}
+			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
 			path := fmt.Sprintf("./playbooks/%s.yml", b.network)
-			err = b.execAnsible(path, extVars)
-			if err != nil {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployBotMessage(), false)
-				continue
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
 			}
-			b.SendMsg(b.ID, doneDeployNodeMessage(), false)
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
+			}
+			b.execAnsible(path, extVars, onSuccess, onError)
 		}
 		// Default response of say hi
 		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
@@ -459,7 +465,7 @@ func (b *Bot) sendKeyStoreFile(path string) {
 	b.bot.Send(msg)
 }
 
-func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error {
+func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSuccess func(), onError func(err error)) {
 	sshKeyFilePath := fmt.Sprintf("%s/ssh_key", dataPath)
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
 		AskPass:    false,
@@ -476,13 +482,17 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string) error 
 		Playbook:          playbookPath,
 		ConnectionOptions: ansiblePlaybookConnectionOptions,
 		Options:           ansiblePlaybookOptions,
+		Exec:              &BotExecute{},
 	}
-	log.Info(playbook.String())
-	err := playbook.Run()
-	if err != nil {
-		return err
-	}
-	return nil
+	go func() {
+		log.Info(playbook.String())
+		err := playbook.Run()
+		if err != nil {
+			onError(err)
+			return
+		}
+		onSuccess()
+	}()
 }
 
 func generateHostsfile(nodeIP string, target string) error {
