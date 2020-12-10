@@ -18,12 +18,10 @@ import (
 
 const (
 	dataPath     = "./data"
-	network1     = "testnet_tbtc_bc"
-	network2     = "testnet_tbtc_goerli"
-	network3     = "testnet_tbtc_bsc"
-	network4     = "mainnet_btc_bc"
-	network5     = "mainnet_btc_eth"
-	network6     = "mainnet_btc_bsc"
+	network1     = "mainnet_btc_bc"
+	network2     = "mainnet_btc_eth"
+	network3     = "testnet_tbtc_bc"
+	network4     = "testnet_tbtc_goerli"
 	blockBookBTC = "51.15.143.55:9130"
 	blockBookETH = "51.15.143.55:9131"
 )
@@ -33,8 +31,6 @@ var networks = map[string]string{
 	"2": network2,
 	"3": network3,
 	"4": network4,
-	"5": network5,
-	"6": network6,
 }
 
 type Bot struct {
@@ -73,6 +69,7 @@ func NewBot(token string) (*Bot, error) {
 		Messages:      make(map[int]string),
 		bot:           b,
 		ID:            0,
+		hostUser:      "root",
 		coinA:         "BTC",
 		coinB:         "BTCB",
 		blockBookBTC:  blockBookBTC,
@@ -140,40 +137,18 @@ func (b *Bot) Start() {
 				b.updateStakeTx(msg)
 				continue
 			}
-
-			// Set node config
-			if mode == "setup_config_1" {
-				err := generateHostsfile(msg, "server")
-				if err != nil {
-					text := fmt.Sprintf("IP address should be version 4. Kindly put again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_config_1"
-					continue
-				}
-				err = b.loadHostAndKeys()
-				if err != nil {
-					text := fmt.Sprintf("Config are something wrong. please try again")
-					b.SendMsg(b.ID, text, false)
-					continue
-				}
-				b.SendMsg(b.ID, doneSSHKeyText(), false)
-				//b.Messages[newMsg.MessageID] = "setup_config_2"
+			// Set server configs
+			if mode == "setup_ip_addr" {
+				b.setupIPAddr(msg)
 				continue
 			}
-			if mode == "setup_config_2" {
-				err := generateSSHKeyfile(msg)
-				if err != nil {
-					text := fmt.Sprintf("SSH priv key is not valid. Kindly put again")
-					newMsg, _ := b.SendMsg(b.ID, text, true)
-					b.Messages[newMsg.MessageID] = "setup_config_2"
-					continue
-				}
-				b.SendMsg(b.ID, doneSSHKeyText(), true)
+			if mode == "setup_username" {
+				b.setupUser(msg)
 				continue
 			}
 		}
 
-		if update.Message.Text == "/setup_config" {
+		if update.Message.Text == "/setup_server_config" {
 			// Disable if remote is `true`
 			if b.isRemote {
 				continue
@@ -182,7 +157,7 @@ func (b *Bot) Start() {
 			if err != nil {
 				continue
 			}
-			b.Messages[msg.MessageID] = "setup_config_1"
+			b.Messages[msg.MessageID] = "setup_ip_addr"
 			continue
 		}
 
@@ -219,9 +194,9 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/deploy_infura" {
 			extVars := map[string]string{}
 			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
-			targetPath := "./playbooks/testnet_infura.yml"
-			if b.network == networks["3"] || b.network == networks["4"] || b.network == networks["5"] {
-				targetPath = "./playbooks/mainet_infura.yml"
+			targetPath := "./playbooks/mainnet_infura.yml"
+			if b.isTestnet {
+				targetPath = "./playbooks/testnet_infura.yml"
 			}
 			err = b.execAnsible(targetPath, extVars)
 			if err != nil {
@@ -258,20 +233,49 @@ func (b *Bot) Start() {
 		}
 		// Default response of say hi
 		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
-			b.SendMsg(b.ID, `Start with /start`, false)
+			b.SendMsg(b.ID, `Let's start with /start`, false)
 		}
 	}
 }
 
-func (b *Bot) updateStakeTx(msg string) {
-	stakeTx := msg
-	if stakeTx == "" {
-		text := fmt.Sprintf("stakeTx not exist, Please type again")
+func (b *Bot) setupIPAddr(msg string) {
+	err := generateHostsfile(msg, "server")
+	if err != nil {
+		text := fmt.Sprintf("IP address should be version 4. Kindly put again")
 		newMsg, _ := b.SendMsg(b.ID, text, true)
-		b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+		b.Messages[newMsg.MessageID] = "setup_ip_addr"
 		return
 	}
-	b.stakeTx = stakeTx
+	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUsernameText(), true)
+	b.Messages[newMsg.MessageID] = "setup_username"
+}
+
+func (b *Bot) setupUser(msg string) {
+	check := b.checkInput(msg, "setup_username")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.hostUser = msg
+	}
+	err := b.loadHostAndKeys()
+	if err != nil {
+		text := fmt.Sprintf("SSH_KEY load error. please try again")
+		b.SendMsg(b.ID, text, false)
+		return
+	}
+	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false)
+}
+
+func (b *Bot) updateStakeTx(msg string) {
+	stakeTx := msg
+	check := b.checkInput(stakeTx, "setup_node_stake_tx")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.stakeTx = msg
+	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.network)
 	b.storeConfig(path, 15, 25)
 	b.SendMsg(b.ID, doneConfigGenerateText(), false)
@@ -290,28 +294,32 @@ func (b *Bot) updateETHAddr(msg string) {
 	rewardAddr := ""
 	if b.network == network1 {
 		rewardAddr = b.rewardAddressBTC
-		b.isTestnet = true
 		b.coinB = "BTCB"
 	}
 	if b.network == network2 {
 		rewardAddr = b.rewardAddressETH
-		b.isTestnet = true
 		b.coinB = "BTCE"
 	}
 	if b.network == network3 {
 		rewardAddr = b.rewardAddressETH
 		b.isTestnet = true
-		b.coinB = "BTCK"
+		b.coinB = "BTCB"
+	}
+	if b.network == network4 {
+		b.isTestnet = true
+		b.coinB = "BTCE"
 	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.network)
-	memo, err := b.generateKeys(path, rewardAddr, b.isTestnet)
+	isLoad, memo, err := b.generateKeys(path, rewardAddr, b.isTestnet)
 	if err != nil {
 		log.Info(err)
 		return
 	}
-	b.sendKeyStoreFile(path)
+	if !isLoad {
+		b.sendKeyStoreFile(path)
+	}
 	b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
-	newMsg, _ := b.SendMsg(b.ID, askStakeTxText(), true)
+	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
 }
 

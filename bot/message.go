@@ -5,11 +5,11 @@ import "fmt"
 func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
-Steps is here. 
-1. Put /setup_config to configure your server
+Steps are here. 
+1. Put /setup_server_config to configure your server
 2. Put /setup_your_bot to deploy your bot to your server.
-3. Put /deploy_infura to deploy infura services into your server
 4. Put /setup_node to configure your node
+3. Put /deploy_infura to deploy infura services into your server
 5. Put /deploy_node to deploy your node
 	`)
 	return text
@@ -19,17 +19,31 @@ func makeHostText() string {
 	text := fmt.Sprintf(`
 OK. 
 Please let me know your server IP address (Only accept Version 4)
+[Configuration step 1/2]
 	`)
 	return text
 }
 
-func seutpSSHKeyText(ip string) string {
+func (b *Bot) setupIPAndAskUsernameText() string {
 	text := fmt.Sprintf(`
 OK. Your server IP is %s, 
 [Configuration step 2/2]
-Please put your SSH private key.
-`, ip)
+Please put your username to login into your server.
 
+now: <b>%s</b>
+
+if you want to skip, type 'none'
+`, b.nodeIP, b.hostUser)
+	return text
+}
+
+func (b *Bot) setupUsernameAndLoadSSHkeyText() string {
+	text := fmt.Sprintf(`
+OK. Your server username is <b>%s</b>
+...
+SSH_KEY is loaded. Your server is ready. 
+Let's setup your bot => /setup_your_bot
+`, b.hostUser)
 	return text
 }
 
@@ -72,9 +86,12 @@ Please put network number from following list.
 
 now: <b>%s</b>
 
-1) BTC --- Binance chain testnet 
-2) BTC --- Ethereum testnet (goerli)
-3) BTC --- Binance Smart Chain testnet
+1) BTC --- Binance chain (mainnet)
+2) BTC --- Ethereum (mainnet)
+
+3) BTC --- Binance chain (testnet) 
+4) BTC --- Ethereum (goerli)
+
 [Configuration step 1/6]
 `, b.network)
 	return text
@@ -145,16 +162,19 @@ and take note of the transaction ID. Use our portal: https://timelock.swingby.ne
 	return text
 }
 
-func askStakeTxText() string {
+func (b *Bot) askStakeTxText() string {
 	text := fmt.Sprintf(`
-What is your Transaction ID? Please put your stake tx Hash
-	`)
+Your staking tx is:
+now: <b>%s</b>
+Could you put your stake tx hash?
+if you want to skip, type 'none'
+	`, b.stakeTx)
 	return text
 }
 
 func (b *Bot) makeStoreKeyText() string {
 	text := fmt.Sprintf(`
-OK. Generating new your wallet and store your new mnemonic key... 
+OK. Setup your new wallet... 
 `)
 	return text
 }

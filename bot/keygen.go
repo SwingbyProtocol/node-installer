@@ -82,17 +82,17 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool) (string, error) {
+func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool) (bool, string, error) {
 	pDataDirName := fmt.Sprintf("%s/data", basePath)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
 	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.network)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if _, _, err := keystore.LoadOrGenerate(pKeystoreFileName); err != nil {
-		return "", err
+		return false, "", err
 	}
 	pKeystore, err := keystore.ReadFromHome(pKeystoreFileName)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
@@ -100,24 +100,24 @@ func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool
 	addr, err := loadStakeKey(stakeKeyPath)
 	if err == nil {
 		b.stakeAddr = addr
-		return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
+		return true, fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
 	}
 
 	pEntropy, err := bip39.NewEntropy(256)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	// Gen a new address from new entropy
 	pMnemonic, err := bip39.NewMnemonic(pEntropy)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	if isTestnet {
 		types.Network = types.TestNetwork
 	}
 	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	log.Info(pMnemonic)
 	b.stakeAddr = pKey.GetAddr().String()
@@ -125,19 +125,19 @@ func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool
 	log.Infof("Deposit address: %s, pass: %s", b.stakeAddr, hex.EncodeToString(password))
 	keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	data, _ := json.Marshal(keydata)
 	err = ioutil.WriteFile(stakeKeyPath, data, 0660)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 	// Check keystore
 	_, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
-	return fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
+	return false, fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
 }
 
 func (b *Bot) storeConfig(network string, threshold int, members int) error {
