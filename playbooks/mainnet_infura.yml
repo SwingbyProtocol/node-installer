@@ -1,6 +1,6 @@
 - name: Setup infura
   hosts: server
-  user: root
+  user: "{{HOST_USER}}"
   become: yes
   vars:
     ansible_python_interpreter: /usr/bin/python3

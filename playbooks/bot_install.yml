@@ -31,6 +31,7 @@
           -e BOT_TOKEN \
           -e CHAT_ID \
           -e IP_ADDR \
+          -e HOST_USER \
           -e SSH_KEY \
           -e REMOTE \
           swingbylabs/node-installer

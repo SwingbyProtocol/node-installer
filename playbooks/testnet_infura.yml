@@ -1,5 +1,5 @@
 - name: Setup infura
-  hosts: server
+  hosts: "{{HOST_USER}}"
   user: root
   become: yes
   vars:

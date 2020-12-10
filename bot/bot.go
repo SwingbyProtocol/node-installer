@@ -173,7 +173,7 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeDeployBotMessage(), false)
 			extVars := map[string]string{
-				"USER":      b.hostUser,
+				"HOST_USER": b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
 				"SSH_KEY":   b.sshKey,
@@ -192,7 +192,9 @@ func (b *Bot) Start() {
 			continue
 		}
 		if update.Message.Text == "/deploy_infura" {
-			extVars := map[string]string{}
+			extVars := map[string]string{
+				"HOST_USER": b.hostUser,
+			}
 			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
 			targetPath := "./playbooks/mainnet_infura.yml"
 			if b.isTestnet {
@@ -400,12 +402,18 @@ func (b *Bot) loadBotEnv() {
 		log.Infof("ChatID=%d", b.ID)
 	}
 	if os.Getenv("IP_ADDR") != "" {
-		generateHostsfile(os.Getenv("IP_ADDR"), "server")
-		log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
+		err := generateHostsfile(os.Getenv("IP_ADDR"), "server")
+		if err == nil {
+			log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
+		}
+	}
+	if os.Getenv("HOST_USER") != "" {
+		b.hostUser = os.Getenv("HOST_USER")
+		log.Infof("HOST_USER=%s", b.hostUser)
 	}
 	if os.Getenv("SSH_KEY") != "" {
 		generateSSHKeyfile(os.Getenv("SSH_KEY"))
-		log.Info("A ssh key stored")
+		log.Info("A ssh key is stored")
 	}
 }
 
