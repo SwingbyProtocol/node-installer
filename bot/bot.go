@@ -75,7 +75,7 @@ func NewBot(token string) (*Bot, error) {
 		blockBookBTC:  blockBookBTC,
 		blockBookETH:  blockBookETH,
 		keygenUntil:   initTime.Format(time.RFC3339),
-		bootstrapNode: "https://tbtc-goerli-1.swingby.network",
+		bootstrapNode: "tbtc-goerli-1.swingby.network",
 		network:       networks["1"],
 		moniker:       "Default Node",
 	}
