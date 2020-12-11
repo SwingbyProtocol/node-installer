@@ -66,7 +66,7 @@ OK. Starting deployment... BOT is moving out to your server....
 
 func errorDeployBotMessage() string {
 	text := fmt.Sprintf(`
-Oh something error is happened. Please kindly check your server IP address and SSH key again.
+Oh something error is happened. Please kindly check server IP address, Username and SSH private key again.
 	`)
 	return text
 }

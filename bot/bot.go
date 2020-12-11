@@ -51,9 +51,10 @@ func NewBot(token string) (*Bot, error) {
 	}
 	bot := &Bot{
 		mu:       new(sync.RWMutex),
-		Messages: make(map[int]string),
 		bot:      b,
+		Messages: make(map[int]string),
 		ID:       0,
+		hostUser: "root",
 		nConf:    NewNodeConfig(),
 	}
 	return bot, nil

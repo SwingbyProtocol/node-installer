@@ -35,7 +35,7 @@ func NewNodeConfig() *NodeConfig {
 		BlockBookBTC:  blockBookBTC,
 		BlockBookETH:  blockBookETH,
 		KeygenUntil:   initTime.Format(time.RFC3339),
-		BootstrapNode: "tbtc-goerli-1.swingby.network",
+		BootstrapNode: "tbtc-goerli-1.swingby.network:12121",
 		Network:       networks["1"],
 		Moniker:       "Default Node",
 	}
