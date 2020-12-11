@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/SwingbyProtocol/node-installer/keystore"
 	"github.com/binance-chain/go-sdk/common/types"
@@ -82,91 +81,64 @@ stake_addr = "**stake_addr**"
 reward_addr = "**reward_addr_bnb**"
 `
 
-func (b *Bot) generateKeys(basePath string, rewardAddress string, isTestnet bool) (bool, string, error) {
+func (b *Bot) generateKeys(basePath string) (bool, error) {
 	pDataDirName := fmt.Sprintf("%s/data", basePath)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
-	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.network)
+	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.nConf.Network)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if _, _, err := keystore.LoadOrGenerate(pKeystoreFileName); err != nil {
-		return false, "", err
+		return false, err
 	}
 	pKeystore, err := keystore.ReadFromHome(pKeystoreFileName)
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
 
 	addr, err := loadStakeKey(stakeKeyPath)
 	if err == nil {
-		b.stakeAddr = addr
-		return true, fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
+		b.nConf.StakeAddr = addr
+		b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
+		return true, nil
 	}
 
 	pEntropy, err := bip39.NewEntropy(256)
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
 	// Gen a new address from new entropy
 	pMnemonic, err := bip39.NewMnemonic(pEntropy)
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
-	if isTestnet {
+	if b.nConf.IsTestnet {
 		types.Network = types.TestNetwork
 	}
 	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
 	log.Info(pMnemonic)
-	b.stakeAddr = pKey.GetAddr().String()
+	b.nConf.StakeAddr = pKey.GetAddr().String()
 	password, _ := generateRandomBytes(24)
-	log.Infof("Deposit address: %s, pass: %s", b.stakeAddr, hex.EncodeToString(password))
+	log.Infof("Deposit address: %s, pass: %s", b.nConf.StakeAddr, hex.EncodeToString(password))
 	keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
 	data, _ := json.Marshal(keydata)
 	err = ioutil.WriteFile(stakeKeyPath, data, 0660)
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
 	// Check keystore
 	_, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
 	if err != nil {
-		return false, "", err
+		return false, err
 	}
-	return false, fmt.Sprintf("%s,%s", pP2PKeyHex, rewardAddress), nil
-}
-
-func (b *Bot) storeConfig(network string, threshold int, members int) error {
-	pConfigFileName := fmt.Sprintf("%s/config.toml", network)
-	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", b.moniker)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", b.coinA)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", b.coinB)
-
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**is_testnet**", fmt.Sprintf("%t", b.isTestnet))
-
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", threshold))
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", members))
-
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", b.blockBookBTC)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_btc**", b.rewardAddressBTC)
-
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_endpoint**", b.blockBookETH)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", b.rewardAddressETH)
-
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", bnbSeedNodes[0])
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_tx**", b.stakeTx)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", b.stakeAddr)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", b.rewardAddressBNB)
-
-	newConfigToml := fmt.Sprintf("%s\n", newBaseConfig)
-	if err := ioutil.WriteFile(pConfigFileName, []byte(newConfigToml), os.ModePerm); err != nil {
-		return err
-	}
-	return nil
+	b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
+	return false, nil
 }
 
 func generateRandomBytes(n int) ([]byte, error) {

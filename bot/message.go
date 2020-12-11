@@ -93,7 +93,7 @@ now: <b>%s</b>
 4) BTC --- Ethereum (goerli)
 
 [Configuration step 1/6]
-`, b.network)
+`, b.nConf.Network)
 	return text
 }
 
@@ -106,7 +106,7 @@ now: <b>%s</b>
 [Configuration step 2/6]
 if you want to skip, type 'none'
 default will be set 'Default Node'
-`, b.moniker)
+`, b.nConf.Moniker)
 	return text
 }
 
@@ -116,7 +116,7 @@ OK. Please put your BTC reward address.
 now: <b>%s</b>
 [Configuration step 3/6]
 if you want to skip, type 'none'
-`, b.rewardAddressBTC)
+`, b.nConf.RewardAddressBTC)
 
 	return text
 }
@@ -127,7 +127,7 @@ OK. Please put your BNB reward address.
 now: <b>%s</b>
 [Configuration step 4/6]
 if you want to skip, type 'none'
-`, b.rewardAddressBNB)
+`, b.nConf.RewardAddressBNB)
 	return text
 }
 
@@ -137,12 +137,12 @@ OK. Please put your ETH reward address.
 now: <b>%s</b>
 [Configuration step 5/6]
 if you want to skip, type 'none'
-`, b.rewardAddressETH)
+`, b.nConf.RewardAddressETH)
 
 	return text
 }
 
-func makeStakeTxText(addr string, memo string) string {
+func (b *Bot) makeStakeTxText() string {
 	text := fmt.Sprintf(`
 OK. Your new wallet is generated.
 
@@ -158,7 +158,7 @@ Send a timelock transaction to yourself with at least 1,000,000 SWINGBY
 
 and take note of the transaction ID. Use our portal: https://timelock.swingby.network
 [Configuration step 6/6]
-`, addr, memo)
+`, b.nConf.StakeAddr, b.nConf.Memo)
 	return text
 }
 
@@ -168,7 +168,7 @@ Your staking tx is:
 now: <b>%s</b>
 Could you put your stake tx hash?
 if you want to skip, type 'none'
-	`, b.stakeTx)
+	`, b.nConf.StakeTx)
 	return text
 }
 

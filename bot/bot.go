@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	ansibler "github.com/apenella/go-ansible"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -34,28 +33,15 @@ var networks = map[string]string{
 }
 
 type Bot struct {
-	mu               *sync.RWMutex
-	bot              *tgbotapi.BotAPI
-	Messages         map[int]string
-	ID               int64
-	hostUser         string
-	nodeIP           string
-	sshKey           string
-	network          string
-	moniker          string
-	bootstrapNode    string
-	coinA            string
-	coinB            string
-	rewardAddressBTC string
-	rewardAddressETH string
-	rewardAddressBNB string
-	blockBookBTC     string
-	blockBookETH     string
-	stakeAddr        string
-	stakeTx          string
-	keygenUntil      string
-	isRemote         bool
-	isTestnet        bool
+	mu       *sync.RWMutex
+	bot      *tgbotapi.BotAPI
+	Messages map[int]string
+	ID       int64
+	hostUser string
+	nodeIP   string
+	sshKey   string
+	nConf    *NodeConfig
+	isRemote bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -63,21 +49,12 @@ func NewBot(token string) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
-	initTime := time.Date(2014, time.December, 31, 12, 13, 24, 0, time.UTC)
 	bot := &Bot{
-		mu:            new(sync.RWMutex),
-		Messages:      make(map[int]string),
-		bot:           b,
-		ID:            0,
-		hostUser:      "root",
-		coinA:         "BTC",
-		coinB:         "BTCB",
-		blockBookBTC:  blockBookBTC,
-		blockBookETH:  blockBookETH,
-		keygenUntil:   initTime.Format(time.RFC3339),
-		bootstrapNode: "tbtc-goerli-1.swingby.network",
-		network:       networks["1"],
-		moniker:       "Default Node",
+		mu:       new(sync.RWMutex),
+		Messages: make(map[int]string),
+		bot:      b,
+		ID:       0,
+		nConf:    NewNodeConfig(),
 	}
 	return bot, nil
 }
@@ -92,6 +69,8 @@ func (b *Bot) Start() {
 	b.loadBotEnv()
 
 	b.loadHostAndKeys()
+
+	b.nConf.loadConfig()
 
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
@@ -198,7 +177,7 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
 			targetPath := "./playbooks/mainnet_infura.yml"
-			if b.isTestnet {
+			if b.nConf.IsTestnet {
 				targetPath = "./playbooks/testnet_infura.yml"
 			}
 			onSuccess := func() {
@@ -225,11 +204,11 @@ func (b *Bot) Start() {
 				"HOST_USER":      b.hostUser,
 				"TAG":            "latest",
 				"IP_ADDR":        b.nodeIP,
-				"BOOTSTRAP_NODE": b.bootstrapNode,
-				"K_UNTIL":        b.keygenUntil,
+				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
+				"K_UNTIL":        b.nConf.KeygenUntil,
 			}
 			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
-			path := fmt.Sprintf("./playbooks/%s.yml", b.network)
+			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
 			}
@@ -282,10 +261,12 @@ func (b *Bot) updateStakeTx(msg string) {
 		return
 	}
 	if check == 1 {
-		b.stakeTx = msg
+		b.nConf.StakeTx = msg
 	}
-	path := fmt.Sprintf("%s/%s", dataPath, b.network)
-	b.storeConfig(path, 15, 25)
+	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+	b.nConf.storeConfig(path, 15, 25)
+	b.nConf.saveConfig()
+	b.nConf.loadConfig()
 	b.SendMsg(b.ID, doneConfigGenerateText(), false)
 }
 
@@ -296,29 +277,23 @@ func (b *Bot) updateETHAddr(msg string) {
 		return
 	}
 	if check == 1 {
-		b.rewardAddressETH = address
+		b.nConf.RewardAddressETH = address
 	}
 	b.SendMsg(b.ID, b.makeStoreKeyText(), false)
-	rewardAddr := ""
-	if b.network == network1 {
-		rewardAddr = b.rewardAddressBTC
-		b.coinB = "BTCB"
+	switch b.nConf.Network {
+	case network1:
+		b.nConf.CoinB = "BTCB"
+	case network2:
+		b.nConf.CoinB = "BTCE"
+	case network3:
+		b.nConf.IsTestnet = true
+		b.nConf.CoinB = "BTCB"
+	case network4:
+		b.nConf.IsTestnet = true
+		b.nConf.CoinB = "BTCE"
 	}
-	if b.network == network2 {
-		rewardAddr = b.rewardAddressETH
-		b.coinB = "BTCE"
-	}
-	if b.network == network3 {
-		rewardAddr = b.rewardAddressETH
-		b.isTestnet = true
-		b.coinB = "BTCB"
-	}
-	if b.network == network4 {
-		b.isTestnet = true
-		b.coinB = "BTCE"
-	}
-	path := fmt.Sprintf("%s/%s", dataPath, b.network)
-	isLoad, memo, err := b.generateKeys(path, rewardAddr, b.isTestnet)
+	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+	isLoad, err := b.generateKeys(path)
 	if err != nil {
 		log.Info(err)
 		return
@@ -326,7 +301,7 @@ func (b *Bot) updateETHAddr(msg string) {
 	if !isLoad {
 		b.sendKeyStoreFile(path)
 	}
-	b.SendMsg(b.ID, makeStakeTxText(b.stakeAddr, memo), false)
+	b.SendMsg(b.ID, b.makeStakeTxText(), false)
 	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
 }
@@ -338,7 +313,7 @@ func (b *Bot) updateBNBAddr(msg string) {
 		return
 	}
 	if check == 1 {
-		b.rewardAddressBNB = address
+		b.nConf.RewardAddressBNB = address
 	}
 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
@@ -351,7 +326,7 @@ func (b *Bot) updateBTCAddr(msg string) {
 		return
 	}
 	if check == 1 {
-		b.rewardAddressBTC = address
+		b.nConf.RewardAddressBTC = address
 	}
 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBNB(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
@@ -364,7 +339,7 @@ func (b *Bot) updateNodeMoniker(msg string) {
 		return
 	}
 	if check == 1 {
-		b.moniker = moniker
+		b.nConf.Moniker = moniker
 	}
 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBTC(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
@@ -377,7 +352,7 @@ func (b *Bot) updateNetwork(msg string) {
 		return
 	}
 	if check == 1 {
-		b.network = network
+		b.nConf.Network = network
 	}
 	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true)
 	b.Messages[newMsg.MessageID] = "setup_node_moniker"
@@ -445,8 +420,8 @@ func (b *Bot) loadHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
-	b.blockBookBTC = fmt.Sprintf("%s:9130", b.nodeIP)
-	b.blockBookETH = fmt.Sprintf("%s:9131", b.nodeIP)
+	b.nConf.BlockBookBTC = fmt.Sprintf("%s:9130", b.nodeIP)
+	b.nConf.BlockBookETH = fmt.Sprintf("%s:9131", b.nodeIP)
 
 	log.Infof("Loaded IP form file: %s", host)
 	// load ssh key file
@@ -460,7 +435,7 @@ func (b *Bot) loadHostAndKeys() error {
 }
 
 func (b *Bot) sendKeyStoreFile(path string) {
-	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", path, b.network)
+	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", path, b.nConf.Network)
 	msg := tgbotapi.NewDocumentUpload(b.ID, stakeKeyPath)
 	b.bot.Send(msg)
 }
