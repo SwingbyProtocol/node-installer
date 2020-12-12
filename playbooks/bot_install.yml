@@ -25,7 +25,8 @@
       shell: >
         docker pull swingbylabs/node-installer && 
         docker image prune -f &&
-        docker run -d -v /var/swingby/node:/app/data \
+        docker run -d --restart unless-stopped \
+          -v /var/swingby/node:/app/data \
           --name node-installer \
           --log-opt max-size=10m --log-opt max-file=5 \
           -e BOT_TOKEN \

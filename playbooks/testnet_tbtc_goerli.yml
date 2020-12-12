@@ -12,7 +12,8 @@
       shell: >
         docker image prune -f && 
         docker pull swingbylabs/swapd-go:{{TAG}} &&
-        docker run -d --name swingby_node \
+        docker run -d --restart unless-stopped \
+          --name swingby_node \
           -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
           -p 12121:12121 \
           -p 8067:8067 \

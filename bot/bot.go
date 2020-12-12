@@ -128,7 +128,10 @@ func (b *Bot) Start() {
 			}
 		}
 
-		if update.Message.Text == "/setup_server_config" {
+		commands := strings.Split(update.Message.Text, "@")
+		cmd := commands[0]
+
+		if cmd == "/setup_server_config" {
 			// Disable if remote is `true`
 			if b.isRemote {
 				continue
@@ -141,7 +144,7 @@ func (b *Bot) Start() {
 			continue
 		}
 
-		if update.Message.Text == "/setup_your_bot" {
+		if cmd == "/setup_your_bot" {
 			// Disable if remote is `true`
 			if b.isRemote {
 				continue
@@ -172,7 +175,7 @@ func (b *Bot) Start() {
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 			continue
 		}
-		if update.Message.Text == "/deploy_infura" {
+		if cmd == "/deploy_infura" {
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
@@ -192,7 +195,7 @@ func (b *Bot) Start() {
 			continue
 		}
 
-		if update.Message.Text == "/setup_node" {
+		if cmd == "/setup_node" {
 			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true)
 			if err != nil {
 				continue
@@ -200,7 +203,7 @@ func (b *Bot) Start() {
 			b.Messages[msg.MessageID] = "setup_node_set_network"
 			continue
 		}
-		if update.Message.Text == "/deploy_node" {
+		if cmd == "/deploy_node" {
 			extVars := map[string]string{
 				"HOST_USER":      b.hostUser,
 				"TAG":            "latest",
@@ -220,7 +223,7 @@ func (b *Bot) Start() {
 			b.execAnsible(path, extVars, onSuccess, onError)
 		}
 		// Default response of say hi
-		if update.Message.Text == "hi" || update.Message.Text == "Hi" {
+		if cmd == "hi" || cmd == "Hi" {
 			b.SendMsg(b.ID, `Let's start with /start`, false)
 		}
 	}
@@ -234,6 +237,7 @@ func (b *Bot) setupIPAddr(msg string) {
 		b.Messages[newMsg.MessageID] = "setup_ip_addr"
 		return
 	}
+	b.nodeIP = msg
 	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUsernameText(), true)
 	b.Messages[newMsg.MessageID] = "setup_username"
 }
