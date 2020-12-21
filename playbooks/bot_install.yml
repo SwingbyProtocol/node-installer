@@ -6,41 +6,37 @@
     ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: download binary && install dependencies
-      shell: >
-        rm -rf docker-blockbook-master &&
-        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz &&
-        tar -xf master.tar.gz &&         
+      shell: |
+        rm -rf docker-blockbook-master
+        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
+        tar -xf master.tar.gz         
         rm master.tar.gz &&
-        cd docker-blockbook-master &&
-        chmod +x ./setup_docker.sh && 
+        cd docker-blockbook-master
+        chmod +x ./setup_docker.sh
         ./setup_docker.sh
       register: output
 
     - name: remove bot
-      shell: >
+      shell: |
         docker rm -f node-installer 2> /dev/null || true
       register: output
 
     - name: setup bot
-      shell: >
-        docker pull swingbylabs/node-installer && 
-        docker image prune -f &&
+      shell: |
+        docker pull swingbylabs/node-installer
+        docker image prune -f
         docker run -d --restart unless-stopped \
           -v /var/swingby/node:/app/data \
           --name node-installer \
           --log-opt max-size=10m --log-opt max-file=5 \
-          -e BOT_TOKEN \
-          -e CHAT_ID \
-          -e IP_ADDR \
-          -e HOST_USER \
-          -e SSH_KEY \
-          -e REMOTE \
+          -e {{BOT_TOKEN}} \
+          -e {{CHAT_ID}} \
+          -e {{IP_ADDR}} \
+          -e {{DOMAIN}} \
+          -e {{HOST_USER}} \
+          -e {{SSH_KEY}} \
+          -e {{REMOTE}} \
           swingbylabs/node-installer
       register: output
-      environment:
-        BOT_TOKEN: "{{BOT_TOKEN}}"
-        CHAT_ID: "{{CHAT_ID}}"
-        IP_ADDR: "{{IP_ADDR}}"
-        HOST_USER: "{{HOST_USER}}"
-        SSH_KEY: "{{SSH_KEY}}"
-        REMOTE: "{{REMOTE}}"
+
+    - debug: var=output.stdout_lines

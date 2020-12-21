@@ -24,22 +24,40 @@ Please let me know your server IP address (Only accept Version 4)
 	return text
 }
 
-func (b *Bot) setupIPAndAskUsernameText() string {
+func (b *Bot) setupIPAndAskDomainNameText() string {
 	text := fmt.Sprintf(`
 OK. Your server IP is %s, 
-[Configuration step 2/2]
+[Configuration step 2/3]
+Please put your Server <b>Domain Name</b> like 
+
+sky-node-1.exmaple.com 
+
+to hosting your server.
+That domain/subdomain should be attached to above address.
+
+now: <b>%s</b>
+
+if you want to skip, type 'none'
+`, b.nodeIP, b.domain)
+	return text
+}
+
+func (b *Bot) setupDomainAndAskUsernameText() string {
+	text := fmt.Sprintf(`
+OK. Your server Domain name is %s, 
+[Configuration step 2/3]
 Please put your username to login into your server.
 
 now: <b>%s</b>
 
 if you want to skip, type 'none'
-`, b.nodeIP, b.hostUser)
+`, b.domain, b.hostUser)
 	return text
 }
 
 func (b *Bot) setupUsernameAndLoadSSHkeyText() string {
 	text := fmt.Sprintf(`
-OK. Your server username is <b>%s</b>
+OK. Your server User name is <b>%s</b>
 ...
 SSH_KEY is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
@@ -183,11 +201,31 @@ func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Node configs are updated. 
-Let's start deploy => /deploy_infura and /deploy_node
+Let's start deploy => /deploy_infura
 	`)
 	return text
 }
 
+func makeDomainMessage() string {
+	text := fmt.Sprintf(`
+Domain setup....
+	`)
+	return text
+}
+
+func doneDomainMessage() string {
+	text := fmt.Sprintf(`
+Your Domain is attached. :-)
+	`)
+	return text
+}
+
+func errorDomainMessage() string {
+	text := fmt.Sprintf(`
+Domain is not attahced. Please kindly check error logs
+	`)
+	return text
+}
 func makeDeployNodeMessage() string {
 	text := fmt.Sprintf(`
 Upgrading your node....
@@ -219,6 +257,7 @@ Upgrading infura containers....
 func doneDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 Infura containers are upgraded. :-)
+let's deploy your nodes => /deploy_node and /enable_domain
 	`)
 	return text
 }

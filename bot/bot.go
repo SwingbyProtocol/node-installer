@@ -39,6 +39,7 @@ type Bot struct {
 	ID       int64
 	hostUser string
 	nodeIP   string
+	domain   string
 	sshKey   string
 	nConf    *NodeConfig
 	isRemote bool
@@ -82,6 +83,11 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
+				b.SendMsg(b.ID, makeHelloText(), false)
+				continue
+			}
+			if !b.validateChat(update.Message.Chat.ID) {
+				continue
 			}
 			b.SendMsg(b.ID, makeHelloText(), false)
 			continue
@@ -98,6 +104,7 @@ func (b *Bot) Start() {
 				b.updateNetwork(msg)
 				continue
 			}
+
 			if mode == "setup_node_moniker" {
 				b.updateNodeMoniker(msg)
 			}
@@ -120,6 +127,10 @@ func (b *Bot) Start() {
 			// Set server configs
 			if mode == "setup_ip_addr" {
 				b.setupIPAddr(msg)
+				continue
+			}
+			if mode == "setup_domain" {
+				b.setupDomain(msg)
 				continue
 			}
 			if mode == "setup_username" {
@@ -159,6 +170,7 @@ func (b *Bot) Start() {
 				"HOST_USER": b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
+				"DOMAIN":    b.domain,
 				"SSH_KEY":   b.sshKey,
 				"IP_ADDR":   b.nodeIP,
 				"REMOTE":    "true",
@@ -221,6 +233,24 @@ func (b *Bot) Start() {
 				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
 			}
 			b.execAnsible(path, extVars, onSuccess, onError)
+			continue
+		}
+		if cmd == "/attach_domain" {
+			extVars := map[string]string{
+				"HOST_USER": b.hostUser,
+				"DOMAIN":    b.domain,
+			}
+			b.SendMsg(b.ID, makeDomainMessage(), false)
+			path := fmt.Sprintf("./playbooks/attach_domain.yml")
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDomainMessage(), false)
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDomainMessage(), false)
+			}
+			b.execAnsible(path, extVars, onSuccess, onError)
+			continue
 		}
 		// Default response of say hi
 		if cmd == "hi" || cmd == "Hi" {
@@ -238,7 +268,19 @@ func (b *Bot) setupIPAddr(msg string) {
 		return
 	}
 	b.nodeIP = msg
-	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUsernameText(), true)
+	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskDomainNameText(), true)
+	b.Messages[newMsg.MessageID] = "setup_domain"
+}
+
+func (b *Bot) setupDomain(msg string) {
+	check := b.checkInput(msg, "setup_domain")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.domain = msg
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.setupDomainAndAskUsernameText(), true)
 	b.Messages[newMsg.MessageID] = "setup_username"
 }
 
@@ -252,7 +294,7 @@ func (b *Bot) setupUser(msg string) {
 	}
 	err := b.loadHostAndKeys()
 	if err != nil {
-		text := fmt.Sprintf("SSH_KEY load error. please try again")
+		text := fmt.Sprintf("SSH_KEY load error. please check data/ssh_key file again")
 		b.SendMsg(b.ID, text, false)
 		return
 	}
@@ -392,6 +434,10 @@ func (b *Bot) loadBotEnv() {
 		if err == nil {
 			log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
 		}
+	}
+	if os.Getenv("DOMAIN") != "" {
+		b.domain = os.Getenv("DOMAIN")
+		log.Infof("DOMAIN=%s", b.domain)
 	}
 	if os.Getenv("HOST_USER") != "" {
 		b.hostUser = os.Getenv("HOST_USER")

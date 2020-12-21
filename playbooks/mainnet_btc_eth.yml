@@ -1,0 +1,40 @@
+- name: Deploy swingby node (btc_eth)
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  tasks:
+    - name: remove swingby node
+      shell: >
+        docker rm -f swingby_node 2> /dev/null || true
+      register: output
+
+    - name: restart swingby node
+      shell: >
+        docker image prune -f && 
+        docker pull swingbylabs/swapd-go:{{TAG}} &&
+        docker run -d --restart unless-stopped \
+          --name swingby_node \
+          -v /var/swingby/node/testnet_tbtc_goerli:/var/node_data \
+          -p 12121:12121 \
+          -p 8067:8067 \
+          --log-opt max-size=10m --log-opt max-file=5 \
+          swingbylabs/swapd-go:{{TAG}} \
+          --home "/var/node_data" \
+          --p2p.listen {{IP_ADDR}} \
+          --p2p.port 12121  \
+          -k {{K_UNTIL}} \
+          --rest.listen 0.0.0.0 \
+          --rest.preferred_uri https://{{DOMAIN}} \
+          --btc.rest_uri http://{{IP_ADDR}}:9130 \
+          --btc.ws_uri http://{{IP_ADDR}}:9130/websocket \
+          --eth.rest_uri http://{{IP_ADDR}}:9131 \
+          --eth.ws_uri http://{{IP_ADDR}}:9131/websocket \
+          --eth.rpc_uri http://{{IP_ADDR}}:8545 \
+          --eth.wallet_contract_addr 0xe06ff2b69b822807b8ac14479ff4386fe051e242 \
+          --eth.lp_token_contract_addr 0xb7f7dd6D0e3addBb98F8Bc84F010B580A6151b08 \
+          --logger.level "INFO" \
+          --p2p.connect 51.158.121.128:12121
+
+      register: output
+
+    - debug: var=output.stdout_lines

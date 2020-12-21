@@ -9,5 +9,5 @@
       shell: >
         cd docker-blockbook-master/deployments/mainnet && 
         docker-compose down &&
-        dir="/var/swingby" docker-compose up -d --build
+        DIR="/var/swingby" docker-compose up -d --build
       register: output
