@@ -33,16 +33,17 @@ var networks = map[string]string{
 }
 
 type Bot struct {
-	mu       *sync.RWMutex
-	bot      *tgbotapi.BotAPI
-	Messages map[int]string
-	ID       int64
-	hostUser string
-	nodeIP   string
-	domain   string
-	sshKey   string
-	nConf    *NodeConfig
-	isRemote bool
+	mu            *sync.RWMutex
+	bot           *tgbotapi.BotAPI
+	Messages      map[int]string
+	ID            int64
+	hostUser      string
+	nodeIP        string
+	containerName string
+	domain        string
+	sshKey        string
+	nConf         *NodeConfig
+	isRemote      bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -51,12 +52,13 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 	bot := &Bot{
-		mu:       new(sync.RWMutex),
-		bot:      b,
-		Messages: make(map[int]string),
-		ID:       0,
-		hostUser: "root",
-		nConf:    NewNodeConfig(),
+		mu:            new(sync.RWMutex),
+		bot:           b,
+		Messages:      make(map[int]string),
+		ID:            0,
+		hostUser:      "root",
+		containerName: "node-installer",
+		nConf:         NewNodeConfig(),
 	}
 	return bot, nil
 }
@@ -76,10 +78,11 @@ func (b *Bot) Start() {
 
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
+		return
 	}
 	for update := range updates {
-		log.Printf("[%s] %s\n", update.Message.From.UserName, update.Message.Text)
+		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
@@ -176,6 +179,7 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeDeployBotMessage(), false)
 			extVars := map[string]string{
+				"CONT_NAME": b.containerName,
 				"HOST_USER": b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
@@ -188,6 +192,50 @@ func (b *Bot) Start() {
 				b.SendMsg(b.ID, doneDeployBotMessage(), false)
 				log.Info("Bot is moved out to your server!")
 				os.Exit(0)
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployBotMessage(), false)
+			}
+			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
+			continue
+		}
+
+		if cmd == "/upgrade_your_bot" {
+			// Disable if remote is `true`
+			if !b.isRemote {
+				continue
+			}
+			err := b.loadHostAndKeys()
+			if err != nil {
+				log.Info(err)
+				continue
+			}
+			b.SendMsg(b.ID, makeUpgradeBotMessage(), false)
+			contName := b.containerName
+			if b.containerName == "node-installer" {
+				contName = "node-installer-clone"
+			} else {
+				contName = "node-installer"
+			}
+			extVars := map[string]string{
+				"CONT_NAME": contName,
+				"HOST_USER": b.hostUser,
+				"BOT_TOKEN": b.bot.Token,
+				"CHAT_ID":   strconv.Itoa(int(b.ID)),
+				"DOMAIN":    b.domain,
+				"SSH_KEY":   b.sshKey,
+				"IP_ADDR":   b.nodeIP,
+				"REMOTE":    "true",
+			}
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneUpgradeBotMessage(), false)
+				os.Exit(0)
+				// extVars := map[string]string{
+				// 	"CONT_NAME": b.containerName,
+				// 	"HOST_USER": b.hostUser,
+				// }
+				// b.execAnsible("./playbooks/bot_remove.yml", extVars, nil, nil)
 			}
 			onError := func(err error) {
 				log.Error(err)
@@ -224,10 +272,31 @@ func (b *Bot) Start() {
 			b.Messages[msg.MessageID] = "setup_node_set_network"
 			continue
 		}
+		if cmd == "/deploy_infura" {
+			extVars := map[string]string{
+				"HOST_USER": b.hostUser,
+			}
+			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
+			targetPath := "./playbooks/mainnet_infura.yml"
+			if b.nConf.IsTestnet {
+				targetPath = "./playbooks/testnet_infura.yml"
+			}
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployInfuraMessage(), false)
+			}
+			b.execAnsible(targetPath, extVars, onSuccess, onError)
+			continue
+		}
+
 		if cmd == "/deploy_node" {
 			extVars := map[string]string{
 				"HOST_USER":      b.hostUser,
-				"TAG":            "latest",
+				"DOMAIN":         b.domain,
+				"TAG":            "test1",
 				"IP_ADDR":        b.nodeIP,
 				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
 				"K_UNTIL":        b.nConf.KeygenUntil,
@@ -244,6 +313,7 @@ func (b *Bot) Start() {
 			b.execAnsible(path, extVars, onSuccess, onError)
 			continue
 		}
+
 		if cmd == "/enable_domain" {
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
@@ -252,7 +322,7 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, b.makeDomainMessage(), false)
 			path := fmt.Sprintf("./playbooks/enable_domain.yml")
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneDomainMessage(), false)
+				b.SendMsg(b.ID, b.doneDomainMessage(), false)
 			}
 			onError := func(err error) {
 				log.Error(err)
@@ -446,6 +516,10 @@ func (b *Bot) loadBotEnv() {
 	if os.Getenv("DOMAIN") != "" {
 		b.domain = os.Getenv("DOMAIN")
 		log.Infof("DOMAIN=%s", b.domain)
+	}
+	if os.Getenv("CONT_NAME") != "" {
+		b.containerName = os.Getenv("CONT_NAME")
+		log.Infof("CONT_NAME=%s", b.containerName)
 	}
 	if os.Getenv("HOST_USER") != "" {
 		b.hostUser = os.Getenv("HOST_USER")

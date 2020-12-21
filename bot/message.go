@@ -101,7 +101,24 @@ Oh something error is happened. Please kindly check server IP address, Username 
 
 func doneDeployBotMessage() string {
 	text := fmt.Sprintf(`
-BOT is moved out to your server! please go ahead with /setup_node
+BOT is moved out to your server! 
+Please go ahead with /setup_node
+	`)
+	return text
+}
+
+func makeUpgradeBotMessage() string {
+	text := fmt.Sprintf(`
+OK. Starting upgrade... 
+BOT will be upgraded to latest version....
+	`)
+	return text
+}
+
+func doneUpgradeBotMessage() string {
+	text := fmt.Sprintf(`
+BOT is upgraded on your server! 
+Please go ahead with /setup_node
 	`)
 	return text
 }
@@ -230,11 +247,12 @@ A record to <b>%s</b>
 	return text
 }
 
-func doneDomainMessage() string {
+func (b *Bot) doneDomainMessage() string {
 	text := fmt.Sprintf(`
 Your Domain is attached. 
+Let's access https://%s
 
-	`)
+	`, b.domain)
 	return text
 }
 

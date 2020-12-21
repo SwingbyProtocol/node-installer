@@ -16,27 +16,24 @@
         ./setup_docker.sh
       register: output
 
-    - name: remove bot
-      shell: |
-        docker rm -f node-installer 2> /dev/null || true
-      register: output
-
     - name: setup bot
       shell: |
+        docker rm -f {{CONT_NAME}} 2> /dev/null || true
         docker pull swingbylabs/node-installer
-        docker image prune -f
-        docker run -d --restart unless-stopped \
+        docker run -d \
           -v /var/swingby/node:/app/data \
-          --name node-installer \
+          --name {{CONT_NAME}} \
           --log-opt max-size=10m --log-opt max-file=5 \
           -e BOT_TOKEN="{{BOT_TOKEN}}" \
           -e CHAT_ID="{{CHAT_ID}}" \
           -e IP_ADDR="{{IP_ADDR}}" \
           -e DOMAIN="{{DOMAIN}}" \
+          -e CONT_NAME="{{CONT_NAME}}" \
           -e HOST_USER="{{HOST_USER}}" \
           -e SSH_KEY="{{SSH_KEY}}" \
           -e REMOTE="{{REMOTE}}" \
           swingbylabs/node-installer
+        docker system prune -f
       register: output
 
     - debug: var=output.stdout_lines

@@ -1,0 +1,13 @@
+- name: Setup bot
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: remove bot
+      shell: |
+        docker rm -f {{CONT_NAME}} 2> /dev/null || true
+      register: output
+
+    - debug: var=output.stdout_lines
