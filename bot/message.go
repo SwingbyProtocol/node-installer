@@ -7,15 +7,18 @@ func makeHelloText() string {
 Hello 😊, This is a deploy bot
 Steps are here. 
 1. Put /setup_server_config to configure your server
-2. Put /setup_your_bot to move out your bot to your server.
-3. Put /setup_node to configure your node
-4. Put /deploy_infura to deploy infura services into your server
+2. Put /setup_domain to setup domain for your server
+3. Put /setup_your_bot to move out your bot to your server.
+4. Put /setup_node to configure your node
 5. Put /deploy_node to deploy your node
+6. Put /enable_domain to enalbe domain for your server
+7. Put /deploy_infura to deploy infura services into your server
+
 	`)
 	return text
 }
 
-func makeHostText() string {
+func (b *Bot) makeSetupIPText() string {
 	text := fmt.Sprintf(`
 OK. 
 Please let me know your server IP address (Only accept Version 4)
@@ -24,34 +27,16 @@ Please let me know your server IP address (Only accept Version 4)
 	return text
 }
 
-func (b *Bot) setupIPAndAskDomainNameText() string {
+func (b *Bot) setupIPAndAskUserNameText() string {
 	text := fmt.Sprintf(`
 OK. Your server IP is %s, 
-[Configuration step 2/3]
-Please put your Server <b>Domain Name</b> like 
-
-sky-node-1.exmaple.com 
-
-to hosting your server.
-That domain/subdomain should be attached to above address.
+[Configuration step 2/2]
+Please put your Server Username 
 
 now: <b>%s</b>
 
 if you want to skip, type 'none'
-`, b.nodeIP, b.domain)
-	return text
-}
-
-func (b *Bot) setupDomainAndAskUsernameText() string {
-	text := fmt.Sprintf(`
-OK. Your server Domain name is %s, 
-[Configuration step 2/3]
-Please put your username to login into your server.
-
-now: <b>%s</b>
-
-if you want to skip, type 'none'
-`, b.domain, b.hostUser)
+`, b.nodeIP, b.hostUser)
 	return text
 }
 
@@ -60,17 +45,42 @@ func (b *Bot) setupUsernameAndLoadSSHkeyText() string {
 OK. Your server User name is <b>%s</b>
 ...
 SSH_KEY is loaded. Your server is ready. 
-Let's setup your bot => /setup_your_bot
+Let's setup your bot => /setup_domain
 `, b.hostUser)
 	return text
 }
 
-func doneSSHKeyText() string {
+func (b *Bot) doneSSHKeyText() string {
 	text := fmt.Sprintf(`
 OK. SSH_KEY is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
 `)
 
+	return text
+}
+
+func (b *Bot) setupDomainText() string {
+	text := fmt.Sprintf(`
+OK. 
+Please put your Domain like 
+
+testnode-1.example.com
+
+now config is : <b>%s</b>
+
+if you want to skip, type 'none'
+`, b.domain)
+	return text
+}
+
+func (b *Bot) doneDomainText() string {
+	text := fmt.Sprintf(`
+OK. Your server Domain name is 
+
+<b>%s</b>
+
+next => /setup_your_bot
+`, b.domain)
 	return text
 }
 
@@ -175,7 +185,6 @@ with memo:
 Send a timelock transaction to yourself with at least 1,000,000 SWINGBY 
 
 and take note of the transaction ID. Use our portal: https://timelock.swingby.network
-[Configuration step 6/6]
 `, b.nConf.StakeAddr, b.nConf.Memo)
 	return text
 }
@@ -184,7 +193,9 @@ func (b *Bot) askStakeTxText() string {
 	text := fmt.Sprintf(`
 Your staking tx is:
 now: <b>%s</b>
+
 Could you put your stake tx hash?
+[Configuration step 6/6]
 if you want to skip, type 'none'
 	`, b.nConf.StakeTx)
 	return text
@@ -201,21 +212,28 @@ func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Node configs are updated. 
-Let's start deploy => /deploy_infura
+Let's start deploy => /deploy_node
 	`)
 	return text
 }
 
-func makeDomainMessage() string {
+func (b *Bot) makeDomainMessage() string {
 	text := fmt.Sprintf(`
 Domain setup....
-	`)
+You have to attach Domain 
+
+<b>%s</b> 
+
+A record to <b>%s</b>
+
+`, b.domain, b.nodeIP)
 	return text
 }
 
 func doneDomainMessage() string {
 	text := fmt.Sprintf(`
-Your Domain is attached. :-)
+Your Domain is attached. 
+
 	`)
 	return text
 }
@@ -257,7 +275,7 @@ Upgrading infura containers....
 func doneDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 Infura containers are upgraded. :-)
-let's deploy your nodes => /deploy_node and /enable_domain
+let's deploy your nodes => /enable_domain and /deploy_infura
 	`)
 	return text
 }

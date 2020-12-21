@@ -29,13 +29,13 @@
           -v /var/swingby/node:/app/data \
           --name node-installer \
           --log-opt max-size=10m --log-opt max-file=5 \
-          -e {{BOT_TOKEN}} \
-          -e {{CHAT_ID}} \
-          -e {{IP_ADDR}} \
-          -e {{DOMAIN}} \
-          -e {{HOST_USER}} \
-          -e {{SSH_KEY}} \
-          -e {{REMOTE}} \
+          -e BOT_TOKEN="{{BOT_TOKEN}}" \
+          -e CHAT_ID="{{CHAT_ID}}" \
+          -e IP_ADDR="{{IP_ADDR}}" \
+          -e DOMAIN="{{DOMAIN}}" \
+          -e HOST_USER="{{HOST_USER}}" \
+          -e SSH_KEY="{{SSH_KEY}}" \
+          -e REMOTE="{{REMOTE}}" \
           swingbylabs/node-installer
       register: output
 

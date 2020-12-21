@@ -13,6 +13,10 @@
         rm master.tar.* 
         cd nginx-certbot-master
         DIR=/var/swingby/nginx_data DOMAIN={{DOMAIN}} PORT=8067 ./init-letsencrypt.sh
+        if [ ! -e "/var/swingby/nginx_data/certbot/conf/live/{{DOMAIN}}/cert.pem" ]; then
+          DIR=/var/swingby/nginx_data docker-compose down
+          exit 1
+        fi
         DIR=/var/swingby/nginx_data docker-compose down
         DIR=/var/swingby/nginx_data docker-compose up -d
 

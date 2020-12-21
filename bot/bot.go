@@ -147,11 +147,20 @@ func (b *Bot) Start() {
 			if b.isRemote {
 				continue
 			}
-			msg, err := b.SendMsg(b.ID, makeHostText(), true)
+			msg, err := b.SendMsg(b.ID, b.makeSetupIPText(), true)
 			if err != nil {
 				continue
 			}
 			b.Messages[msg.MessageID] = "setup_ip_addr"
+			continue
+		}
+
+		if cmd == "/setup_domain" {
+			newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true)
+			if err != nil {
+				continue
+			}
+			b.Messages[newMsg.MessageID] = "setup_domain"
 			continue
 		}
 
@@ -235,13 +244,13 @@ func (b *Bot) Start() {
 			b.execAnsible(path, extVars, onSuccess, onError)
 			continue
 		}
-		if cmd == "/attach_domain" {
+		if cmd == "/enable_domain" {
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 				"DOMAIN":    b.domain,
 			}
-			b.SendMsg(b.ID, makeDomainMessage(), false)
-			path := fmt.Sprintf("./playbooks/attach_domain.yml")
+			b.SendMsg(b.ID, b.makeDomainMessage(), false)
+			path := fmt.Sprintf("./playbooks/enable_domain.yml")
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneDomainMessage(), false)
 			}
@@ -268,19 +277,7 @@ func (b *Bot) setupIPAddr(msg string) {
 		return
 	}
 	b.nodeIP = msg
-	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskDomainNameText(), true)
-	b.Messages[newMsg.MessageID] = "setup_domain"
-}
-
-func (b *Bot) setupDomain(msg string) {
-	check := b.checkInput(msg, "setup_domain")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.domain = msg
-	}
-	newMsg, _ := b.SendMsg(b.ID, b.setupDomainAndAskUsernameText(), true)
+	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUserNameText(), true)
 	b.Messages[newMsg.MessageID] = "setup_username"
 }
 
@@ -299,6 +296,17 @@ func (b *Bot) setupUser(msg string) {
 		return
 	}
 	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false)
+}
+
+func (b *Bot) setupDomain(msg string) {
+	check := b.checkInput(msg, "setup_domain")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.domain = msg
+	}
+	b.SendMsg(b.ID, b.doneDomainText(), false)
 }
 
 func (b *Bot) updateStakeTx(msg string) {
