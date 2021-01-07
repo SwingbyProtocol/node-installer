@@ -44,6 +44,7 @@ type Bot struct {
 	sshKey        string
 	nConf         *NodeConfig
 	isRemote      bool
+	isLocked      bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -177,6 +178,9 @@ func (b *Bot) Start() {
 				log.Info(err)
 				continue
 			}
+			if b.checkProcess() {
+				continue
+			}
 			b.SendMsg(b.ID, makeDeployBotMessage(), false)
 			extVars := map[string]string{
 				"CONT_NAME": b.containerName,
@@ -191,24 +195,37 @@ func (b *Bot) Start() {
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneDeployBotMessage(), false)
 				log.Info("Bot is moved out to your server!")
+				b.cooldown()
 				os.Exit(0)
 			}
 			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDeployBotMessage(), false)
+				b.cooldown()
 			}
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 			continue
 		}
 
+		if cmd == "/setup_node" {
+			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true)
+			if err != nil {
+				continue
+			}
+			b.Messages[msg.MessageID] = "setup_node_set_network"
+			continue
+		}
+
 		if cmd == "/upgrade_your_bot" {
-			// Disable if remote is `true`
 			if !b.isRemote {
 				continue
 			}
 			err := b.loadHostAndKeys()
 			if err != nil {
 				log.Info(err)
+				continue
+			}
+			if b.checkProcess() {
 				continue
 			}
 			b.SendMsg(b.ID, makeUpgradeBotMessage(), false)
@@ -230,6 +247,7 @@ func (b *Bot) Start() {
 			}
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneUpgradeBotMessage(), false)
+				b.cooldown()
 				os.Exit(0)
 				// extVars := map[string]string{
 				// 	"CONT_NAME": b.containerName,
@@ -240,39 +258,15 @@ func (b *Bot) Start() {
 			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDeployBotMessage(), false)
+				b.cooldown()
 			}
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 			continue
 		}
 		if cmd == "/deploy_infura" {
-			extVars := map[string]string{
-				"HOST_USER": b.hostUser,
-			}
-			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
-			targetPath := "./playbooks/mainnet_infura.yml"
-			if b.nConf.IsTestnet {
-				targetPath = "./playbooks/testnet_infura.yml"
-			}
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployInfuraMessage(), false)
-			}
-			b.execAnsible(targetPath, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/setup_node" {
-			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true)
-			if err != nil {
+			if b.checkProcess() {
 				continue
 			}
-			b.Messages[msg.MessageID] = "setup_node_set_network"
-			continue
-		}
-		if cmd == "/deploy_infura" {
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
@@ -283,16 +277,21 @@ func (b *Bot) Start() {
 			}
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+				b.cooldown()
 			}
 			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDeployInfuraMessage(), false)
+				b.cooldown()
 			}
 			b.execAnsible(targetPath, extVars, onSuccess, onError)
 			continue
 		}
 
 		if cmd == "/deploy_node" {
+			if b.checkProcess() {
+				continue
+			}
 			extVars := map[string]string{
 				"HOST_USER":      b.hostUser,
 				"DOMAIN":         b.domain,
@@ -305,16 +304,21 @@ func (b *Bot) Start() {
 			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
 			onSuccess := func() {
 				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
+				b.cooldown()
 			}
 			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
+				b.cooldown()
 			}
 			b.execAnsible(path, extVars, onSuccess, onError)
 			continue
 		}
 
 		if cmd == "/enable_domain" {
+			if b.checkProcess() {
+				continue
+			}
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 				"DOMAIN":    b.domain,
@@ -323,10 +327,14 @@ func (b *Bot) Start() {
 			path := fmt.Sprintf("./playbooks/enable_domain.yml")
 			onSuccess := func() {
 				b.SendMsg(b.ID, b.doneDomainMessage(), false)
+				b.cooldown()
+
 			}
 			onError := func(err error) {
 				log.Error(err)
 				b.SendMsg(b.ID, errorDomainMessage(), false)
+				b.cooldown()
+
 			}
 			b.execAnsible(path, extVars, onSuccess, onError)
 			continue
@@ -338,6 +346,26 @@ func (b *Bot) Start() {
 	}
 }
 
+func (b *Bot) checkProcess() bool {
+	b.mu.RLock()
+	if b.isLocked {
+		b.mu.RUnlock()
+		text := fmt.Sprintf("Process is already started")
+		b.SendMsg(b.ID, text, false)
+		return true
+	}
+	b.mu.RUnlock()
+	b.mu.Lock()
+	b.isLocked = true
+	b.mu.Unlock()
+	return false
+}
+
+func (b *Bot) cooldown() {
+	b.mu.Lock()
+	b.isLocked = false
+	b.mu.Unlock()
+}
 func (b *Bot) setupIPAddr(msg string) {
 	err := generateHostsfile(msg, "server")
 	if err != nil {
@@ -556,7 +584,7 @@ func (b *Bot) loadHostAndKeys() error {
 	b.nConf.BlockBookBTC = fmt.Sprintf("%s:9130", b.nodeIP)
 	b.nConf.BlockBookETH = fmt.Sprintf("%s:9131", b.nodeIP)
 
-	log.Infof("Loaded IP form file: %s", host)
+	log.Infof("Loaded target IPv4 for your server from hosts file: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {

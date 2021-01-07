@@ -189,7 +189,7 @@ if you want to skip, type 'none'
 
 func (b *Bot) makeStakeTxText() string {
 	text := fmt.Sprintf(`
-OK. Your new wallet is generated.
+OK. Your new p2p node key is generated.
 
 Your address: <b>%s</b>
 
@@ -220,7 +220,7 @@ if you want to skip, type 'none'
 
 func (b *Bot) makeStoreKeyText() string {
 	text := fmt.Sprintf(`
-OK. Setup your new wallet... 
+OK. Setup your p2p node keys... 
 `)
 	return text
 }
@@ -286,7 +286,8 @@ Deployment is not completed. Please kindly check error logs
 func makeDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 Upgrading infura containers....
-	`)
+(This process may takes too long time...)
+`)
 	return text
 }
 

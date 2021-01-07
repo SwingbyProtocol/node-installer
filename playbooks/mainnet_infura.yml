@@ -6,8 +6,14 @@
     ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: setup infura nodes
-      shell: >
-        cd docker-blockbook-master/deployments/mainnet && 
-        docker-compose down &&
-        DIR="/var/swingby" docker-compose up -d --build
+      shell: |
+        cd docker-blockbook-master/deployments/mainnet
+        if [ ! -d "/var/swingby/mainnet/geth/geth/chaindata" ]; then 
+          mkdir -p /var/swingby/mainnet/geth/geth
+          wget -qO- https://infura-hosting.s3-ap-southeast-1.amazonaws.com/geth/chaindata.tar.gz | tar zxvf - -C /var/swingby/mainnet/geth/geth/
+        fi
+        docker-compose down
+        #DIR="/var/swingby" docker-compose up -d --build
       register: output
+
+    - debug: var=output.stdout_lines
