@@ -5,7 +5,7 @@
 - OS Ubuntu 20.04 LTS
 - vCPUs >= 4
 - Memory >= 8GB
-- Disk space >= 130GB for Mainnet environment
+- Disk space >= 1TB for Mainnet environment
 - Swap memory >= 5GB 
 
 The docker host should supports swap memory. [details](https://docs.docker.com/config/containers/resource_constraints/)
