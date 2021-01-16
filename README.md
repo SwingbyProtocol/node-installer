@@ -3,9 +3,9 @@
 ## Requirements
 
 - OS Ubuntu 20.04 LTS
-- vCPUs >= 4
-- Memory >= 8GB
-- Disk space >= 1TB for Mainnet environment
+- CPUs >= 4
+- Memory >= 16GB
+- Disk space >= 1.5TB for Mainnet environment
 - Swap memory >= 5GB 
 
 The docker host should supports swap memory. [details](https://docs.docker.com/config/containers/resource_constraints/)
@@ -24,7 +24,7 @@ https://docs.docker.com/engine/install/linux-postinstall/#your-kernel-does-not-s
 
 ## Development 
 ```
-$ export BOT_TOKEN=<your bot token>
+$ export BOT_TOKEN={your bot token}
 $ go run main.go
 ```
 

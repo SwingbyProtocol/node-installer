@@ -58,7 +58,7 @@ func NewBot(token string) (*Bot, error) {
 		Messages:      make(map[int]string),
 		ID:            0,
 		hostUser:      "root",
-		containerName: "node-installer",
+		containerName: "node_installer",
 		nConf:         NewNodeConfig(),
 	}
 	return bot, nil
@@ -230,10 +230,10 @@ func (b *Bot) Start() {
 			}
 			b.SendMsg(b.ID, makeUpgradeBotMessage(), false)
 			contName := b.containerName
-			if b.containerName == "node-installer" {
-				contName = "node-installer-clone"
+			if b.containerName == "node_installer" {
+				contName = "node_installer_clone"
 			} else {
-				contName = "node-installer"
+				contName = "node_installer"
 			}
 			extVars := map[string]string{
 				"CONT_NAME": contName,
@@ -285,6 +285,28 @@ func (b *Bot) Start() {
 				b.cooldown()
 			}
 			b.execAnsible(targetPath, extVars, onSuccess, onError)
+			continue
+		}
+
+		if cmd == "/check_infura" {
+			if b.checkProcess() {
+				continue
+			}
+			extVars := map[string]string{
+				"HOST_USER": b.hostUser,
+			}
+			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
+			path := fmt.Sprintf("./playbooks/mainnet_infura_check.yml")
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
+				b.cooldown()
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
+				b.cooldown()
+			}
+			b.execAnsible(path, extVars, onSuccess, onError)
 			continue
 		}
 
