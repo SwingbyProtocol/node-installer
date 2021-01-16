@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/SwingbyProtocol/tx-indexer/api"
 	ansibler "github.com/apenella/go-ansible"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	log "github.com/sirupsen/logrus"
@@ -23,6 +25,7 @@ const (
 	network4     = "testnet_tbtc_goerli"
 	blockBookBTC = "51.15.143.55:9130"
 	blockBookETH = "51.15.143.55:9131"
+	maxDataSize  = 1011451108
 )
 
 var networks = map[string]string{
@@ -35,6 +38,7 @@ var networks = map[string]string{
 type Bot struct {
 	mu            *sync.RWMutex
 	bot           *tgbotapi.BotAPI
+	api           *api.Resolver
 	Messages      map[int]string
 	ID            int64
 	hostUser      string
@@ -45,6 +49,7 @@ type Bot struct {
 	nConf         *NodeConfig
 	isRemote      bool
 	isLocked      bool
+	isSynced      bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -60,6 +65,7 @@ func NewBot(token string) (*Bot, error) {
 		hostUser:      "root",
 		containerName: "node_installer",
 		nConf:         NewNodeConfig(),
+		api:           api.NewResolver("", 200),
 	}
 	return bot, nil
 }
@@ -68,6 +74,7 @@ func (b *Bot) Start() {
 	ansibler.AnsibleAvoidHostKeyChecking()
 	b.bot.Debug = false
 	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
+	b.api.SetTimeout(20 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	// load host key file
@@ -82,6 +89,15 @@ func (b *Bot) Start() {
 		log.Error(err)
 		return
 	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	go func() {
+		for {
+			<-ticker.C
+			b.checkBlockBooks()
+		}
+	}()
+
 	for update := range updates {
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if update.Message.Text == "/start" {
@@ -298,7 +314,9 @@ func (b *Bot) Start() {
 			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
 			path := fmt.Sprintf("./playbooks/mainnet_infura_check.yml")
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
+				syncDataSize, _ := getDirSizeFromFile()
+				parcent := 100 * syncDataSize / maxDataSize
+				b.SendMsg(b.ID, checkNodeMessage(parcent), false)
 				b.cooldown()
 			}
 			onError := func(err error) {
@@ -653,6 +671,12 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 	}()
 }
 
+func (b *Bot) checkBlockBooks() {
+	res := BlockBook{}
+	b.api.GetRequest(fmt.Sprintf("%s:9030/api", b.nodeIP), &res)
+	log.Info(res)
+}
+
 func generateHostsfile(nodeIP string, target string) error {
 	ipAddr := net.ParseIP(nodeIP)
 	if ipAddr == nil {
@@ -679,6 +703,17 @@ func getFileHostfile() (string, error) {
 		return "", errors.New("IP addr parse error")
 	}
 	return ipAddr.String(), nil
+}
+
+func getDirSizeFromFile() (int, error) {
+	path := fmt.Sprintf("/tmp/dir_size", dataPath)
+	str, err := ioutil.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	strs := strings.Split(string(str), "\t")
+	intNum, _ := strconv.Atoi(strs[0])
+	return intNum, nil
 }
 
 func getFileSSHKeyfie() (string, error) {

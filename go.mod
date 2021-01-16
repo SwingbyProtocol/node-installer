@@ -3,6 +3,7 @@ module github.com/SwingbyProtocol/node-installer
 go 1.14
 
 require (
+	github.com/SwingbyProtocol/tx-indexer v0.0.0-20200809124002-e54d6740619f
 	github.com/apenella/go-ansible v0.5.0
 	github.com/binance-chain/go-sdk v1.2.5
 	github.com/binance-chain/tss-lib v1.3.2
@@ -12,6 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 
 )
 

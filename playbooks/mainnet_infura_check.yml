@@ -12,6 +12,6 @@
     - local_action:
         module: copy
         content: "{{ output.stdout }}"
-        dest: "/root/dir_size"
+        dest: "/tmp/dir_size"
 
     - debug: var=output.stdout_lines

@@ -305,3 +305,14 @@ Deployment is not completed. Please kindly check error logs
 	`)
 	return text
 }
+
+func checkNodeMessage(parcent int) string {
+	text := fmt.Sprintf(`
+Node sycning is not completed. 
+
+now: %d%%
+
+Please kindly check error logs
+	`, parcent)
+	return text
+}
