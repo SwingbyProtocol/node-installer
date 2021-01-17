@@ -2,7 +2,7 @@ package bot
 
 import "fmt"
 
-func makeHelloText() string {
+func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
 You can setup node via this bot.
@@ -10,6 +10,13 @@ You can setup node via this bot.
 [Setup Node]
 /setup_server_config to configure your server
 /setup_your_bot to move out your bot to your server.
+`)
+	if b.isRemote {
+		text = fmt.Sprintf(`
+Hello 😊, This is a deploy bot
+You can setup node via this bot.
+
+[Setup Node]
 /setup_node to configure your node
 
 [Deploy Node]
@@ -24,7 +31,8 @@ You can setup node via this bot.
 [Node management]
 /check_status to check status of nodes
 /upgrade_your_bot to upgrade your bot itself
-`)
+	`)
+	}
 	return text
 }
 
@@ -60,31 +68,6 @@ Let's setup your bot => /setup_your_bot
 	return text
 }
 
-func (b *Bot) setupDomainText() string {
-	text := fmt.Sprintf(`
-OK. 
-Please put your Domain like 
-
-testnode-1.example.com
-
-now config is : <b>%s</b>
-
-if you want to skip, type 'none'
-`, b.domain)
-	return text
-}
-
-func (b *Bot) doneDomainText() string {
-	text := fmt.Sprintf(`
-OK. Your server Domain name is 
-
-<b>%s</b>
-
-next => /setup_your_bot
-`, b.domain)
-	return text
-}
-
 func makeDeployBotMessage() string {
 	text := fmt.Sprintf(`
 OK. Starting deployment... BOT is moving out to your server....
@@ -102,7 +85,7 @@ Oh something error is happened. Please kindly check server IP address, Username 
 
 func doneDeployBotMessage() string {
 	text := fmt.Sprintf(`
-BOT is moved out to your server! 
+Your bot is moved out to your server! 
 Please go ahead with /setup_node
 	`)
 	return text
@@ -110,17 +93,19 @@ Please go ahead with /setup_node
 
 func makeUpgradeBotMessage() string {
 	text := fmt.Sprintf(`
-OK. Starting upgrade... 
-BOT will be upgraded to latest version....
+OK. Upgrading your bot....
 	`)
 	return text
 }
 
-func doneUpgradeBotMessage() string {
+func (b *Bot) doneUpgradeBotMessage() string {
 	text := fmt.Sprintf(`
-BOT is upgraded on your server! 
-Please go ahead with /setup_node
-	`)
+System has been upgraded! 
+
+Version: <b>%s</b>
+
+You can start with /start command.
+	`, b.version)
 	return text
 }
 
@@ -138,7 +123,7 @@ now: <b>%s</b>
 3) BTC --- Binance chain (testnet) 
 4) BTC --- Ethereum (goerli)
 
-[Configuration step 1/6]
+[Configuration step 1/4]
 `, b.nConf.Network)
 	return text
 }
@@ -149,21 +134,10 @@ OK. What is your Node moniker?
 
 now: <b>%s</b>
 
-[Configuration step 2/6]
+[Configuration step 2/4]
 if you want to skip, type 'none'
 default will be set 'Default Node'
 `, b.nConf.Moniker)
-	return text
-}
-
-func (b *Bot) makeRewardAddressBTC() string {
-	text := fmt.Sprintf(`
-OK. Please put your BTC reward address. 
-now: <b>%s</b>
-[Configuration step 3/6]
-if you want to skip, type 'none'
-`, b.nConf.RewardAddressBTC)
-
 	return text
 }
 
@@ -181,7 +155,7 @@ func (b *Bot) makeRewardAddressETH() string {
 	text := fmt.Sprintf(`
 OK. Please put your ETH reward address. 
 now: <b>%s</b>
-[Configuration step 5/6]
+[Configuration step 3/4]
 if you want to skip, type 'none'
 `, b.nConf.RewardAddressETH)
 
@@ -197,6 +171,7 @@ Following steps:
 1. Setup your BNB wallet: https://www.binance.org/en/create
 2. Access our timelock portal: https://timelock.swingby.network
 3. Make a "timelock" tx with this "description"
+4. Put your "staking" BNB wallet address.
 
 description:
 
@@ -209,14 +184,14 @@ Note: minimum stake amount is least 150,000 SWINGBYs
 
 func (b *Bot) askStakeTxText() string {
 	text := fmt.Sprintf(`
-Your staking tx is:
+Your staking BNB address is:
 
 now: <b>%s</b>
 
-Could you put your stake tx hash?
-[Configuration step 6/6]
+Could you put your BNB staking address?
+[Configuration step 4/4]
 if you want to skip, type 'none'
-	`, b.nConf.StakeTx)
+	`, b.nConf.StakeAddr)
 	return text
 }
 
@@ -236,31 +211,65 @@ Let's start deploy => /deploy_node
 	return text
 }
 
+func (b *Bot) setupDomainText() string {
+	text := fmt.Sprintf(`
+OK. 
+Please put your subdomain like 
+
+testnode-1.example.com
+
+now subdomain is:
+
+<b>%s</b>
+
+if you want to skip, type 'none'
+`, b.nConf.Domain)
+	return text
+}
+
+func (b *Bot) doneDomainText() string {
+	text := fmt.Sprintf(`
+OK. Your server subdomain is 
+
+<b>%s</b>
+
+your server IP is :
+
+<b>%s</b>
+
+You have to attach domain A record to your server before use
+/enable_domain
+`, b.nConf.Domain, b.nodeIP)
+	return text
+}
+
 func (b *Bot) makeDomainMessage() string {
 	text := fmt.Sprintf(`
-Domain setup....
-You have to attach Domain 
+Deploying nginx ....
+Your subdomain will be attached to your server
 
 <b>%s</b> 
 
-A record to <b>%s</b>
+to
 
-`, b.domain, b.nodeIP)
+<b>%s</b>
+
+`, b.nConf.Domain, b.nodeIP)
 	return text
 }
 
 func (b *Bot) doneDomainMessage() string {
 	text := fmt.Sprintf(`
-Your Domain is attached. 
+Your subdomain is attached. 
 Let's access https://%s
 
-	`, b.domain)
+	`, b.nConf.Domain)
 	return text
 }
 
 func errorDomainMessage() string {
 	text := fmt.Sprintf(`
-Domain is not attahced. Please kindly check error logs
+You subdomain is not attahced. Please kindly check error logs
 	`)
 	return text
 }
@@ -271,9 +280,18 @@ Upgrading your node....
 	return text
 }
 
+func rejectDeployNodeMessage() string {
+	text := fmt.Sprintf(`
+Infura syncing is not completed. 
+Could you try after completed infura syncing?
+/check_status
+`)
+	return text
+}
+
 func doneDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Your Node is upgraded. :-)
+Your Node is upgraded!
 	`)
 	return text
 }
@@ -282,6 +300,15 @@ func errorDeployNodeMessage() string {
 	text := fmt.Sprintf(`
 Deployment is not completed. Please kindly check error logs
 	`)
+	return text
+}
+
+func confirmSetupInfuraMessage() string {
+	text := fmt.Sprintf(`
+This command removes your blockchain data.
+And blockchain data will be rollback to latest snapshot.
+If you sure this, please go ahead /setup_infura
+`)
 	return text
 }
 
@@ -294,9 +321,9 @@ Setup infura packages...
 
 func doneSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
-Download infura data from S3....
+Syncing infura snapshot....
 (This process may takes too long time...)
-Syncing progress you can check with /check_status
+You can check the syncing progress with /check_status
 	`)
 	return text
 }
@@ -310,29 +337,39 @@ Someting wrong. Please kindly check error logs
 
 func rejectDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Downloading is not completed. could you try after completed /check_status
+Syncing infura snapshot is not completed yet.
+Could you try check status of syncing /check_status
+`)
+	return text
+}
+
+func confirmDeployInfuraMessage() string {
+	text := fmt.Sprintf(`
+This command will restarts geth nodes.
+it may takes a long time to sync blockchain again.
+if you sure this, please go ahead /deploy_infura
 `)
 	return text
 }
 
 func makeDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Upgrading infura containers....
+Deploying infura containers....
 `)
 	return text
 }
 
 func doneDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Infura containers are upgraded. :-)
-let's deploy your nodes => /enable_domain and /deploy_infura
+Infura containers are upgraded!
+Status check => /check_status
 	`)
 	return text
 }
 
 func errorDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Deployment is not completed. Please kindly check error logs
+Deployment has been rejected. Please kindly check error logs
 	`)
 	return text
 }
@@ -344,13 +381,25 @@ Getting latest node status...
 	return text
 }
 
-func checkNodeMessage(parcent float64) string {
+func (b *Bot) checkNodeMessage() string {
+	isMemBTC := " "
+	isMemETH := " "
+	b.mu.Lock()
+	if b.isSyncedMempoolBTC {
+		isMemBTC = "+ "
+	}
+	if b.isSyncedMempoolETH {
+		isMemETH = "+ "
+	}
 	text := fmt.Sprintf(`
-Sycning status. 
+[Syncing status]
+<b>%.2f%%</b> completed.
 
-S3 data syncing progress is <b>%.2f%%</b> completed.
-
-	`, parcent)
+[Blockchain syncing status]
+BTC_Block: %d (sync: %.3f%% %s)
+ETH_Block: %d (sync: %.3f%% %s)
+	`, b.syncProgress, b.bestHeightBTC, b.syncBTCRatio, isMemBTC, b.bestHeightETH, b.syncETHRatio, isMemETH)
+	b.mu.Unlock()
 	return text
 }
 

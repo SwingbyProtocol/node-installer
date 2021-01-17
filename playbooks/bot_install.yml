@@ -27,7 +27,6 @@
           -e BOT_TOKEN="{{BOT_TOKEN}}" \
           -e CHAT_ID="{{CHAT_ID}}" \
           -e IP_ADDR="{{IP_ADDR}}" \
-          -e DOMAIN="{{DOMAIN}}" \
           -e CONT_NAME="{{CONT_NAME}}" \
           -e HOST_USER="{{HOST_USER}}" \
           -e SSH_KEY="{{SSH_KEY}}" \

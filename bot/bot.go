@@ -18,17 +18,16 @@ import (
 )
 
 const (
-	dataPath     = "./data"
-	network1     = "mainnet_btc_eth"
-	network2     = "mainnet_btc_bc"
-	network3     = "testnet_tbtc_goerli"
-	network4     = "testnet_tbtc_bc"
-	blockBookBTC = "10.2.0.1:9130"
-	blockBookETH = "10.2.0.1:9131"
-	maxDataSize  = 817083983700
+	version     = "0.1.0-beta"
+	dataPath    = "./data"
+	network1    = "mainnet_btc_eth"
+	network2    = "mainnet_btc_bc"
+	network3    = "testnet_tbtc_goerli"
+	network4    = "testnet_tbtc_bc"
+	maxDataSize = 817083983700
 )
 
-var networks = map[string]string{
+var Networks = map[string]string{
 	"1": network1,
 	"2": network2,
 	"3": network3,
@@ -36,20 +35,31 @@ var networks = map[string]string{
 }
 
 type Bot struct {
-	mu            *sync.RWMutex
-	bot           *tgbotapi.BotAPI
-	api           *api.Resolver
-	Messages      map[int]string
-	ID            int64
-	hostUser      string
-	nodeIP        string
-	containerName string
-	domain        string
-	sshKey        string
-	nConf         *NodeConfig
-	isRemote      bool
-	isLocked      bool
-	isSynced      bool
+	Messages           map[int]string
+	ID                 int64
+	mu                 *sync.RWMutex
+	bot                *tgbotapi.BotAPI
+	api                *api.Resolver
+	version            string
+	hostUser           string
+	nodeIP             string
+	containerName      string
+	sshKey             string
+	nConf              *NodeConfig
+	isRemote           bool
+	isLocked           bool
+	isConfirmed        map[string]bool
+	bestHeightBTC      int
+	stuckCountBTC      int
+	bestHeightETH      int
+	stuckCountETH      int
+	isSyncedBTC        bool
+	isSyncedETH        bool
+	isSyncedMempoolBTC bool
+	isSyncedMempoolETH bool
+	syncProgress       float64
+	syncBTCRatio       float64
+	syncETHRatio       float64
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -58,29 +68,33 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 	bot := &Bot{
-		mu:            new(sync.RWMutex),
-		bot:           b,
 		Messages:      make(map[int]string),
 		ID:            0,
+		mu:            new(sync.RWMutex),
+		bot:           b,
+		api:           api.NewResolver("", 200),
+		version:       version,
 		hostUser:      "root",
 		containerName: "node_installer",
 		nConf:         NewNodeConfig(),
-		api:           api.NewResolver("", 200),
+		isConfirmed:   make(map[string]bool),
 	}
 	return bot, nil
 }
 
 func (b *Bot) Start() {
 	b.bot.Debug = false
-	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
 	b.api.SetTimeout(20 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
+	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
+
 	b.loadSystemEnv()
 	b.loadHostAndKeys()
 	b.nConf.loadConfig()
 
 	ticker := time.NewTicker(30 * time.Second)
+	b.checkBlockBooks()
 	go func() {
 		for {
 			<-ticker.C
@@ -96,16 +110,20 @@ func (b *Bot) Start() {
 
 	for update := range updates {
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		if update.Message.Text == "/start" {
+
+		commands := strings.Split(update.Message.Text, "@")
+		cmd := commands[0]
+
+		if cmd == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
-				b.SendMsg(b.ID, makeHelloText(), false, false)
+				b.SendMsg(b.ID, b.makeHelloText(), false, false)
 				continue
 			}
 			if !b.validateChat(update.Message.Chat.ID) {
 				continue
 			}
-			b.SendMsg(b.ID, makeHelloText(), false, false)
+			b.SendMsg(b.ID, b.makeHelloText(), false, false)
 			continue
 		}
 		if !b.validateChat(update.Message.Chat.ID) {
@@ -136,8 +154,8 @@ func (b *Bot) Start() {
 				b.updateETHAddr(msg)
 				continue
 			}
-			if mode == "setup_node_stake_tx" {
-				b.updateStakeTx(msg)
+			if mode == "setup_node_stake_addr" {
+				b.updateStakeAddr(msg)
 				continue
 			}
 			// Set server configs
@@ -154,9 +172,6 @@ func (b *Bot) Start() {
 				continue
 			}
 		}
-
-		commands := strings.Split(update.Message.Text, "@")
-		cmd := commands[0]
 
 		if cmd == "/setup_server_config" {
 			// Disable if remote is `true`
@@ -199,7 +214,6 @@ func (b *Bot) Start() {
 				"HOST_USER": b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
-				"DOMAIN":    b.domain,
 				"SSH_KEY":   b.sshKey,
 				"IP_ADDR":   b.nodeIP,
 				"REMOTE":    "true",
@@ -252,13 +266,12 @@ func (b *Bot) Start() {
 				"HOST_USER": b.hostUser,
 				"BOT_TOKEN": b.bot.Token,
 				"CHAT_ID":   strconv.Itoa(int(b.ID)),
-				"DOMAIN":    b.domain,
 				"SSH_KEY":   b.sshKey,
 				"IP_ADDR":   b.nodeIP,
 				"REMOTE":    "true",
 			}
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneUpgradeBotMessage(), false, false)
+				b.SendMsg(b.ID, b.doneUpgradeBotMessage(), false, false)
 				b.cooldown()
 				os.Exit(0)
 				// extVars := map[string]string{
@@ -280,6 +293,23 @@ func (b *Bot) Start() {
 			if b.checkProcess() {
 				continue
 			}
+			if !b.isConfirmed["setup_infura"] {
+				b.SendMsg(b.ID, confirmSetupInfuraMessage(), false, false)
+				b.mu.Lock()
+				b.isConfirmed["setup_infura"] = true
+				b.mu.Unlock()
+				go func() {
+					time.Sleep(20 * time.Second)
+					b.mu.Lock()
+					b.isConfirmed["setup_infura"] = false
+					b.mu.Unlock()
+				}()
+				b.cooldown()
+				continue
+			}
+			b.mu.Lock()
+			b.isConfirmed["setup_infura"] = false
+			b.mu.Unlock()
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
@@ -305,16 +335,28 @@ func (b *Bot) Start() {
 			if b.checkProcess() {
 				continue
 			}
-			syncDataSize, _ := getDirSizeFromFile()
-			parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
-			if parcent >= 100 {
-				parcent = 100
-			}
-			if parcent != 100.00 {
+			if b.syncProgress < 99.99 {
 				b.SendMsg(b.ID, rejectDeployInfuraMessage(), false, false)
 				b.cooldown()
 				continue
 			}
+			if !b.isConfirmed["deploy_infura"] {
+				b.SendMsg(b.ID, confirmDeployInfuraMessage(), false, false)
+				b.mu.Lock()
+				b.isConfirmed["deploy_infura"] = true
+				b.mu.Unlock()
+				go func() {
+					time.Sleep(20 * time.Second)
+					b.mu.Lock()
+					b.isConfirmed["deploy_infura"] = false
+					b.mu.Unlock()
+				}()
+				b.cooldown()
+				continue
+			}
+			b.mu.Lock()
+			b.isConfirmed["deploy_infura"] = false
+			b.mu.Unlock()
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
@@ -350,9 +392,12 @@ func (b *Bot) Start() {
 				syncDataSize, _ := getDirSizeFromFile()
 				parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
 				if parcent >= 100 {
-					parcent = 100
+					b.syncProgress = 99.99
 				}
-				b.SendMsg(b.ID, checkNodeMessage(parcent), false, false)
+				if b.isSyncedBTC && b.isSyncedETH {
+					b.syncProgress = 100.00
+				}
+				b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
 				b.cooldown()
 			}
 			onError := func(err error) {
@@ -368,11 +413,14 @@ func (b *Bot) Start() {
 			if b.checkProcess() {
 				continue
 			}
+			if b.syncProgress <= 99.99 {
+				b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
+				b.cooldown()
+				continue
+			}
 			extVars := map[string]string{
 				"HOST_USER":      b.hostUser,
-				"DOMAIN":         b.domain,
 				"TAG":            "test1",
-				"IP_ADDR":        b.nodeIP,
 				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
 				"K_UNTIL":        b.nConf.KeygenUntil,
 			}
@@ -397,7 +445,7 @@ func (b *Bot) Start() {
 			}
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
-				"DOMAIN":    b.domain,
+				"DOMAIN":    b.nConf.Domain,
 			}
 			b.SendMsg(b.ID, b.makeDomainMessage(), false, false)
 			path := fmt.Sprintf("./playbooks/enable_domain.yml")
@@ -478,22 +526,24 @@ func (b *Bot) setupDomain(msg string) {
 		return
 	}
 	if check == 1 {
-		b.domain = msg
+		b.nConf.SetDomain(msg)
+		b.nConf.storeConfig()
+		b.nConf.saveConfig()
+		b.nConf.loadConfig()
 	}
 	b.SendMsg(b.ID, b.doneDomainText(), false, false)
 }
 
-func (b *Bot) updateStakeTx(msg string) {
+func (b *Bot) updateStakeAddr(msg string) {
 	stakeTx := msg
-	check := b.checkInput(stakeTx, "setup_node_stake_tx")
+	check := b.checkInput(stakeTx, "setup_node_stake_addr")
 	if check == 0 {
 		return
 	}
 	if check == 1 {
-		b.nConf.StakeTx = msg
+		b.nConf.StakeAddr = msg
 	}
-	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
-	b.nConf.storeConfig(path, 15, 25)
+	b.nConf.storeConfig()
 	b.nConf.saveConfig()
 	b.nConf.loadConfig()
 	b.SendMsg(b.ID, doneConfigGenerateText(), false, false)
@@ -511,14 +561,21 @@ func (b *Bot) updateETHAddr(msg string) {
 	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
 	switch b.nConf.Network {
 	case network1:
-		b.nConf.CoinB = "WBTC"
+		b.nConf.SetMainnet()
+		b.nConf.SetTSSGroup(10, 31)
+		b.nConf.CoinA = "WBTC"
+		b.nConf.CoinB = "BTC"
 	case network2:
-		b.nConf.CoinB = "BTCB"
+		b.nConf.SetMainnet()
+		b.nConf.CoinA = "BTCB"
+		b.nConf.CoinB = "BTC"
 	case network3:
-		b.nConf.IsTestnet = true
-		b.nConf.CoinB = "BTCE"
+		b.nConf.SetTestnet()
+		b.nConf.SetTSSGroup(25, 50)
+		b.nConf.CoinA = "BTCE"
+		b.nConf.CoinB = "BTC"
 	case network4:
-		b.nConf.IsTestnet = true
+		b.nConf.SetTestnet()
 		b.nConf.CoinB = "BTCB"
 	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
@@ -532,7 +589,7 @@ func (b *Bot) updateETHAddr(msg string) {
 	}
 	b.SendMsg(b.ID, b.makeStakeTxText(), false, true)
 	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
-	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
+	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
 }
 
 // func (b *Bot) updateBNBAddr(msg string) {
@@ -575,7 +632,7 @@ func (b *Bot) updateNodeMoniker(msg string) {
 }
 
 func (b *Bot) updateNetwork(msg string) {
-	network := networks[msg]
+	network := Networks[msg]
 	check := b.checkInput(network, "setup_node_set_network")
 	if check == 0 {
 		return
@@ -616,10 +673,6 @@ func (b *Bot) loadSystemEnv() {
 		if err == nil {
 			log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
 		}
-	}
-	if os.Getenv("DOMAIN") != "" {
-		b.domain = os.Getenv("DOMAIN")
-		log.Infof("DOMAIN=%s", b.domain)
 	}
 	if os.Getenv("CONT_NAME") != "" {
 		b.containerName = os.Getenv("CONT_NAME")
@@ -712,9 +765,48 @@ func (b *Bot) checkBlockBooks() {
 	resETH := BlockBook{}
 	uriBTC := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
 	b.api.GetRequest(uriBTC, &resBTC)
+	if b.bestHeightBTC == resBTC.BlockBook.BestHeight && resBTC.BlockBook.InSync {
+		b.mu.Lock()
+		b.stuckCountBTC++
+		b.mu.Unlock()
+	} else {
+		b.mu.Lock()
+		b.stuckCountBTC = 0
+		b.mu.Unlock()
+	}
+	b.mu.Lock()
+	b.isSyncedBTC = resBTC.BlockBook.InSync
+	b.bestHeightBTC = resBTC.BlockBook.BestHeight
+	if resBTC.BlockBook.BestHeight != 0 && resBTC.Backend.Blocks != 0 {
+		b.syncBTCRatio = 100 * float64(resBTC.BlockBook.BestHeight) / float64(resBTC.Backend.Blocks)
+	}
+	if resBTC.BlockBook.MempoolSize != 0 && resBTC.BlockBook.InSyncMempool {
+		b.isSyncedMempoolBTC = true
+	}
+	b.mu.Unlock()
+
 	uriETH := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
 	b.api.GetRequest(uriETH, &resETH)
-	log.Info(uriBTC, uriETH, resBTC, resETH)
+
+	if b.bestHeightETH == resETH.BlockBook.BestHeight && resETH.BlockBook.InSync {
+		b.mu.Lock()
+		b.stuckCountETH++
+		b.mu.Unlock()
+	} else {
+		b.mu.Lock()
+		b.stuckCountETH = 0
+		b.mu.Unlock()
+	}
+	b.mu.Lock()
+	b.isSyncedETH = resETH.BlockBook.InSync
+	b.bestHeightETH = resETH.BlockBook.BestHeight
+	if resETH.BlockBook.BestHeight != 0 && resETH.Backend.Blocks != 0 {
+		b.syncETHRatio = 100 * float64(resETH.BlockBook.BestHeight) / float64(resETH.Backend.Blocks)
+	}
+	if resETH.BlockBook.MempoolSize != 0 && resETH.BlockBook.InSyncMempool {
+		b.isSyncedMempoolETH = true
+	}
+	b.mu.Unlock()
 }
 
 func generateHostsfile(nodeIP string, target string) error {
