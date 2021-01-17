@@ -79,7 +79,7 @@ func (n *NodeConfig) saveConfig() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/nConf.json", dataPath), []byte(data), 0600)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/node_config.json", dataPath), []byte(data), 0600)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (n *NodeConfig) saveConfig() error {
 }
 
 func (n *NodeConfig) loadConfig() error {
-	str, err := ioutil.ReadFile(fmt.Sprintf("%s/nConf.json", dataPath))
+	str, err := ioutil.ReadFile(fmt.Sprintf("%s/node_config.json", dataPath))
 	if err != nil {
 		return err
 	}

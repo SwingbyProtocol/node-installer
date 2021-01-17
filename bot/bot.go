@@ -71,24 +71,14 @@ func NewBot(token string) (*Bot, error) {
 }
 
 func (b *Bot) Start() {
-	ansibler.AnsibleAvoidHostKeyChecking()
 	b.bot.Debug = false
 	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
 	b.api.SetTimeout(20 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	// load host key file
-	b.loadBotEnv()
-
+	b.loadSystemEnv()
 	b.loadHostAndKeys()
-
 	b.nConf.loadConfig()
-
-	updates, err := b.bot.GetUpdatesChan(u)
-	if err != nil {
-		log.Error(err)
-		return
-	}
 
 	ticker := time.NewTicker(30 * time.Second)
 	go func() {
@@ -97,6 +87,12 @@ func (b *Bot) Start() {
 			b.checkBlockBooks()
 		}
 	}()
+
+	updates, err := b.bot.GetUpdatesChan(u)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 
 	for update := range updates {
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
@@ -604,7 +600,7 @@ func (b *Bot) checkInput(input string, keepMode string) int {
 	return 1
 }
 
-func (b *Bot) loadBotEnv() {
+func (b *Bot) loadSystemEnv() {
 	if os.Getenv("REMOTE") == "true" {
 		b.isRemote = true
 	}
@@ -662,9 +658,6 @@ func (b *Bot) loadHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
-	b.nConf.BlockBookBTC = blockBookBTC
-	b.nConf.BlockBookETH = blockBookETH
-
 	log.Infof("Loaded target IPv4 for your server from hosts file: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
@@ -683,6 +676,8 @@ func (b *Bot) sendKeyStoreFile(path string) {
 }
 
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSuccess func(), onError func(err error)) {
+	ansibler.AnsibleAvoidHostKeyChecking()
+
 	sshKeyFilePath := fmt.Sprintf("%s/ssh_key", dataPath)
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
 		AskPass:    false,
@@ -715,9 +710,9 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 func (b *Bot) checkBlockBooks() {
 	resBTC := BlockBook{}
 	resETH := BlockBook{}
-	uriBTC := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
+	uriBTC := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
 	b.api.GetRequest(uriBTC, &resBTC)
-	uriETH := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
+	uriETH := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
 	b.api.GetRequest(uriETH, &resETH)
 	log.Info(uriBTC, uriETH, resBTC, resETH)
 }

@@ -1,13 +1,13 @@
 package bot
 
 type BlockBook struct {
-	BlockBook *Response
-	Backend   *Backend
+	BlockBook *Response `json:"blockbook"`
+	Backend   *Backend  `json:"backend"`
 }
 
 type Response struct {
-	Syncmode   bool
-	InSync     bool
+	Syncmode   bool `json:"syncMode"`
+	InSync     bool `json:"inSync"`
 	BestHeight int
 	SFbSize    int
 }

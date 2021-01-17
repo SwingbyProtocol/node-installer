@@ -5,7 +5,7 @@ import "fmt"
 func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
-Steps are here. 
+You can setup node via this bot.
 
 [Setup Node]
 /setup_server_config to configure your server
@@ -22,10 +22,9 @@ Steps are here.
 /deploy_infura to deploy infura services into your server
 
 [Node management]
-/check_status to check status of nodes packages
+/check_status to check status of nodes
 /upgrade_your_bot to upgrade your bot itself
-
-	`)
+`)
 	return text
 }
 
@@ -56,17 +55,8 @@ func (b *Bot) setupUsernameAndLoadSSHkeyText() string {
 OK. Your server User name is <b>%s</b>
 ...
 SSH_KEY is loaded. Your server is ready. 
-Let's setup your bot => /setup_domain
-`, b.hostUser)
-	return text
-}
-
-func (b *Bot) doneSSHKeyText() string {
-	text := fmt.Sprintf(`
-OK. SSH_KEY is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
-`)
-
+`, b.hostUser)
 	return text
 }
 
