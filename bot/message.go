@@ -6,13 +6,24 @@ func makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊, This is a deploy bot
 Steps are here. 
-1. Put /setup_server_config to configure your server
-2. Put /setup_domain to setup domain for your server
-3. Put /setup_your_bot to move out your bot to your server.
-4. Put /setup_node to configure your node
-5. Put /deploy_node to deploy your node
-6. Put /enable_domain to enalbe domain for your server
-7. Put /deploy_infura to deploy infura services into your server
+
+[Setup Node]
+/setup_server_config to configure your server
+/setup_your_bot to move out your bot to your server.
+/setup_node to configure your node
+
+[Deploy Node]
+/deploy_node to deploy your node
+/setup_domain to setup domain for your server
+/enable_domain to enalbe domain for your server
+
+[Deploy Infura]
+/setup_infura to setup infura containers
+/deploy_infura to deploy infura services into your server
+
+[Node management]
+/check_status to check status of nodes packages
+/upgrade_your_bot to upgrade your bot itself
 
 	`)
 	return text
@@ -131,8 +142,8 @@ Please put network number from following list.
 
 now: <b>%s</b>
 
-1) BTC --- Binance chain (mainnet)
-2) BTC --- Ethereum (mainnet)
+1) BTC --- Ethereum (mainnet)
+2) BTC --- Binance chain (mainnet)
 
 3) BTC --- Binance chain (testnet) 
 4) BTC --- Ethereum (goerli)
@@ -191,24 +202,25 @@ func (b *Bot) makeStakeTxText() string {
 	text := fmt.Sprintf(`
 OK. Your new p2p node key is generated.
 
-Your address: <b>%s</b>
+You have to make a stake tx. 
+Following steps:
+1. Setup your BNB wallet: https://www.binance.org/en/create
+2. Access our timelock portal: https://timelock.swingby.network
+3. Make a "timelock" tx with this "description"
 
-You have to make stake tx to above address. Please make a tx 
-
-with memo:
+description:
 
 <b>%s</b>
 
-Send a timelock transaction to yourself with at least 1,000,000 SWINGBY 
-
-and take note of the transaction ID. Use our portal: https://timelock.swingby.network
-`, b.nConf.StakeAddr, b.nConf.Memo)
+Note: minimum stake amount is least 150,000 SWINGBYs
+`, b.nConf.Memo)
 	return text
 }
 
 func (b *Bot) askStakeTxText() string {
 	text := fmt.Sprintf(`
 Your staking tx is:
+
 now: <b>%s</b>
 
 Could you put your stake tx hash?
@@ -283,10 +295,39 @@ Deployment is not completed. Please kindly check error logs
 	return text
 }
 
+func makeSetupInfuraMessage() string {
+	text := fmt.Sprintf(`
+Setup infura packages...
+`)
+	return text
+}
+
+func doneSetupInfuraMessage() string {
+	text := fmt.Sprintf(`
+Download infura data from S3....
+(This process may takes too long time...)
+Syncing progress you can check with /check_status
+	`)
+	return text
+}
+
+func errorSetupInfuraMessage() string {
+	text := fmt.Sprintf(`
+Someting wrong. Please kindly check error logs
+	`)
+	return text
+}
+
+func rejectDeployInfuraMessage() string {
+	text := fmt.Sprintf(`
+Downloading is not completed. could you try after completed /check_status
+`)
+	return text
+}
+
 func makeDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 Upgrading infura containers....
-(This process may takes too long time...)
 `)
 	return text
 }
@@ -306,13 +347,26 @@ Deployment is not completed. Please kindly check error logs
 	return text
 }
 
-func checkNodeMessage(parcent int) string {
+func makeCheckNodeMessage() string {
 	text := fmt.Sprintf(`
-Node sycning is not completed. 
+Getting latest node status...
+`)
+	return text
+}
 
-now: %d%%
+func checkNodeMessage(parcent float64) string {
+	text := fmt.Sprintf(`
+Sycning status. 
 
-Please kindly check error logs
+S3 data syncing progress is <b>%.2f%%</b> completed.
+
 	`, parcent)
+	return text
+}
+
+func errorCheckNodeMessage() string {
+	text := fmt.Sprintf(`
+Node data checking is failed, could you try it later.
+	`)
 	return text
 }

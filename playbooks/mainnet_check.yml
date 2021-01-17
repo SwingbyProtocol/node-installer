@@ -1,0 +1,28 @@
+- name: Check status
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: check infura nodes
+      shell: |
+        du -bs /var/swingby/mainnet
+      register: output
+    - local_action:
+        module: copy
+        content: "{{ output.stdout }}"
+        dest: "/tmp/dir_size"
+
+    - debug: var=output.stdout_lines
+
+    - name: set iptables
+      shell: |
+        iptables -D DOCKER-USER -p tcp --match multiport --dport 8545,9130,8067 -j DROP
+        iptables -I DOCKER-USER -p tcp --match multiport --dport 8545,9130,8067 -j DROP
+        iptables -L DOCKER-USER
+
+      register: output
+
+    - debug: var=output.stdout_lines
+

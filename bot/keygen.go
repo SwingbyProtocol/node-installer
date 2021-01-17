@@ -10,10 +10,7 @@ import (
 	"os"
 
 	"github.com/SwingbyProtocol/node-installer/keystore"
-	"github.com/binance-chain/go-sdk/common/types"
 	"github.com/binance-chain/go-sdk/keys"
-	"github.com/cosmos/go-bip39"
-	log "github.com/sirupsen/logrus"
 )
 
 var bnbSeedNodes = []string{
@@ -84,7 +81,6 @@ reward_addr = "**reward_addr_bnb**"
 func (b *Bot) generateKeys(basePath string) (bool, error) {
 	pDataDirName := fmt.Sprintf("%s/data", basePath)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
-	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", basePath, b.nConf.Network)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	if _, _, err := keystore.LoadOrGenerate(pKeystoreFileName); err != nil {
 		return false, err
@@ -96,49 +92,45 @@ func (b *Bot) generateKeys(basePath string) (bool, error) {
 	pP2PPubKey := pKeystore.P2pData.SK.Public()
 	pP2PKeyHex := hex.EncodeToString(pP2PPubKey[:])
 
-	addr, err := loadStakeKey(stakeKeyPath)
-	if err == nil {
-		b.nConf.StakeAddr = addr
-		b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
-		return true, nil
-	}
-
-	pEntropy, err := bip39.NewEntropy(256)
-	if err != nil {
-		return false, err
-	}
-	// Gen a new address from new entropy
-	pMnemonic, err := bip39.NewMnemonic(pEntropy)
-	if err != nil {
-		return false, err
-	}
-	if b.nConf.IsTestnet {
-		types.Network = types.TestNetwork
-	}
-	pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
-	if err != nil {
-		return false, err
-	}
-	log.Info(pMnemonic)
-	b.nConf.StakeAddr = pKey.GetAddr().String()
-	password, _ := generateRandomBytes(24)
-	log.Infof("Deposit address: %s, pass: %s", b.nConf.StakeAddr, hex.EncodeToString(password))
-	keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
-	if err != nil {
-		return false, err
-	}
-	data, _ := json.Marshal(keydata)
-	err = ioutil.WriteFile(stakeKeyPath, data, 0660)
-	if err != nil {
-		return false, err
-	}
-	// Check keystore
-	_, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
-	if err != nil {
-		return false, err
-	}
 	b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
-	return false, nil
+	return true, nil
+
+	// pEntropy, err := bip39.NewEntropy(256)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// // Gen a new address from new entropy
+	// pMnemonic, err := bip39.NewMnemonic(pEntropy)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// if b.nConf.IsTestnet {
+	// 	types.Network = types.TestNetwork
+	// }
+	// pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// log.Info(pMnemonic)
+	// b.nConf.StakeAddr = pKey.GetAddr().String()
+	// password, _ := generateRandomBytes(24)
+	// log.Infof("Deposit address: %s, pass: %s", b.nConf.StakeAddr, hex.EncodeToString(password))
+	// keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
+	// if err != nil {
+	// 	return false, err
+	// }
+	// data, _ := json.Marshal(keydata)
+	// err = ioutil.WriteFile(stakeKeyPath, data, 0660)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// // Check keystore
+	// _, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
+	// if err != nil {
+	// 	return false, err
+	// }
+	// b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
+	// return false, nil
 }
 
 func generateRandomBytes(n int) ([]byte, error) {

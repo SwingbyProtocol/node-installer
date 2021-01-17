@@ -19,13 +19,13 @@ import (
 
 const (
 	dataPath     = "./data"
-	network1     = "mainnet_btc_bc"
-	network2     = "mainnet_btc_eth"
-	network3     = "testnet_tbtc_bc"
-	network4     = "testnet_tbtc_goerli"
-	blockBookBTC = "51.15.143.55:9130"
-	blockBookETH = "51.15.143.55:9131"
-	maxDataSize  = 1011451108
+	network1     = "mainnet_btc_eth"
+	network2     = "mainnet_btc_bc"
+	network3     = "testnet_tbtc_goerli"
+	network4     = "testnet_tbtc_bc"
+	blockBookBTC = "10.2.0.1:9130"
+	blockBookETH = "10.2.0.1:9131"
+	maxDataSize  = 817083983700
 )
 
 var networks = map[string]string{
@@ -103,13 +103,13 @@ func (b *Bot) Start() {
 		if update.Message.Text == "/start" {
 			if b.ID == 0 {
 				b.ID = update.Message.Chat.ID
-				b.SendMsg(b.ID, makeHelloText(), false)
+				b.SendMsg(b.ID, makeHelloText(), false, false)
 				continue
 			}
 			if !b.validateChat(update.Message.Chat.ID) {
 				continue
 			}
-			b.SendMsg(b.ID, makeHelloText(), false)
+			b.SendMsg(b.ID, makeHelloText(), false, false)
 			continue
 		}
 		if !b.validateChat(update.Message.Chat.ID) {
@@ -128,14 +128,14 @@ func (b *Bot) Start() {
 			if mode == "setup_node_moniker" {
 				b.updateNodeMoniker(msg)
 			}
-			if mode == "setup_node_btc_addr" {
-				b.updateBTCAddr(msg)
-				continue
-			}
-			if mode == "setup_node_bnb_addr" {
-				b.updateBNBAddr(msg)
-				continue
-			}
+			// if mode == "setup_node_btc_addr" {
+			// 	b.updateBTCAddr(msg)
+			// 	continue
+			// }
+			// if mode == "setup_node_bnb_addr" {
+			// 	b.updateBNBAddr(msg)
+			// 	continue
+			// }
 			if mode == "setup_node_eth_addr" {
 				b.updateETHAddr(msg)
 				continue
@@ -167,7 +167,7 @@ func (b *Bot) Start() {
 			if b.isRemote {
 				continue
 			}
-			msg, err := b.SendMsg(b.ID, b.makeSetupIPText(), true)
+			msg, err := b.SendMsg(b.ID, b.makeSetupIPText(), true, false)
 			if err != nil {
 				continue
 			}
@@ -176,7 +176,7 @@ func (b *Bot) Start() {
 		}
 
 		if cmd == "/setup_domain" {
-			newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true)
+			newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true, false)
 			if err != nil {
 				continue
 			}
@@ -197,7 +197,7 @@ func (b *Bot) Start() {
 			if b.checkProcess() {
 				continue
 			}
-			b.SendMsg(b.ID, makeDeployBotMessage(), false)
+			b.SendMsg(b.ID, makeDeployBotMessage(), false, false)
 			extVars := map[string]string{
 				"CONT_NAME": b.containerName,
 				"HOST_USER": b.hostUser,
@@ -209,14 +209,14 @@ func (b *Bot) Start() {
 				"REMOTE":    "true",
 			}
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployBotMessage(), false)
+				b.SendMsg(b.ID, doneDeployBotMessage(), false, false)
 				log.Info("Bot is moved out to your server!")
 				b.cooldown()
 				os.Exit(0)
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDeployBotMessage(), false)
+				b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
 				b.cooldown()
 			}
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
@@ -224,7 +224,7 @@ func (b *Bot) Start() {
 		}
 
 		if cmd == "/setup_node" {
-			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true)
+			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true, false)
 			if err != nil {
 				continue
 			}
@@ -244,10 +244,10 @@ func (b *Bot) Start() {
 			if b.checkProcess() {
 				continue
 			}
-			b.SendMsg(b.ID, makeUpgradeBotMessage(), false)
+			b.SendMsg(b.ID, makeUpgradeBotMessage(), false, false)
 			contName := b.containerName
 			if b.containerName == "node_installer" {
-				contName = "node_installer_clone"
+				contName = "node_installer_fork"
 			} else {
 				contName = "node_installer"
 			}
@@ -262,7 +262,7 @@ func (b *Bot) Start() {
 				"REMOTE":    "true",
 			}
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneUpgradeBotMessage(), false)
+				b.SendMsg(b.ID, doneUpgradeBotMessage(), false, false)
 				b.cooldown()
 				os.Exit(0)
 				// extVars := map[string]string{
@@ -273,55 +273,95 @@ func (b *Bot) Start() {
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDeployBotMessage(), false)
+				b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
 				b.cooldown()
 			}
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 			continue
 		}
-		if cmd == "/deploy_infura" {
+
+		if cmd == "/setup_infura" {
 			if b.checkProcess() {
 				continue
 			}
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
-			b.SendMsg(b.ID, makeDeployInfuraMessage(), false)
-			targetPath := "./playbooks/mainnet_infura.yml"
+			b.SendMsg(b.ID, makeSetupInfuraMessage(), false, false)
+			targetPath := "./playbooks/mainnet_infura_setup.yml"
 			if b.nConf.IsTestnet {
-				targetPath = "./playbooks/testnet_infura.yml"
+				targetPath = "./playbooks/testnet_infura_setup.yml"
 			}
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployInfuraMessage(), false)
+				b.SendMsg(b.ID, doneSetupInfuraMessage(), false, false)
 				b.cooldown()
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDeployInfuraMessage(), false)
+				b.SendMsg(b.ID, errorSetupInfuraMessage(), false, false)
 				b.cooldown()
 			}
 			b.execAnsible(targetPath, extVars, onSuccess, onError)
 			continue
 		}
 
-		if cmd == "/check_infura" {
+		if cmd == "/deploy_infura" {
 			if b.checkProcess() {
+				continue
+			}
+			syncDataSize, _ := getDirSizeFromFile()
+			parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
+			if parcent >= 100 {
+				parcent = 100
+			}
+			if parcent != 100.00 {
+				b.SendMsg(b.ID, rejectDeployInfuraMessage(), false, false)
+				b.cooldown()
 				continue
 			}
 			extVars := map[string]string{
 				"HOST_USER": b.hostUser,
 			}
-			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
-			path := fmt.Sprintf("./playbooks/mainnet_infura_check.yml")
+			b.SendMsg(b.ID, makeDeployInfuraMessage(), false, false)
+			targetPath := "./playbooks/mainnet_infura.yml"
+			if b.nConf.IsTestnet {
+				targetPath = "./playbooks/testnet_infura.yml"
+			}
 			onSuccess := func() {
-				syncDataSize, _ := getDirSizeFromFile()
-				parcent := 100 * syncDataSize / maxDataSize
-				b.SendMsg(b.ID, checkNodeMessage(parcent), false)
+				b.SendMsg(b.ID, doneDeployInfuraMessage(), false, false)
 				b.cooldown()
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
+				b.SendMsg(b.ID, errorDeployInfuraMessage(), false, false)
+				b.cooldown()
+			}
+			b.execAnsible(targetPath, extVars, onSuccess, onError)
+			continue
+		}
+
+		if cmd == "/check_status" {
+			if b.checkProcess() {
+				continue
+			}
+			extVars := map[string]string{
+				"HOST_USER": b.hostUser,
+				"IP_ADDR":   b.nodeIP,
+			}
+			b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
+			path := fmt.Sprintf("./playbooks/mainnet_check.yml")
+			onSuccess := func() {
+				syncDataSize, _ := getDirSizeFromFile()
+				parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
+				if parcent >= 100 {
+					parcent = 100
+				}
+				b.SendMsg(b.ID, checkNodeMessage(parcent), false, false)
+				b.cooldown()
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
 				b.cooldown()
 			}
 			b.execAnsible(path, extVars, onSuccess, onError)
@@ -340,15 +380,15 @@ func (b *Bot) Start() {
 				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
 				"K_UNTIL":        b.nConf.KeygenUntil,
 			}
-			b.SendMsg(b.ID, makeDeployNodeMessage(), false)
+			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
 			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
 			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployNodeMessage(), false)
+				b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
 				b.cooldown()
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDeployNodeMessage(), false)
+				b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
 				b.cooldown()
 			}
 			b.execAnsible(path, extVars, onSuccess, onError)
@@ -363,16 +403,16 @@ func (b *Bot) Start() {
 				"HOST_USER": b.hostUser,
 				"DOMAIN":    b.domain,
 			}
-			b.SendMsg(b.ID, b.makeDomainMessage(), false)
+			b.SendMsg(b.ID, b.makeDomainMessage(), false, false)
 			path := fmt.Sprintf("./playbooks/enable_domain.yml")
 			onSuccess := func() {
-				b.SendMsg(b.ID, b.doneDomainMessage(), false)
+				b.SendMsg(b.ID, b.doneDomainMessage(), false, false)
 				b.cooldown()
 
 			}
 			onError := func(err error) {
 				log.Error(err)
-				b.SendMsg(b.ID, errorDomainMessage(), false)
+				b.SendMsg(b.ID, errorDomainMessage(), false, false)
 				b.cooldown()
 
 			}
@@ -381,7 +421,7 @@ func (b *Bot) Start() {
 		}
 		// Default response of say hi
 		if cmd == "hi" || cmd == "Hi" {
-			b.SendMsg(b.ID, `Let's start with /start`, false)
+			b.SendMsg(b.ID, `Let's start with /start`, false, false)
 		}
 	}
 }
@@ -391,7 +431,7 @@ func (b *Bot) checkProcess() bool {
 	if b.isLocked {
 		b.mu.RUnlock()
 		text := fmt.Sprintf("Process is already started")
-		b.SendMsg(b.ID, text, false)
+		b.SendMsg(b.ID, text, false, false)
 		return true
 	}
 	b.mu.RUnlock()
@@ -410,12 +450,12 @@ func (b *Bot) setupIPAddr(msg string) {
 	err := generateHostsfile(msg, "server")
 	if err != nil {
 		text := fmt.Sprintf("IP address should be version 4. Kindly put again")
-		newMsg, _ := b.SendMsg(b.ID, text, true)
+		newMsg, _ := b.SendMsg(b.ID, text, true, false)
 		b.Messages[newMsg.MessageID] = "setup_ip_addr"
 		return
 	}
 	b.nodeIP = msg
-	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUserNameText(), true)
+	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUserNameText(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_username"
 }
 
@@ -430,10 +470,10 @@ func (b *Bot) setupUser(msg string) {
 	err := b.loadHostAndKeys()
 	if err != nil {
 		text := fmt.Sprintf("SSH_KEY load error. please check data/ssh_key file again")
-		b.SendMsg(b.ID, text, false)
+		b.SendMsg(b.ID, text, false, false)
 		return
 	}
-	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false)
+	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false, false)
 }
 
 func (b *Bot) setupDomain(msg string) {
@@ -444,7 +484,7 @@ func (b *Bot) setupDomain(msg string) {
 	if check == 1 {
 		b.domain = msg
 	}
-	b.SendMsg(b.ID, b.doneDomainText(), false)
+	b.SendMsg(b.ID, b.doneDomainText(), false, false)
 }
 
 func (b *Bot) updateStakeTx(msg string) {
@@ -460,7 +500,7 @@ func (b *Bot) updateStakeTx(msg string) {
 	b.nConf.storeConfig(path, 15, 25)
 	b.nConf.saveConfig()
 	b.nConf.loadConfig()
-	b.SendMsg(b.ID, doneConfigGenerateText(), false)
+	b.SendMsg(b.ID, doneConfigGenerateText(), false, false)
 }
 
 func (b *Bot) updateETHAddr(msg string) {
@@ -472,18 +512,18 @@ func (b *Bot) updateETHAddr(msg string) {
 	if check == 1 {
 		b.nConf.RewardAddressETH = address
 	}
-	b.SendMsg(b.ID, b.makeStoreKeyText(), false)
+	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
 	switch b.nConf.Network {
 	case network1:
-		b.nConf.CoinB = "BTCB"
+		b.nConf.CoinB = "WBTC"
 	case network2:
-		b.nConf.CoinB = "BTCE"
+		b.nConf.CoinB = "BTCB"
 	case network3:
 		b.nConf.IsTestnet = true
-		b.nConf.CoinB = "BTCB"
+		b.nConf.CoinB = "BTCE"
 	case network4:
 		b.nConf.IsTestnet = true
-		b.nConf.CoinB = "BTCE"
+		b.nConf.CoinB = "BTCB"
 	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
 	isLoad, err := b.generateKeys(path)
@@ -494,36 +534,36 @@ func (b *Bot) updateETHAddr(msg string) {
 	if !isLoad {
 		b.sendKeyStoreFile(path)
 	}
-	b.SendMsg(b.ID, b.makeStakeTxText(), false)
-	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true)
+	b.SendMsg(b.ID, b.makeStakeTxText(), false, true)
+	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_tx"
 }
 
-func (b *Bot) updateBNBAddr(msg string) {
-	address := msg
-	check := b.checkInput(address, "setup_node_bnb_addr")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.RewardAddressBNB = address
-	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true)
-	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
-}
+// func (b *Bot) updateBNBAddr(msg string) {
+// 	address := msg
+// 	check := b.checkInput(address, "setup_node_bnb_addr")
+// 	if check == 0 {
+// 		return
+// 	}
+// 	if check == 1 {
+// 		b.nConf.RewardAddressBNB = address
+// 	}
+// 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true)
+// 	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+// }
 
-func (b *Bot) updateBTCAddr(msg string) {
-	address := msg
-	check := b.checkInput(address, "setup_node_btc_addr")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.RewardAddressBTC = address
-	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBNB(), true)
-	b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
-}
+// func (b *Bot) updateBTCAddr(msg string) {
+// 	address := msg
+// 	check := b.checkInput(address, "setup_node_btc_addr")
+// 	if check == 0 {
+// 		return
+// 	}
+// 	if check == 1 {
+// 		b.nConf.RewardAddressBTC = address
+// 	}
+// 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBNB(), true)
+// 	b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
+// }
 
 func (b *Bot) updateNodeMoniker(msg string) {
 	moniker := msg
@@ -534,8 +574,8 @@ func (b *Bot) updateNodeMoniker(msg string) {
 	if check == 1 {
 		b.nConf.Moniker = moniker
 	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBTC(), true)
-	b.Messages[newMsg.MessageID] = "setup_node_btc_addr"
+	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true, false)
+	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
 }
 
 func (b *Bot) updateNetwork(msg string) {
@@ -547,14 +587,14 @@ func (b *Bot) updateNetwork(msg string) {
 	if check == 1 {
 		b.nConf.Network = network
 	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true)
+	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_moniker"
 }
 
 func (b *Bot) checkInput(input string, keepMode string) int {
 	if input == "" {
 		text := fmt.Sprintf("input is wrong, Please type again")
-		newMsg, _ := b.SendMsg(b.ID, text, true)
+		newMsg, _ := b.SendMsg(b.ID, text, true, false)
 		b.Messages[newMsg.MessageID] = keepMode
 		return 0
 	}
@@ -595,8 +635,18 @@ func (b *Bot) loadBotEnv() {
 	}
 	if os.Getenv("SSH_KEY") != "" {
 		generateSSHKeyfile(os.Getenv("SSH_KEY"))
-		log.Info("A ssh key is stored")
+		log.Info("SSH priv key is stored")
 	}
+}
+
+func (b *Bot) SendMsg(id int64, text string, isReply bool, hidePreview bool) (tgbotapi.Message, error) {
+	msg := tgbotapi.NewMessage(id, text)
+	if isReply {
+		msg.ReplyMarkup = tgbotapi.ForceReply{ForceReply: true, Selective: true}
+	}
+	msg.ParseMode = "HTML"
+	msg.DisableWebPagePreview = hidePreview
+	return b.bot.Send(msg)
 }
 
 func (b *Bot) validateChat(chatID int64) bool {
@@ -606,23 +656,14 @@ func (b *Bot) validateChat(chatID int64) bool {
 	return false
 }
 
-func (b *Bot) SendMsg(id int64, text string, isReply bool) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(id, text)
-	if isReply {
-		msg.ReplyMarkup = tgbotapi.ForceReply{ForceReply: true, Selective: true}
-	}
-	msg.ParseMode = "HTML"
-	return b.bot.Send(msg)
-}
-
 func (b *Bot) loadHostAndKeys() error {
 	host, err := getFileHostfile()
 	if err != nil {
 		return err
 	}
 	b.nodeIP = host
-	b.nConf.BlockBookBTC = fmt.Sprintf("%s:9130", b.nodeIP)
-	b.nConf.BlockBookETH = fmt.Sprintf("%s:9131", b.nodeIP)
+	b.nConf.BlockBookBTC = blockBookBTC
+	b.nConf.BlockBookETH = blockBookETH
 
 	log.Infof("Loaded target IPv4 for your server from hosts file: %s", host)
 	// load ssh key file
@@ -630,7 +671,7 @@ func (b *Bot) loadHostAndKeys() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Loaded ssh keys")
+	log.Infof("Loaded SSH priv key")
 	b.sshKey = key
 	return nil
 }
@@ -672,9 +713,13 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 }
 
 func (b *Bot) checkBlockBooks() {
-	res := BlockBook{}
-	b.api.GetRequest(fmt.Sprintf("%s:9030/api", b.nodeIP), &res)
-	log.Info(res)
+	resBTC := BlockBook{}
+	resETH := BlockBook{}
+	uriBTC := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
+	b.api.GetRequest(uriBTC, &resBTC)
+	uriETH := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
+	b.api.GetRequest(uriETH, &resETH)
+	log.Info(uriBTC, uriETH, resBTC, resETH)
 }
 
 func generateHostsfile(nodeIP string, target string) error {
@@ -706,12 +751,13 @@ func getFileHostfile() (string, error) {
 }
 
 func getDirSizeFromFile() (int, error) {
-	path := fmt.Sprintf("/tmp/dir_size", dataPath)
+	path := fmt.Sprintf("/tmp/dir_size")
 	str, err := ioutil.ReadFile(path)
 	if err != nil {
 		return 0, err
 	}
 	strs := strings.Split(string(str), "\t")
+	log.Info(strs)
 	intNum, _ := strconv.Atoi(strs[0])
 	return intNum, nil
 }

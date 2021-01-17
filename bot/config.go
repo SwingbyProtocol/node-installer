@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type NodeConfig struct {
@@ -65,6 +67,7 @@ func (n *NodeConfig) storeConfig(network string, threshold int, members int) err
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", n.RewardAddressBNB)
 
 	newConfigToml := fmt.Sprintf("%s\n", newBaseConfig)
+	log.Info(newConfigToml)
 	if err := ioutil.WriteFile(pConfigFileName, []byte(newConfigToml), os.ModePerm); err != nil {
 		return err
 	}

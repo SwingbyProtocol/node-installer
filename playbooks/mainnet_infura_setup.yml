@@ -1,0 +1,26 @@
+- name: Setup infura
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: setup infura nodes
+      shell: |
+        cd docker-blockbook-master/deployments/mainnet
+        DIR=/var/swingby docker-compose down
+        
+        if ! type "aws" >/dev/null; then
+          apt-get update && apt-get install -y awscli
+        fi
+        if [ ! -f ~/.aws/credentials ]; then
+          mkdir -p ~/.aws
+          echo '[default]\naws_access_key_id = AKIAZC33PGTB63FOYOTN\naws_secret_access_key = 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' > ~/.aws/credentials
+        fi
+        if ! pgrep -x "aws" > /dev/null; then
+          nohup aws s3 sync s3://infura-hosting/mainnet /var/swingby/mainnet --delete > /tmp/store.log &
+        fi
+
+      register: output
+
+    - debug: var=output.stdout_lines
