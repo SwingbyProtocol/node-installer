@@ -76,7 +76,7 @@ func GenerateInHome(optPath ...string) error {
 		return err
 	}
 	p2pData := NewP2PSaveData(keys.PrivateKey(), c1, c2)
-	tssPreParams, err := keygen.GeneratePreParams(2 * time.Minute)
+	tssPreParams, err := keygen.GeneratePreParams(5 * time.Minute)
 	if err != nil {
 		return err
 	}
