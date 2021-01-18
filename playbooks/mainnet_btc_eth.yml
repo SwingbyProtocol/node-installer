@@ -25,7 +25,8 @@
           --home "/var/node_data" \
           --logger.level {{LOG_LEVEL}} \
           -k {{K_UNTIL}} \
-          --p2p.connect {{BOOTSTRAP_NODE}}
+          --p2p.connect {{BOOTSTRAP_NODE_1}} \
+          --p2p.connect {{BOOTSTRAP_NODE_2}}
 
       register: output
 

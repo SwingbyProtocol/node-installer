@@ -10,26 +10,36 @@ import (
 )
 
 const (
-	WalletContract      = "0x0fc2c6513ffc15d92a7593cede8b44cec3d85122"
-	WalletContractTest  = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	LPtokenContract     = "0xb7f7dd6D0e3addBb98F8Bc84F010B580A6151b08"
-	LPtokenContractTest = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	WBTCContract        = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
-	WBTCContractTest    = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	BootstrapNode       = "116.203.5.120:12122"
-	BootstrapNodeTest   = "51.158.121.128:12121"
-	GethRPC             = "10.2.0.1:8545"
-	BlockBookBTC        = "10.2.0.1:9130"
-	BlockBookETH        = "10.2.0.1:9131"
-	StopTrigger         = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
+	WalletContract  = "0x0fc2c6513ffc15d92a7593cede8b44cec3d85122"
+	LPtokenContract = "0xefcf527fdd2084de2ac9ba34463be4a245b45efa"
+	WBTCContract    = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
 )
 
-var BnbSeedNodes = []string{
-	"tcp://data-seed-pre-0-s3.binance.org:80",
-	"tcp://data-seed-pre-1-s3.binance.org:80",
-	"tcp://data-seed-pre-0-s1.binance.org:80",
-	"tcp://data-seed-pre-1-s1.binance.org:80",
-	"tcp://data-seed-pre-2-s1.binance.org:80",
+const (
+	WalletContractTest  = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
+	LPtokenContractTest = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
+	WBTCContractTest    = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
+)
+
+const (
+	GethRPC      = "10.2.0.1:8545"
+	BlockBookBTC = "10.2.0.1:9130"
+	BlockBookETH = "10.2.0.1:9131"
+	StopTrigger  = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
+)
+
+var BootstrapNodeMain = []string{
+	"116.203.5.116:12121",
+	"116.203.5.120:12122",
+}
+
+var BootstrapNodeTest = []string{
+	"116.203.5.116:12121",
+	"116.203.5.120:12122",
+}
+
+var BnbSeedNodesMain = []string{
+	"tcp://dataseed2.defibit.io:80",
 }
 
 const baseConfig = `
@@ -57,7 +67,6 @@ compress = true
 testnet = **is_testnet**
 coin_1 = "**coin_A**"
 coin_2 = "**coin_B**"
-stake_coin = "SWINGBY-888"
 stop_trigger_uri = "**stop_trigger_uri**"
 # (using defaults in code)
 # fee_percent = 0.2
@@ -67,7 +76,7 @@ stop_trigger_uri = "**stop_trigger_uri**"
 
 [tss]
 threshold = **threshold_placeholder**
-keygen_until = "2020-07-23T12:00:00Z"
+keygen_until = "2020-12-13T12:00:00Z"
 
 [btc]
 rest_uri = "http://**btc_blockbook_endpoint**"
@@ -93,7 +102,7 @@ stake_addr = "**stake_addr**"
 type NodeConfig struct {
 	Network          string
 	Moniker          string
-	BootstrapNode    string
+	BootstrapNode    []string
 	Domain           string
 	PreferredURI     string
 	BNBSeed          string
@@ -123,11 +132,11 @@ func NewNodeConfig() *NodeConfig {
 		CoinA:          "WBTC",
 		CoinB:          "BTC",
 		GethRPC:        GethRPC,
-		BNBSeed:        BnbSeedNodes[0],
+		BNBSeed:        BnbSeedNodesMain[0],
 		BlockBookBTC:   BlockBookBTC,
 		BlockBookETH:   BlockBookETH,
 		KeygenUntil:    initTime.Format(time.RFC3339),
-		BootstrapNode:  BootstrapNode,
+		BootstrapNode:  BootstrapNodeMain,
 		Network:        Networks["1"],
 		Moniker:        "Default Node",
 		WalletContract: WalletContract,
@@ -142,7 +151,7 @@ func (n *NodeConfig) SetMainnet() {
 	n.IsTestnet = false
 	n.WalletContract = WalletContract
 	n.LPtoken = LPtokenContract
-	n.BootstrapNode = BootstrapNode
+	n.BootstrapNode = BootstrapNodeMain
 	n.WBTCContract = WBTCContract
 }
 

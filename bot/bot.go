@@ -301,7 +301,7 @@ func (b *Bot) Start() {
 				b.isConfirmed["setup_infura"] = true
 				b.mu.Unlock()
 				go func() {
-					time.Sleep(20 * time.Second)
+					time.Sleep(10 * time.Second)
 					b.mu.Lock()
 					b.isConfirmed["setup_infura"] = false
 					b.mu.Unlock()
@@ -348,7 +348,7 @@ func (b *Bot) Start() {
 				b.isConfirmed["deploy_infura"] = true
 				b.mu.Unlock()
 				go func() {
-					time.Sleep(20 * time.Second)
+					time.Sleep(10 * time.Second)
 					b.mu.Lock()
 					b.isConfirmed["deploy_infura"] = false
 					b.mu.Unlock()
@@ -421,11 +421,44 @@ func (b *Bot) Start() {
 				continue
 			}
 			extVars := map[string]string{
-				"HOST_USER":      b.hostUser,
-				"TAG":            "test1",
-				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
-				"K_UNTIL":        b.nConf.KeygenUntil,
-				"LOG_LEVEL":      "DEBUG",
+				"HOST_USER":        b.hostUser,
+				"TAG":              "test1",
+				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
+				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
+				"K_UNTIL":          b.nConf.KeygenUntil,
+				"LOG_LEVEL":        "INFO",
+			}
+			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
+			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
+				b.cooldown()
+			}
+			onError := func(err error) {
+				log.Error(err)
+				b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
+				b.cooldown()
+			}
+			b.execAnsible(path, extVars, onSuccess, onError)
+			continue
+		}
+
+		if cmd == "/deploy_node_debug" {
+			if b.checkProcess() {
+				continue
+			}
+			if b.syncProgress <= 99.99 {
+				b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
+				b.cooldown()
+				continue
+			}
+			extVars := map[string]string{
+				"HOST_USER":        b.hostUser,
+				"TAG":              "test1",
+				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
+				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
+				"K_UNTIL":          b.nConf.KeygenUntil,
+				"LOG_LEVEL":        "DEBUG",
 			}
 			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
 			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
