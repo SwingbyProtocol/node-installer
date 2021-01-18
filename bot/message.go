@@ -49,7 +49,7 @@ func (b *Bot) setupIPAndAskUserNameText() string {
 	text := fmt.Sprintf(`
 OK. Your server IP is %s, 
 [Configuration step 2/2]
-Please put your Server Username 
+Please put your Server Login Username 
 
 now: <b>%s</b>
 
@@ -60,8 +60,11 @@ if you want to skip, type 'none'
 
 func (b *Bot) setupUsernameAndLoadSSHkeyText() string {
 	text := fmt.Sprintf(`
-OK. Your server User name is <b>%s</b>
-...
+OK. Your server Login Username is 
+
+<b>%s</b>
+
+.....
 SSH_KEY is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
 `, b.hostUser)
@@ -70,8 +73,8 @@ Let's setup your bot => /setup_your_bot
 
 func makeDeployBotMessage() string {
 	text := fmt.Sprintf(`
-OK. Starting deployment... BOT is moving out to your server....
-
+OK. Starting deployment... 
+Your bot is moving out to your server....
 	`)
 	return text
 }

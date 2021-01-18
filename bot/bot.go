@@ -87,11 +87,13 @@ func (b *Bot) Start() {
 	b.api.SetTimeout(20 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	log.Printf("Authorized on account %s\n", b.bot.Self.UserName)
+	log.Infof("Authorized on account %s", b.bot.Self.UserName)
 
 	b.loadSystemEnv()
 	b.loadHostAndKeys()
 	b.nConf.loadConfig()
+
+	log.Infof("Now keygenUntil is %s", b.nConf.KeygenUntil)
 
 	ticker := time.NewTicker(30 * time.Second)
 	b.checkBlockBooks()
@@ -571,7 +573,7 @@ func (b *Bot) updateETHAddr(msg string) {
 		b.nConf.CoinB = "BTC"
 	case network3:
 		b.nConf.SetTestnet()
-		b.nConf.SetTSSGroup(25, 50)
+		b.nConf.SetTSSGroup(50, 25)
 		b.nConf.CoinA = "BTCE"
 		b.nConf.CoinB = "BTC"
 	case network4:

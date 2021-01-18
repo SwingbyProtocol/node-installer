@@ -66,7 +66,6 @@ stop_trigger_uri = "**stop_trigger_uri**"
 # min_amount_refund = 0.001
 
 [tss]
-participants = **participants_placeholder**
 threshold = **threshold_placeholder**
 keygen_until = "2020-07-23T12:00:00Z"
 
@@ -160,9 +159,9 @@ func (n *NodeConfig) SetDomain(domain string) {
 	n.PreferredURI = fmt.Sprintf("https://%s", domain)
 }
 
-func (n *NodeConfig) SetTSSGroup(threshold int, members int) {
-	n.Threshold = threshold
+func (n *NodeConfig) SetTSSGroup(members int, threshold int) {
 	n.Members = members
+	n.Threshold = threshold
 }
 
 func (n *NodeConfig) storeConfig() error {
@@ -174,8 +173,8 @@ func (n *NodeConfig) storeConfig() error {
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stop_trigger_uri**", n.StopTrigger)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**is_testnet**", fmt.Sprintf("%t", n.IsTestnet))
 
+	//newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", n.Members))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", n.Threshold))
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", n.Members))
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", n.BlockBookBTC)
 
