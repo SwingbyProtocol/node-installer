@@ -29,13 +29,15 @@ const (
 )
 
 var BootstrapNodeMain = []string{
-	"116.203.5.116:12121",
-	"116.203.5.120:12122",
+	"49.12.68.127:12131",  // https://moonfly-re-0078.yen.farm
+	"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
+	"116.203.56.22:12133", // https://motion-re-0080.yen.farm
 }
 
 var BootstrapNodeTest = []string{
-	"116.203.5.116:12121",
-	"116.203.5.120:12122",
+	"49.12.68.127:12131",  // https://moonfly-re-0078.yen.farm
+	"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
+	"116.203.56.22:12133", // https://motion-re-0080.yen.farm
 }
 
 var BnbSeedNodesMain = []string{

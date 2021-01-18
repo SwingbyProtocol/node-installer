@@ -4,8 +4,9 @@ import "fmt"
 
 func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
-Hello 😊, This is a deploy bot
-You can setup node via this bot.
+Hello 😊
+This is a Swingby node-installer bot.
+You can install your meta node and manage node via this bot.
 
 [Setup Node]
 /setup_server_config to configure your server
@@ -278,7 +279,7 @@ You subdomain is not attahced. Please kindly check error logs
 }
 func makeDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Upgrading your node....
+Deploying your Swingby node....
 	`)
 	return text
 }
@@ -286,7 +287,7 @@ Upgrading your node....
 func rejectDeployNodeMessage() string {
 	text := fmt.Sprintf(`
 Infura syncing is not completed. 
-Could you try after completed infura syncing?
+Could you try this after completed infura syncing?
 /check_status
 `)
 	return text
@@ -294,7 +295,8 @@ Could you try after completed infura syncing?
 
 func doneDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Your Node is upgraded!
+Your Swingby node is deployed! 
+(Updated to latest version)
 	`)
 	return text
 }

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	version     = "0.1.0-beta"
+	version     = "v0.1.0"
 	dataPath    = "./data"
 	network1    = "mainnet_btc_eth"
 	network2    = "mainnet_btc_bc"
@@ -84,7 +84,7 @@ func NewBot(token string) (*Bot, error) {
 
 func (b *Bot) Start() {
 	b.bot.Debug = false
-	b.api.SetTimeout(20 * time.Second)
+	b.api.SetTimeout(15 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	log.Infof("Authorized on account %s", b.bot.Self.UserName)
@@ -425,6 +425,7 @@ func (b *Bot) Start() {
 				"TAG":              "test1",
 				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
+				"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
 				"K_UNTIL":          b.nConf.KeygenUntil,
 				"LOG_LEVEL":        "INFO",
 			}
@@ -457,6 +458,7 @@ func (b *Bot) Start() {
 				"TAG":              "test1",
 				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
+				"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
 				"K_UNTIL":          b.nConf.KeygenUntil,
 				"LOG_LEVEL":        "DEBUG",
 			}
