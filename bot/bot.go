@@ -111,6 +111,12 @@ func (b *Bot) Start() {
 	}
 
 	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+		if update.Message.From == nil {
+			continue
+		}
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
 		commands := strings.Split(update.Message.Text, "@")
@@ -749,7 +755,7 @@ func (b *Bot) loadHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
-	log.Infof("Loaded target IPv4 for your server from hosts file: %s", host)
+	log.Infof("Loaded target IPv4:%s for your server from hosts file.", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {
@@ -845,6 +851,30 @@ func (b *Bot) checkBlockBooks() {
 		b.isSyncedMempoolETH = true
 	}
 	b.mu.Unlock()
+
+	b.mu.Lock()
+	log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
+	if b.stuckCountBTC >= 50 || b.stuckCountETH >= 50 {
+		b.stuckCountBTC = 0
+		b.stuckCountETH = 0
+		log.Info("Restarting blockbook...")
+		b.restartBlockbook()
+	}
+	b.mu.Unlock()
+}
+
+func (b *Bot) restartBlockbook() {
+	extVars := map[string]string{
+		"HOST_USER": b.hostUser,
+	}
+	path := fmt.Sprintf("./playbooks/mainnet_blockbook.yml")
+	onSuccess := func() {
+		log.Info("Blockbooks are restarted")
+	}
+	onError := func(err error) {
+		log.Error(err)
+	}
+	b.execAnsible(path, extVars, onSuccess, onError)
 }
 
 func generateHostsfile(nodeIP string, target string) error {

@@ -5,17 +5,18 @@ import "fmt"
 func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊
-This is a Swingby node-installer bot.
+This is <b>Swingby node-installer bot. (%s)</b>
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
 /setup_server_config to configure your server
 /setup_your_bot to move out your bot to your server.
-`)
+`, b.version)
 	if b.isRemote {
 		text = fmt.Sprintf(`
-Hello 😊, This is a deploy bot
-You can setup node via this bot.
+Hello 😊
+This is <b>Swingby node-installer bot. (%s)</b>
+You can install your meta node and manage node via this bot.
 
 [Setup Node]
 /setup_node to configure your node
@@ -29,10 +30,10 @@ You can setup node via this bot.
 /setup_infura to setup infura containers
 /deploy_infura to deploy infura services into your server
 
-[Node management]
+[System management]
 /check_status to check status of nodes
 /upgrade_your_bot to upgrade your bot itself
-	`)
+	`, b.version)
 	}
 	return text
 }
@@ -105,11 +106,8 @@ OK. Upgrading your bot....
 func (b *Bot) doneUpgradeBotMessage() string {
 	text := fmt.Sprintf(`
 System has been upgraded! 
-
-Version: <b>%s</b>
-
 You can start with /start command.
-	`, b.version)
+	`)
 	return text
 }
 
@@ -295,7 +293,7 @@ Could you try this after completed infura syncing?
 
 func doneDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Your Swingby node is deployed! 
+Your Swingby node has been deployed! 
 (Updated to latest version)
 	`)
 	return text

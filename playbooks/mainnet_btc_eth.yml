@@ -2,6 +2,8 @@
   hosts: server
   user: "{{HOST_USER}}"
   become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: remove swingby node
       shell: |

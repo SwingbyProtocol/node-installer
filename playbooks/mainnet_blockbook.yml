@@ -1,0 +1,14 @@
+- name: Restart blokbooks
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: restart infura nodes
+      shell: |
+        docker restart bb_btc_mainnet bb_eth_mainnet
+
+      register: output
+
+    - debug: var=output.stdout_lines
