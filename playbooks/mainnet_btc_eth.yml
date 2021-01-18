@@ -23,7 +23,7 @@
           --log-opt max-size=10m --log-opt max-file=5 \
           swingbylabs/swapd-go:{{TAG}} \
           --home "/var/node_data" \
-          --logger.level "INFO" \
+          --logger.level {{LOG_LEVEL}} \
           -k {{K_UNTIL}} \
           --p2p.connect {{BOOTSTRAP_NODE}}
 

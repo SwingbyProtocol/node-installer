@@ -425,6 +425,7 @@ func (b *Bot) Start() {
 				"TAG":            "test1",
 				"BOOTSTRAP_NODE": b.nConf.BootstrapNode,
 				"K_UNTIL":        b.nConf.KeygenUntil,
+				"LOG_LEVEL":      "DEBUG",
 			}
 			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
 			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)

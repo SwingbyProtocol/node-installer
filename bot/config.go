@@ -16,7 +16,7 @@ const (
 	LPtokenContractTest = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
 	WBTCContract        = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
 	WBTCContractTest    = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	BootstrapNode       = "116.203.5.116:12121"
+	BootstrapNode       = "116.203.5.120:12122"
 	BootstrapNodeTest   = "51.158.121.128:12121"
 	GethRPC             = "10.2.0.1:8545"
 	BlockBookBTC        = "10.2.0.1:9130"
@@ -54,7 +54,7 @@ use_file_logger = true
 compress = true
 
 [swaps]
-testnet = "**is_testnet**"
+testnet = **is_testnet**
 coin_1 = "**coin_A**"
 coin_2 = "**coin_B**"
 stake_coin = "SWINGBY-888"
