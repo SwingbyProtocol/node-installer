@@ -19,7 +19,7 @@
     - name: setup bot
       shell: |
         docker rm -f {{CONT_NAME}} 2> /dev/null || true
-        docker pull swingbylabs/node-installer
+        docker pull swingbylabs/node-installer:{{TAG}}
         docker run -d \
           -v /var/swingby/node:/app/data \
           --name {{CONT_NAME}} \
@@ -31,7 +31,7 @@
           -e HOST_USER="{{HOST_USER}}" \
           -e SSH_KEY="{{SSH_KEY}}" \
           -e REMOTE="{{REMOTE}}" \
-          swingbylabs/node-installer
+          swingbylabs/node-installer:{{TAG}}
         docker system prune -f
       register: output
 

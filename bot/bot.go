@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	version     = "v0.1.0"
+	nodeVersion = "0.1.0"
+	botVersion  = "1.0.0"
 	dataPath    = "./data"
 	network1    = "mainnet_btc_eth"
 	network2    = "mainnet_btc_bc"
@@ -40,7 +41,8 @@ type Bot struct {
 	mu                 *sync.RWMutex
 	bot                *tgbotapi.BotAPI
 	api                *api.Resolver
-	version            string
+	nodeVersion        string
+	botVersion         string
 	hostUser           string
 	nodeIP             string
 	containerName      string
@@ -73,7 +75,7 @@ func NewBot(token string) (*Bot, error) {
 		mu:            new(sync.RWMutex),
 		bot:           b,
 		api:           api.NewResolver("", 200),
-		version:       version,
+		nodeVersion:   nodeVersion,
 		hostUser:      "root",
 		containerName: "node_installer",
 		nConf:         NewNodeConfig(),
@@ -118,399 +120,7 @@ func (b *Bot) Start() {
 			continue
 		}
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		commands := strings.Split(update.Message.Text, "@")
-		cmd := commands[0]
-
-		if cmd == "/start" {
-			if b.ID == 0 {
-				b.ID = update.Message.Chat.ID
-				b.SendMsg(b.ID, b.makeHelloText(), false, false)
-				continue
-			}
-			if !b.validateChat(update.Message.Chat.ID) {
-				continue
-			}
-			b.SendMsg(b.ID, b.makeHelloText(), false, false)
-			continue
-		}
-		if !b.validateChat(update.Message.Chat.ID) {
-			continue
-		}
-		// Handle for reply messages
-		if update.Message.ReplyToMessage != nil {
-			msg := update.Message.Text
-			prevMsg := update.Message.ReplyToMessage
-			mode := b.Messages[prevMsg.MessageID]
-			if mode == "setup_node_set_network" {
-				b.updateNetwork(msg)
-				continue
-			}
-
-			if mode == "setup_node_moniker" {
-				b.updateNodeMoniker(msg)
-			}
-			// if mode == "setup_node_btc_addr" {
-			// 	b.updateBTCAddr(msg)
-			// 	continue
-			// }
-			// if mode == "setup_node_bnb_addr" {
-			// 	b.updateBNBAddr(msg)
-			// 	continue
-			// }
-			if mode == "setup_node_eth_addr" {
-				b.updateETHAddr(msg)
-				continue
-			}
-			if mode == "setup_node_stake_addr" {
-				b.updateStakeAddr(msg)
-				continue
-			}
-			// Set server configs
-			if mode == "setup_ip_addr" {
-				b.setupIPAddr(msg)
-				continue
-			}
-			if mode == "setup_domain" {
-				b.setupDomain(msg)
-				continue
-			}
-			if mode == "setup_username" {
-				b.setupUser(msg)
-				continue
-			}
-		}
-
-		if cmd == "/setup_server_config" {
-			// Disable if remote is `true`
-			if b.isRemote {
-				continue
-			}
-			msg, err := b.SendMsg(b.ID, b.makeSetupIPText(), true, false)
-			if err != nil {
-				continue
-			}
-			b.Messages[msg.MessageID] = "setup_ip_addr"
-			continue
-		}
-
-		if cmd == "/setup_domain" {
-			newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true, false)
-			if err != nil {
-				continue
-			}
-			b.Messages[newMsg.MessageID] = "setup_domain"
-			continue
-		}
-
-		if cmd == "/setup_your_bot" {
-			// Disable if remote is `true`
-			if b.isRemote {
-				continue
-			}
-			err := b.loadHostAndKeys()
-			if err != nil {
-				log.Info(err)
-				continue
-			}
-			if b.checkProcess() {
-				continue
-			}
-			b.SendMsg(b.ID, makeDeployBotMessage(), false, false)
-			extVars := map[string]string{
-				"CONT_NAME": b.containerName,
-				"HOST_USER": b.hostUser,
-				"BOT_TOKEN": b.bot.Token,
-				"CHAT_ID":   strconv.Itoa(int(b.ID)),
-				"SSH_KEY":   b.sshKey,
-				"IP_ADDR":   b.nodeIP,
-				"REMOTE":    "true",
-			}
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployBotMessage(), false, false)
-				log.Info("Bot is moved out to your server!")
-				b.cooldown()
-				os.Exit(0)
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/setup_node" {
-			msg, err := b.SendMsg(b.ID, b.makeNodeText(), true, false)
-			if err != nil {
-				continue
-			}
-			b.Messages[msg.MessageID] = "setup_node_set_network"
-			continue
-		}
-
-		if cmd == "/upgrade_your_bot" {
-			if !b.isRemote {
-				continue
-			}
-			err := b.loadHostAndKeys()
-			if err != nil {
-				log.Info(err)
-				continue
-			}
-			if b.checkProcess() {
-				continue
-			}
-			b.SendMsg(b.ID, makeUpgradeBotMessage(), false, false)
-			contName := b.containerName
-			if b.containerName == "node_installer" {
-				contName = "node_installer_fork"
-			} else {
-				contName = "node_installer"
-			}
-			extVars := map[string]string{
-				"CONT_NAME": contName,
-				"HOST_USER": b.hostUser,
-				"BOT_TOKEN": b.bot.Token,
-				"CHAT_ID":   strconv.Itoa(int(b.ID)),
-				"SSH_KEY":   b.sshKey,
-				"IP_ADDR":   b.nodeIP,
-				"REMOTE":    "true",
-			}
-			onSuccess := func() {
-				b.SendMsg(b.ID, b.doneUpgradeBotMessage(), false, false)
-				b.cooldown()
-				os.Exit(0)
-				// extVars := map[string]string{
-				// 	"CONT_NAME": b.containerName,
-				// 	"HOST_USER": b.hostUser,
-				// }
-				// b.execAnsible("./playbooks/bot_remove.yml", extVars, nil, nil)
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/setup_infura" {
-			if b.checkProcess() {
-				continue
-			}
-			if !b.isConfirmed["setup_infura"] {
-				b.SendMsg(b.ID, confirmSetupInfuraMessage(), false, false)
-				b.mu.Lock()
-				b.isConfirmed["setup_infura"] = true
-				b.mu.Unlock()
-				go func() {
-					time.Sleep(10 * time.Second)
-					b.mu.Lock()
-					b.isConfirmed["setup_infura"] = false
-					b.mu.Unlock()
-				}()
-				b.cooldown()
-				continue
-			}
-			b.mu.Lock()
-			b.isConfirmed["setup_infura"] = false
-			b.mu.Unlock()
-			extVars := map[string]string{
-				"HOST_USER": b.hostUser,
-			}
-			b.SendMsg(b.ID, makeSetupInfuraMessage(), false, false)
-			targetPath := "./playbooks/mainnet_infura_setup.yml"
-			if b.nConf.IsTestnet {
-				targetPath = "./playbooks/testnet_infura_setup.yml"
-			}
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneSetupInfuraMessage(), false, false)
-				b.cooldown()
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorSetupInfuraMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible(targetPath, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/deploy_infura" {
-			if b.checkProcess() {
-				continue
-			}
-			if b.syncProgress < 99.99 {
-				b.SendMsg(b.ID, rejectDeployInfuraMessage(), false, false)
-				b.cooldown()
-				continue
-			}
-			if !b.isConfirmed["deploy_infura"] {
-				b.SendMsg(b.ID, confirmDeployInfuraMessage(), false, false)
-				b.mu.Lock()
-				b.isConfirmed["deploy_infura"] = true
-				b.mu.Unlock()
-				go func() {
-					time.Sleep(10 * time.Second)
-					b.mu.Lock()
-					b.isConfirmed["deploy_infura"] = false
-					b.mu.Unlock()
-				}()
-				b.cooldown()
-				continue
-			}
-			b.mu.Lock()
-			b.isConfirmed["deploy_infura"] = false
-			b.mu.Unlock()
-			extVars := map[string]string{
-				"HOST_USER": b.hostUser,
-			}
-			b.SendMsg(b.ID, makeDeployInfuraMessage(), false, false)
-			targetPath := "./playbooks/mainnet_infura.yml"
-			if b.nConf.IsTestnet {
-				targetPath = "./playbooks/testnet_infura.yml"
-			}
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployInfuraMessage(), false, false)
-				b.cooldown()
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployInfuraMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible(targetPath, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/check_status" {
-			if b.checkProcess() {
-				continue
-			}
-			extVars := map[string]string{
-				"HOST_USER": b.hostUser,
-				"IP_ADDR":   b.nodeIP,
-			}
-			b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
-			path := fmt.Sprintf("./playbooks/mainnet_check.yml")
-			onSuccess := func() {
-				syncDataSize, _ := getDirSizeFromFile()
-				parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
-				if parcent >= 100 {
-					b.syncProgress = 99.99
-				}
-				if b.isSyncedBTC && b.isSyncedETH {
-					b.syncProgress = 100.00
-				}
-				b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
-				b.cooldown()
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible(path, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/deploy_node" {
-			if b.checkProcess() {
-				continue
-			}
-			if b.syncProgress <= 99.99 {
-				b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
-				b.cooldown()
-				continue
-			}
-			extVars := map[string]string{
-				"HOST_USER":        b.hostUser,
-				"TAG":              "test1",
-				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
-				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
-				"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
-				"K_UNTIL":          b.nConf.KeygenUntil,
-				"LOG_LEVEL":        "INFO",
-			}
-			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
-			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
-				b.cooldown()
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible(path, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/deploy_node_debug" {
-			if b.checkProcess() {
-				continue
-			}
-			if b.syncProgress <= 99.99 {
-				b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
-				b.cooldown()
-				continue
-			}
-			extVars := map[string]string{
-				"HOST_USER":        b.hostUser,
-				"TAG":              "test1",
-				"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
-				"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
-				"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
-				"K_UNTIL":          b.nConf.KeygenUntil,
-				"LOG_LEVEL":        "DEBUG",
-			}
-			b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
-			path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
-			onSuccess := func() {
-				b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
-				b.cooldown()
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
-				b.cooldown()
-			}
-			b.execAnsible(path, extVars, onSuccess, onError)
-			continue
-		}
-
-		if cmd == "/enable_domain" {
-			if b.checkProcess() {
-				continue
-			}
-			extVars := map[string]string{
-				"HOST_USER": b.hostUser,
-				"DOMAIN":    b.nConf.Domain,
-			}
-			b.SendMsg(b.ID, b.makeDomainMessage(), false, false)
-			path := fmt.Sprintf("./playbooks/enable_domain.yml")
-			onSuccess := func() {
-				b.SendMsg(b.ID, b.doneDomainMessage(), false, false)
-				b.cooldown()
-
-			}
-			onError := func(err error) {
-				log.Error(err)
-				b.SendMsg(b.ID, errorDomainMessage(), false, false)
-				b.cooldown()
-
-			}
-			b.execAnsible(path, extVars, onSuccess, onError)
-			continue
-		}
-		// Default response of say hi
-		if cmd == "hi" || cmd == "Hi" {
-			b.SendMsg(b.ID, `Let's start with /start`, false, false)
-		}
+		b.handleMessage(update.Message)
 	}
 }
 
@@ -534,6 +144,7 @@ func (b *Bot) cooldown() {
 	b.isLocked = false
 	b.mu.Unlock()
 }
+
 func (b *Bot) setupIPAddr(msg string) {
 	err := generateHostsfile(msg, "server")
 	if err != nil {
@@ -635,32 +246,6 @@ func (b *Bot) updateETHAddr(msg string) {
 	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
 }
-
-// func (b *Bot) updateBNBAddr(msg string) {
-// 	address := msg
-// 	check := b.checkInput(address, "setup_node_bnb_addr")
-// 	if check == 0 {
-// 		return
-// 	}
-// 	if check == 1 {
-// 		b.nConf.RewardAddressBNB = address
-// 	}
-// 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true)
-// 	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
-// }
-
-// func (b *Bot) updateBTCAddr(msg string) {
-// 	address := msg
-// 	check := b.checkInput(address, "setup_node_btc_addr")
-// 	if check == 0 {
-// 		return
-// 	}
-// 	if check == 1 {
-// 		b.nConf.RewardAddressBTC = address
-// 	}
-// 	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressBNB(), true)
-// 	b.Messages[newMsg.MessageID] = "setup_node_bnb_addr"
-// }
 
 func (b *Bot) updateNodeMoniker(msg string) {
 	moniker := msg

@@ -5,17 +5,19 @@ import "fmt"
 func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊
-This is <b>Swingby node-installer bot. (%s)</b>
+This is <b>Swingby node-installer bot</b>
+version (node-v%s, bot-v%s)
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
 /setup_server_config to configure your server
 /setup_your_bot to move out your bot to your server.
-`, b.version)
+`, b.nodeVersion, b.botVersion)
 	if b.isRemote {
 		text = fmt.Sprintf(`
 Hello 😊
-This is <b>Swingby node-installer bot. (%s)</b>
+This is <b>Swingby node-installer bot</b>
+version (node-v%s, bot-v%s)
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
@@ -33,7 +35,7 @@ You can install your meta node and manage node via this bot.
 [System management]
 /check_status to check status of nodes
 /upgrade_your_bot to upgrade your bot itself
-	`, b.version)
+	`, b.nodeVersion, b.botVersion)
 	}
 	return text
 }
