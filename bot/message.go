@@ -112,18 +112,19 @@ You can start with /start command.
 }
 
 func (b *Bot) makeNodeText() string {
+
+	// 2) BTC --- Binance chain (mainnet)
+
+	// 3) BTC --- Binance chain (testnet)
+	// 4) BTC --- Ethereum (goerli)
 	text := fmt.Sprintf(`
 OK. 
-Next step is you can generate node config
-Please put network number from following list.
+This steps generates node config
+Please put target network number on following list.
 
 now: <b>%s</b>
 
 1) BTC --- Ethereum (mainnet)
-2) BTC --- Binance chain (mainnet)
-
-3) BTC --- Binance chain (testnet) 
-4) BTC --- Ethereum (goerli)
 
 [Configuration step 1/4]
 `, b.nConf.Network)
@@ -207,7 +208,7 @@ OK. Setup your p2p node keys...
 func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
-Your Node configs are updated. 
+Your Swingby node config has been updated. 
 Let's start deploy => /deploy_node
 	`)
 	return text
@@ -247,7 +248,6 @@ You have to attach domain A record to your server before use
 
 func (b *Bot) makeDomainMessage() string {
 	text := fmt.Sprintf(`
-Deploying nginx ....
 Your subdomain will be attached to your server
 
 <b>%s</b> 
@@ -256,13 +256,14 @@ to
 
 <b>%s</b>
 
+Deploying Nginx....
 `, b.nConf.Domain, b.nodeIP)
 	return text
 }
 
 func (b *Bot) doneDomainMessage() string {
 	text := fmt.Sprintf(`
-Your subdomain is attached. 
+Your subdomain has been attached. 
 Let's access https://%s
 
 	`, b.nConf.Domain)
@@ -284,9 +285,9 @@ Deploying your Swingby node....
 
 func rejectDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Infura syncing is not completed. 
-Could you try this after completed infura syncing?
-/check_status
+This command is not avaialbe now.
+Infura syncing should be 100.00%% done
+Please try /check_status first.
 `)
 	return text
 }

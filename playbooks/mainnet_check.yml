@@ -5,6 +5,20 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
+    - name: download node-agent & start agent
+      shell: |
+        rm -rf node-agent-master
+        wget -q https://github.com/SwingbyProtocol/node-agent/archive/master.tar.gz
+        tar -xf master.tar.gz         
+        rm master.tar.gz
+        cd node-agent-master
+        killall node-agent
+        nohup bin/linux_amd64/node-agent -c swingby_node -o /var/swingby/agent.json > node-agent.log &
+        
+      register: output
+
+    - debug: var=output.stdout_lines
+
     - name: check infura nodes
       shell: |
         du -bs /var/swingby/mainnet
