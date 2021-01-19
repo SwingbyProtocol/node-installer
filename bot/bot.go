@@ -76,6 +76,7 @@ func NewBot(token string) (*Bot, error) {
 		bot:           b,
 		api:           api.NewResolver("", 200),
 		nodeVersion:   nodeVersion,
+		botVersion:    botVersion,
 		hostUser:      "root",
 		containerName: "node_installer",
 		nConf:         NewNodeConfig(),

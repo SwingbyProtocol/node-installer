@@ -1,4 +1,5 @@
 # node-installer
+[![Go Report Card](https://goreportcard.com/badge/github.com/SwingbyProtocol/node-installer)](https://goreportcard.com/report/github.com/SwingbyProtocol/node-installer)
 
 ## Requirements
 

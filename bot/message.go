@@ -6,7 +6,7 @@ func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-version (node-v%s, bot-v%s)
+[versions: <b>node-v%s, bot-v%s</b>]
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
@@ -17,7 +17,7 @@ You can install your meta node and manage node via this bot.
 		text = fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-version (node-v%s, bot-v%s)
+[versions: <b>node-v%s, bot-v%s</b>]
 You can install your meta node and manage node via this bot.
 
 [Setup Node]

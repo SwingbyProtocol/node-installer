@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#docker build -t swingbylabs/node-installer . 
+#docker build -t swingbylabs/node-installer .
 
 #docker push swingbylabs/node-installer
 
