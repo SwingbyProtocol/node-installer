@@ -74,8 +74,7 @@ OK. Your server Login Username is
 
 <b>%s</b>
 
-.....
-SSH_KEY is loaded. Your server is ready. 
+...SSH_KEY file is loaded. Your server is ready. 
 Let's setup your bot => /setup_your_bot
 `, b.hostUser)
 	return text
@@ -408,8 +407,8 @@ func (b *Bot) checkNodeMessage() string {
 <b>%.2f%%</b> completed.
 
 [Blockchain syncing status]
-BTC_Block: <b>%d</b> ( sync: %.3f%% %s)
-ETH_Block: <b>%d</b> ( sync: %.3f%% %s)
+BTC: <b>#%d</b> (%.3f%% %s)
+ETH: <b>#%d</b> (%.3f%% %s)
 	`, b.syncProgress, b.bestHeightBTC, b.syncBTCRatio, isMemBTC, b.bestHeightETH, b.syncETHRatio, isMemETH)
 	b.mu.Unlock()
 	return text

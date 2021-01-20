@@ -122,8 +122,9 @@ func (b *Bot) Start() {
 
 func (b *Bot) startBBKeeper() {
 	ticker := time.NewTicker(30 * time.Second)
-	b.checkBlockBooks()
 	go func() {
+		time.Sleep(10 * time.Second)
+		b.checkBlockBooks()
 		for {
 			<-ticker.C
 			b.checkBlockBooks()
@@ -175,7 +176,7 @@ func (b *Bot) setupUser(msg string) {
 	}
 	err := b.loadHostAndKeys()
 	if err != nil {
-		text := fmt.Sprintf("SSH_KEY load error. please check data/ssh_key file again")
+		text := fmt.Sprintf("SSH_KEY loading error. please check data/ssh_key file again")
 		b.SendMsg(b.ID, text, false, false)
 		return
 	}
@@ -400,7 +401,12 @@ func (b *Bot) checkBlockBooks() {
 	resBTC := BlockBook{}
 	resETH := BlockBook{}
 	uriBTC := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
-	b.api.GetRequest(uriBTC, &resBTC)
+	err := b.api.GetRequest(uriBTC, &resBTC)
+	if err != nil {
+		b.mu.Lock()
+		b.stuckCountBTC++
+		b.mu.Unlock()
+	}
 	if b.bestHeightBTC == resBTC.BlockBook.BestHeight && resBTC.BlockBook.InSync {
 		b.mu.Lock()
 		b.stuckCountBTC++
@@ -422,8 +428,12 @@ func (b *Bot) checkBlockBooks() {
 	b.mu.Unlock()
 
 	uriETH := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
-	b.api.GetRequest(uriETH, &resETH)
-
+	err = b.api.GetRequest(uriETH, &resETH)
+	if err != nil {
+		b.mu.Lock()
+		b.stuckCountETH++
+		b.mu.Unlock()
+	}
 	if b.bestHeightETH == resETH.BlockBook.BestHeight && resETH.BlockBook.InSync {
 		b.mu.Lock()
 		b.stuckCountETH++
