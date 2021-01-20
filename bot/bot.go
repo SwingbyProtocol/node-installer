@@ -387,7 +387,7 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 		Exec:              &BotExecute{},
 	}
 	go func() {
-		log.Info(playbook.String())
+		//log.Info(playbook.String())
 		err := playbook.Run()
 		if err != nil {
 			onError(err)
