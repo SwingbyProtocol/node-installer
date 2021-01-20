@@ -366,7 +366,7 @@ func (b *Bot) handleDeployNode(cmd string) {
 			"K_UNTIL":          b.nConf.KeygenUntil,
 			"LOG_LEVEL":        "INFO",
 		}
-		b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
+		b.SendMsg(b.ID, b.makeDeployNodeMessage(), false, false)
 		path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
@@ -401,7 +401,7 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 			"K_UNTIL":          b.nConf.KeygenUntil,
 			"LOG_LEVEL":        "DEBUG",
 		}
-		b.SendMsg(b.ID, makeDeployNodeMessage(), false, false)
+		b.SendMsg(b.ID, b.makeDeployNodeMessage(), false, false)
 		path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)

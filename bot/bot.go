@@ -98,14 +98,9 @@ func (b *Bot) Start() {
 
 	log.Infof("Now keygenUntil is %s", b.nConf.KeygenUntil)
 
-	ticker := time.NewTicker(30 * time.Second)
-	b.checkBlockBooks()
-	go func() {
-		for {
-			<-ticker.C
-			b.checkBlockBooks()
-		}
-	}()
+	if b.isRemote {
+		b.startBBKeeper()
+	}
 
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
@@ -123,6 +118,17 @@ func (b *Bot) Start() {
 		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		b.handleMessage(update.Message)
 	}
+}
+
+func (b *Bot) startBBKeeper() {
+	ticker := time.NewTicker(30 * time.Second)
+	b.checkBlockBooks()
+	go func() {
+		for {
+			<-ticker.C
+			b.checkBlockBooks()
+		}
+	}()
 }
 
 func (b *Bot) checkProcess() bool {
@@ -440,7 +446,7 @@ func (b *Bot) checkBlockBooks() {
 
 	b.mu.Lock()
 	log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
-	if b.stuckCountBTC >= 50 || b.stuckCountETH >= 50 {
+	if b.stuckCountBTC >= 70 || b.stuckCountETH >= 50 {
 		b.stuckCountBTC = 0
 		b.stuckCountETH = 0
 		log.Info("Restarting blockbook...")

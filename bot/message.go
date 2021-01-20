@@ -6,18 +6,20 @@ func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-[versions: <b>node-v%s, bot-v%s</b>]
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
 /setup_server_config to configure your server
 /setup_your_bot to move out your bot to your server.
+
+[Version]
+Swingby Node: <b>v%s</b>
+This Bot: <b>v%s</b>
 `, b.nodeVersion, b.botVersion)
 	if b.isRemote {
 		text = fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-[versions: <b>node-v%s, bot-v%s</b>]
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
@@ -33,8 +35,12 @@ You can install your meta node and manage node via this bot.
 /deploy_infura to deploy infura services into your server
 
 [System management]
-/check_status to check status of nodes
-/upgrade_your_bot to upgrade your bot itself
+/check_status to check status of system
+/upgrade_your_bot to upgrade this bot app
+
+[Version]
+Swingby Node: <b>v%s</b>
+This Bot: <b>v%s</b>
 	`, b.nodeVersion, b.botVersion)
 	}
 	return text
@@ -278,10 +284,10 @@ You subdomain is not attahced. Please kindly check error logs
 	`)
 	return text
 }
-func makeDeployNodeMessage() string {
+func (b *Bot) makeDeployNodeMessage() string {
 	text := fmt.Sprintf(`
-Deploying your Swingby node....
-	`)
+Deploying your Swingby node.... (v%s)
+	`, b.nodeVersion)
 	return text
 }
 
@@ -311,7 +317,7 @@ Deployment is not completed. Please kindly check error logs
 
 func confirmSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
-This command removes your blockchain data.
+<b>This command removes your blockchain data.</b>
 And blockchain data will be rollback to latest snapshot.
 If you sure this, please go ahead /setup_infura
 `)
@@ -352,7 +358,7 @@ Could you try check status of syncing /check_status
 func confirmDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 This command will restarts geth nodes.
-it may takes a long time to sync blockchain again.
+<b>it may takes a long time to sync blockchain again. </b>
 if you sure this, please go ahead /deploy_infura
 `)
 	return text
