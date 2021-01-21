@@ -327,15 +327,15 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		path := fmt.Sprintf("./playbooks/mainnet_check.yml")
 		onSuccess := func() {
 			syncDataSize, _ := getDirSizeFromFile()
-			parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
-			if parcent < 100 {
-				b.syncProgress = parcent
-			}
-			if parcent >= 100 {
+			parcent := 100.00 * float64(syncDataSize) / float64(maxDataSize)
+			if parcent >= 100.00 {
 				b.syncProgress = 99.99
 			}
 			if b.isSyncedBTC && b.isSyncedETH {
 				b.syncProgress = 100.00
+			}
+			if parcent < 99.99 {
+				b.syncProgress = parcent
 			}
 			b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
 			b.cooldown()

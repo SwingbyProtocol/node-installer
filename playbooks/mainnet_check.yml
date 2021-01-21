@@ -7,7 +7,9 @@
   tasks:
     - name: check infura nodes
       shell: |
-        du -bs /var/swingby/mainnet
+        if [ ! -d "/var/swingby/mainnet" ]; then 
+          sudo du -bs /var/swingby/mainnet
+        fi
       register: output
     - local_action:
         module: copy
@@ -25,4 +27,3 @@
       register: output
 
     - debug: var=output.stdout_lines
-

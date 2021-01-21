@@ -514,7 +514,7 @@ func getDirSizeFromFile() (int, error) {
 		return 0, err
 	}
 	strs := strings.Split(string(str), "\t")
-	log.Info(strs)
+	//log.Info(strs)
 	intNum, _ := strconv.Atoi(strs[0])
 	return intNum, nil
 }
