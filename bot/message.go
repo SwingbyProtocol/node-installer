@@ -88,9 +88,19 @@ Your bot is moving out to your server....
 	return text
 }
 
+func rejectDeployBotByDiskSpaceMessage() string {
+	text := fmt.Sprintf(`
+Oh sorry. 
+The server hasn't enough Disk space on "/var" mount path.
+Minimum <b>1.5TB</b> space required to install Swingby node.
+	`)
+	return text
+}
+
 func errorDeployBotMessage() string {
 	text := fmt.Sprintf(`
-Oh something error is happened. Please kindly check server IP address, Username and SSH private key again.
+Oh something wrong. Please kindly check your
+IP address, login Username and SSH private key.
 	`)
 	return text
 }
@@ -187,7 +197,7 @@ description:
 
 <b>%s</b>
 
-Note: minimum stake amount is least 150,000 SWINGBYs
+<b>Note: minimum stake amount is least 150,000 SWINGBYs with 1 month lock<b>
 `, b.nConf.Memo)
 	return text
 }
@@ -325,16 +335,16 @@ If you sure this, please go ahead /setup_infura
 
 func makeSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
-Setup infura packages...
+Installing infura packages...
 `)
 	return text
 }
 
 func doneSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
-Syncing infura snapshot....
-(This process may takes too long time...)
-You can check the syncing progress with /check_status
+Syncing of the snapshot data....
+(This process may takes long time...)
+You can check the syncing progress by /check_status
 	`)
 	return text
 }
@@ -348,8 +358,8 @@ Someting wrong. Please kindly check error logs
 
 func rejectDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Syncing infura snapshot is not completed yet.
-Could you try check status of syncing /check_status
+Syncing progress is not completed yet.
+You can check the syncing progress by /check_status first.
 `)
 	return text
 }
@@ -372,7 +382,7 @@ Deploying infura containers....
 
 func doneDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Infura containers are upgraded!
+All infura containers are upgraded!
 Status check => /check_status
 	`)
 	return text
@@ -380,14 +390,14 @@ Status check => /check_status
 
 func errorDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Deployment has been rejected. Please kindly check error logs
+Deployment has been rejected. Please kindly check error logs.
 	`)
 	return text
 }
 
 func makeCheckNodeMessage() string {
 	text := fmt.Sprintf(`
-Getting latest node status...
+Getting the latest node status...
 `)
 	return text
 }
@@ -404,7 +414,7 @@ func (b *Bot) checkNodeMessage() string {
 	}
 	text := fmt.Sprintf(`
 [Syncing status]
-<b>%.2f%%</b> completed.
+<b>%.2f%%</b> finished.
 
 [Blockchain syncing status]
 BTC: <b>#%d</b> (%.3f%% %s)

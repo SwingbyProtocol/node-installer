@@ -1,13 +1,9 @@
 package bot
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -25,7 +21,6 @@ const (
 	network2    = "mainnet_btc_bc"
 	network3    = "testnet_tbtc_goerli"
 	network4    = "testnet_tbtc_bc"
-	maxDataSize = 817083983700
 )
 
 var Networks = map[string]string{
@@ -153,147 +148,6 @@ func (b *Bot) cooldown() {
 	b.mu.Unlock()
 }
 
-func (b *Bot) setupIPAddr(msg string) {
-	err := generateHostsfile(msg, "server")
-	if err != nil {
-		text := fmt.Sprintf("IP address should be version 4. Kindly put again")
-		newMsg, _ := b.SendMsg(b.ID, text, true, false)
-		b.Messages[newMsg.MessageID] = "setup_ip_addr"
-		return
-	}
-	b.nodeIP = msg
-	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUserNameText(), true, false)
-	b.Messages[newMsg.MessageID] = "setup_username"
-}
-
-func (b *Bot) setupUser(msg string) {
-	check := b.checkInput(msg, "setup_username")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.hostUser = msg
-	}
-	err := b.loadHostAndKeys()
-	if err != nil {
-		text := fmt.Sprintf("SSH_KEY loading error. please check data/ssh_key file again")
-		b.SendMsg(b.ID, text, false, false)
-		return
-	}
-	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false, false)
-}
-
-func (b *Bot) setupDomain(msg string) {
-	check := b.checkInput(msg, "setup_domain")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.SetDomain(msg)
-		b.nConf.storeConfig()
-		b.nConf.saveConfig()
-		b.nConf.loadConfig()
-	}
-	b.SendMsg(b.ID, b.doneDomainText(), false, false)
-}
-
-func (b *Bot) updateStakeAddr(msg string) {
-	stakeTx := msg
-	check := b.checkInput(stakeTx, "setup_node_stake_addr")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.StakeAddr = msg
-	}
-	b.nConf.storeConfig()
-	b.nConf.saveConfig()
-	b.nConf.loadConfig()
-	b.SendMsg(b.ID, doneConfigGenerateText(), false, false)
-}
-
-func (b *Bot) updateETHAddr(msg string) {
-	address := msg
-	check := b.checkInput(address, "setup_node_eth_addr")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.RewardAddressETH = address
-	}
-	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
-	switch b.nConf.Network {
-	case network1:
-		b.nConf.SetMainnet()
-		b.nConf.SetTSSGroup(10, 31)
-		b.nConf.CoinA = "WBTC"
-		b.nConf.CoinB = "BTC"
-	case network2:
-		b.nConf.SetMainnet()
-		b.nConf.CoinA = "BTCB"
-		b.nConf.CoinB = "BTC"
-	case network3:
-		b.nConf.SetTestnet()
-		b.nConf.SetTSSGroup(50, 25)
-		b.nConf.CoinA = "BTCE"
-		b.nConf.CoinB = "BTC"
-	case network4:
-		b.nConf.SetTestnet()
-		b.nConf.CoinB = "BTCB"
-	}
-	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
-	isLoad, err := b.generateKeys(path)
-	if err != nil {
-		log.Info(err)
-		return
-	}
-	if !isLoad {
-		b.sendKeyStoreFile(path)
-	}
-	b.SendMsg(b.ID, b.makeStakeTxText(), false, true)
-	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
-	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
-}
-
-func (b *Bot) updateNodeMoniker(msg string) {
-	moniker := msg
-	check := b.checkInput(moniker, "setup_node_moniker")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.Moniker = moniker
-	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true, false)
-	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
-}
-
-func (b *Bot) updateNetwork(msg string) {
-	network := Networks[msg]
-	check := b.checkInput(network, "setup_node_set_network")
-	if check == 0 {
-		return
-	}
-	if check == 1 {
-		b.nConf.Network = network
-	}
-	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true, false)
-	b.Messages[newMsg.MessageID] = "setup_node_moniker"
-}
-
-func (b *Bot) checkInput(input string, keepMode string) int {
-	if input == "" {
-		text := fmt.Sprintf("input is wrong, Please type again")
-		newMsg, _ := b.SendMsg(b.ID, text, true, false)
-		b.Messages[newMsg.MessageID] = keepMode
-		return 0
-	}
-	if input == "none" {
-		return 2
-	}
-	return 1
-}
-
 func (b *Bot) loadSystemEnv() {
 	if os.Getenv("REMOTE") == "true" {
 		b.isRemote = true
@@ -335,13 +189,6 @@ func (b *Bot) SendMsg(id int64, text string, isReply bool, hidePreview bool) (tg
 	return b.bot.Send(msg)
 }
 
-func (b *Bot) validateChat(chatID int64) bool {
-	if b.ID == chatID {
-		return true
-	}
-	return false
-}
-
 func (b *Bot) loadHostAndKeys() error {
 	host, err := getFileHostfile()
 	if err != nil {
@@ -365,12 +212,6 @@ func (b *Bot) loadHostAndKeys() error {
 	log.Infof("Loaded SSH priv key")
 	b.sshKey = updatedKey
 	return nil
-}
-
-func (b *Bot) sendKeyStoreFile(path string) {
-	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", path, b.nConf.Network)
-	msg := tgbotapi.NewDocumentUpload(b.ID, stakeKeyPath)
-	b.bot.Send(msg)
 }
 
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSuccess func(), onError func(err error)) {
@@ -485,67 +326,4 @@ func (b *Bot) restartBlockbook() {
 		log.Error(err)
 	}
 	b.execAnsible(path, extVars, onSuccess, onError)
-}
-
-func generateHostsfile(nodeIP string, target string) error {
-	ipAddr := net.ParseIP(nodeIP)
-	if ipAddr == nil {
-		return errors.New("IP addr error")
-	}
-	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
-	path := fmt.Sprintf("%s/hosts", dataPath)
-	err := ioutil.WriteFile(path, []byte(text), 0666)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func getFileHostfile() (string, error) {
-	path := fmt.Sprintf("%s/hosts", dataPath)
-	str, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	strs := strings.Split(string(str), "]")
-	ipAddr := net.ParseIP(strs[1][1:])
-	if ipAddr == nil {
-		return "", errors.New("IP addr parse error")
-	}
-	return ipAddr.String(), nil
-}
-
-func getDirSizeFromFile() (int, error) {
-	path := fmt.Sprintf("/tmp/dir_size")
-	str, err := ioutil.ReadFile(path)
-	if err != nil {
-		return 0, err
-	}
-	strs := strings.Split(string(str), "\t")
-	//log.Info(strs)
-	intNum, _ := strconv.Atoi(strs[0])
-	return intNum, nil
-}
-
-func getFileSSHKeyfie() (string, error) {
-	path := fmt.Sprintf("%s/ssh_key", dataPath)
-	str, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(str), nil
-}
-
-func storeSSHKeyfile(key string) error {
-	last := key[len(key)-1:]
-	text := fmt.Sprintf("%s", key)
-	if last != "\n" {
-		text = fmt.Sprintf("%s%s", text, "\n")
-	}
-	path := fmt.Sprintf("%s/ssh_key", dataPath)
-	err := ioutil.WriteFile(path, []byte(text), 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -5,17 +5,6 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: download docker-blockbook && install dependencies
-      shell: |
-        rm -rf docker-blockbook-master
-        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
-        tar -xf master.tar.gz         
-        rm master.tar.gz &&
-        cd docker-blockbook-master
-        chmod +x ./setup_docker.sh
-        ./setup_docker.sh
-      register: output
-
     - name: setup bot
       shell: |
         docker rm -f {{CONT_NAME}} 2> /dev/null || true

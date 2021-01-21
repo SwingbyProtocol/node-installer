@@ -11,6 +11,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	syncSnapshotSize = 817083983700
+	varDiskSizeMiB   = 1430511
+)
+
 func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	commands := strings.Split(msg.Text, "@")
 	cmd := commands[0]
@@ -53,6 +58,13 @@ func (b *Bot) sayHello(chatID int64) {
 		return
 	}
 	b.SendMsg(b.ID, b.makeHelloText(), false, false)
+}
+
+func (b *Bot) validateChat(chatID int64) bool {
+	if b.ID == chatID {
+		return true
+	}
+	return false
 }
 
 func (b *Bot) handleReplyMessage(msg *tgbotapi.Message) {
@@ -135,27 +147,43 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 		}
 		b.SendMsg(b.ID, makeDeployBotMessage(), false, false)
 		extVars := map[string]string{
-			"TAG":       b.botVersion,
-			"CONT_NAME": b.containerName,
 			"HOST_USER": b.hostUser,
-			"BOT_TOKEN": b.bot.Token,
-			"CHAT_ID":   strconv.Itoa(int(b.ID)),
-			"SSH_KEY":   b.sshKey,
-			"IP_ADDR":   b.nodeIP,
-			"REMOTE":    "true",
 		}
 		onSuccess := func() {
-			b.SendMsg(b.ID, doneDeployBotMessage(), false, false)
-			log.Info("Bot is moved out to your server!")
-			b.cooldown()
-			os.Exit(0)
+			diskSpace, _ := getDiskSpaceFromFile()
+			if diskSpace <= varDiskSizeMiB {
+				b.SendMsg(b.ID, rejectDeployBotByDiskSpaceMessage(), false, false)
+				b.cooldown()
+				return
+			}
+			extVars := map[string]string{
+				"TAG":       b.botVersion,
+				"CONT_NAME": b.containerName,
+				"HOST_USER": b.hostUser,
+				"BOT_TOKEN": b.bot.Token,
+				"CHAT_ID":   strconv.Itoa(int(b.ID)),
+				"SSH_KEY":   b.sshKey,
+				"IP_ADDR":   b.nodeIP,
+				"REMOTE":    "true",
+			}
+			onSuccess := func() {
+				b.SendMsg(b.ID, doneDeployBotMessage(), false, false)
+				log.Info("Bot is moved out to your server!")
+				b.cooldown()
+				os.Exit(0)
+			}
+			onError := func(err error) {
+				b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
+				b.cooldown()
+			}
+			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 		}
 		onError := func(err error) {
 			log.Error(err)
 			b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
 			b.cooldown()
 		}
-		b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
+		b.execAnsible("./playbooks/setup_node.yml", extVars, onSuccess, onError)
 		return
 	}
 }
@@ -205,11 +233,6 @@ func (b *Bot) handleUpgradeYourBot(cmd string) {
 			b.SendMsg(b.ID, b.doneUpgradeBotMessage(), false, false)
 			b.cooldown()
 			os.Exit(0)
-			// extVars := map[string]string{
-			// 	"CONT_NAME": b.containerName,
-			// 	"HOST_USER": b.hostUser,
-			// }
-			// b.execAnsible("./playbooks/bot_remove.yml", extVars, nil, nil)
 		}
 		onError := func(err error) {
 			log.Error(err)
@@ -247,10 +270,6 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			"HOST_USER": b.hostUser,
 		}
 		b.SendMsg(b.ID, makeSetupInfuraMessage(), false, false)
-		targetPath := "./playbooks/mainnet_infura_setup.yml"
-		if b.nConf.IsTestnet {
-			targetPath = "./playbooks/testnet_infura_setup.yml"
-		}
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneSetupInfuraMessage(), false, false)
 			b.cooldown()
@@ -259,6 +278,10 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			log.Error(err)
 			b.SendMsg(b.ID, errorSetupInfuraMessage(), false, false)
 			b.cooldown()
+		}
+		targetPath := "./playbooks/mainnet_data_sync.yml"
+		if b.nConf.IsTestnet {
+			targetPath = "./playbooks/testnet_data_sync.yml"
 		}
 		b.execAnsible(targetPath, extVars, onSuccess, onError)
 		return
@@ -296,10 +319,6 @@ func (b *Bot) handleDeployInfura(cmd string) {
 			"HOST_USER": b.hostUser,
 		}
 		b.SendMsg(b.ID, makeDeployInfuraMessage(), false, false)
-		targetPath := "./playbooks/mainnet_infura.yml"
-		if b.nConf.IsTestnet {
-			targetPath = "./playbooks/testnet_infura.yml"
-		}
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneDeployInfuraMessage(), false, false)
 			b.cooldown()
@@ -308,6 +327,10 @@ func (b *Bot) handleDeployInfura(cmd string) {
 			log.Error(err)
 			b.SendMsg(b.ID, errorDeployInfuraMessage(), false, false)
 			b.cooldown()
+		}
+		targetPath := "./playbooks/mainnet_infura.yml"
+		if b.nConf.IsTestnet {
+			targetPath = "./playbooks/testnet_infura.yml"
 		}
 		b.execAnsible(targetPath, extVars, onSuccess, onError)
 		return
@@ -324,10 +347,9 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			"IP_ADDR":   b.nodeIP,
 		}
 		b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
-		path := fmt.Sprintf("./playbooks/mainnet_check.yml")
 		onSuccess := func() {
-			syncDataSize, _ := getDirSizeFromFile()
-			parcent := 100.00 * float64(syncDataSize) / float64(maxDataSize)
+			syncedSize, _ := getDirSizeFromFile()
+			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotSize)
 			if parcent >= 100.00 {
 				b.syncProgress = 99.99
 			}
@@ -345,6 +367,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
 			b.cooldown()
 		}
+		path := fmt.Sprintf("./playbooks/check_status.yml")
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
@@ -445,4 +468,145 @@ func (b *Bot) handleEnableDomain(cmd string) {
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
+}
+
+func (b *Bot) setupIPAddr(msg string) {
+	err := generateHostsfile(msg, "server")
+	if err != nil {
+		text := fmt.Sprintf("IP address should be version 4. Kindly put again")
+		newMsg, _ := b.SendMsg(b.ID, text, true, false)
+		b.Messages[newMsg.MessageID] = "setup_ip_addr"
+		return
+	}
+	b.nodeIP = msg
+	newMsg, _ := b.SendMsg(b.ID, b.setupIPAndAskUserNameText(), true, false)
+	b.Messages[newMsg.MessageID] = "setup_username"
+}
+
+func (b *Bot) setupUser(msg string) {
+	check := b.checkInput(msg, "setup_username")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.hostUser = msg
+	}
+	err := b.loadHostAndKeys()
+	if err != nil {
+		text := fmt.Sprintf("SSH_KEY loading error. please check data/ssh_key file again")
+		b.SendMsg(b.ID, text, false, false)
+		return
+	}
+	b.SendMsg(b.ID, b.setupUsernameAndLoadSSHkeyText(), false, false)
+}
+
+func (b *Bot) setupDomain(msg string) {
+	check := b.checkInput(msg, "setup_domain")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.nConf.SetDomain(msg)
+		b.nConf.storeConfig()
+		b.nConf.saveConfig()
+		b.nConf.loadConfig()
+	}
+	b.SendMsg(b.ID, b.doneDomainText(), false, false)
+}
+
+func (b *Bot) updateStakeAddr(msg string) {
+	stakeTx := msg
+	check := b.checkInput(stakeTx, "setup_node_stake_addr")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.nConf.StakeAddr = msg
+	}
+	b.nConf.storeConfig()
+	b.nConf.saveConfig()
+	b.nConf.loadConfig()
+	b.SendMsg(b.ID, doneConfigGenerateText(), false, false)
+}
+
+func (b *Bot) updateETHAddr(msg string) {
+	address := msg
+	check := b.checkInput(address, "setup_node_eth_addr")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.nConf.RewardAddressETH = address
+	}
+	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
+	switch b.nConf.Network {
+	case network1:
+		b.nConf.SetMainnet()
+		b.nConf.SetTSSGroup(10, 31)
+		b.nConf.CoinA = "WBTC"
+		b.nConf.CoinB = "BTC"
+	case network2:
+		b.nConf.SetMainnet()
+		b.nConf.CoinA = "BTCB"
+		b.nConf.CoinB = "BTC"
+	case network3:
+		b.nConf.SetTestnet()
+		b.nConf.SetTSSGroup(50, 25)
+		b.nConf.CoinA = "BTCE"
+		b.nConf.CoinB = "BTC"
+	case network4:
+		b.nConf.SetTestnet()
+		b.nConf.CoinB = "BTCB"
+	}
+	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+	isLoad, err := b.generateKeys(path)
+	if err != nil {
+		log.Info(err)
+		return
+	}
+	if !isLoad {
+		b.sendKeyStoreFile(path)
+	}
+	b.SendMsg(b.ID, b.makeStakeTxText(), false, true)
+	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
+	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
+}
+
+func (b *Bot) updateNodeMoniker(msg string) {
+	moniker := msg
+	check := b.checkInput(moniker, "setup_node_moniker")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.nConf.Moniker = moniker
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeRewardAddressETH(), true, false)
+	b.Messages[newMsg.MessageID] = "setup_node_eth_addr"
+}
+
+func (b *Bot) updateNetwork(msg string) {
+	network := Networks[msg]
+	check := b.checkInput(network, "setup_node_set_network")
+	if check == 0 {
+		return
+	}
+	if check == 1 {
+		b.nConf.Network = network
+	}
+	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true, false)
+	b.Messages[newMsg.MessageID] = "setup_node_moniker"
+}
+
+func (b *Bot) checkInput(input string, keepMode string) int {
+	if input == "" {
+		text := fmt.Sprintf("input is wrong, Please type again")
+		newMsg, _ := b.SendMsg(b.ID, text, true, false)
+		b.Messages[newMsg.MessageID] = keepMode
+		return 0
+	}
+	if input == "none" {
+		return 2
+	}
+	return 1
 }
