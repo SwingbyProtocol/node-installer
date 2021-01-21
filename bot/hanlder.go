@@ -328,6 +328,9 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		onSuccess := func() {
 			syncDataSize, _ := getDirSizeFromFile()
 			parcent := 100 * float64(syncDataSize) / float64(maxDataSize)
+			if parcent < 100 {
+				b.syncProgress = parcent
+			}
 			if parcent >= 100 {
 				b.syncProgress = 99.99
 			}

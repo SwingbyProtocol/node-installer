@@ -455,7 +455,7 @@ func (b *Bot) checkBlockBooks() {
 	b.mu.Unlock()
 
 	b.mu.Lock()
-	log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
+	//log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
 	if b.stuckCountBTC >= 70 || b.stuckCountETH >= 50 {
 		b.stuckCountBTC = 0
 		b.stuckCountETH = 0
