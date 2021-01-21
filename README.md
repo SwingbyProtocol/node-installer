@@ -37,7 +37,7 @@ $ go run main.go
 $ make build
 ```
 
-## Build Docker
+## Build docker image
 ```
 $ make docker 
 ```
