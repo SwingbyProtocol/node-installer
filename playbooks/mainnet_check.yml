@@ -7,7 +7,7 @@
   tasks:
     - name: check infura nodes
       shell: |
-        if [ ! -d "/var/swingby/mainnet" ]; then 
+        if [ -d "/var/swingby/mainnet" ]; then 
           sudo du -bs /var/swingby/mainnet
         fi
       register: output

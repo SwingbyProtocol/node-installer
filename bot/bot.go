@@ -320,8 +320,8 @@ func (b *Bot) loadSystemEnv() {
 		log.Infof("HOST_USER=%s", b.hostUser)
 	}
 	if os.Getenv("SSH_KEY") != "" {
-		generateSSHKeyfile(os.Getenv("SSH_KEY"))
-		log.Info("SSH priv key is stored")
+		storeSSHKeyfile(os.Getenv("SSH_KEY"))
+		log.Info("SSH private key is stored")
 	}
 }
 
@@ -354,8 +354,16 @@ func (b *Bot) loadHostAndKeys() error {
 	if err != nil {
 		return err
 	}
+	err = storeSSHKeyfile(key)
+	if err != nil {
+		return err
+	}
+	updatedKey, err := getFileSSHKeyfie()
+	if err != nil {
+		return err
+	}
 	log.Infof("Loaded SSH priv key")
-	b.sshKey = key
+	b.sshKey = updatedKey
 	return nil
 }
 
@@ -528,8 +536,12 @@ func getFileSSHKeyfie() (string, error) {
 	return string(str), nil
 }
 
-func generateSSHKeyfile(key string) error {
-	text := fmt.Sprintf("%s\n", key)
+func storeSSHKeyfile(key string) error {
+	last := key[len(key)-1:]
+	text := fmt.Sprintf("%s", key)
+	if last != "\n" {
+		text = fmt.Sprintf("%s%s", text, "\n")
+	}
 	path := fmt.Sprintf("%s/ssh_key", dataPath)
 	err := ioutil.WriteFile(path, []byte(text), 0600)
 	if err != nil {
