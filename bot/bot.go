@@ -50,7 +50,7 @@ type Bot struct {
 	bestHeight      map[string]int
 	isSynced        map[string]bool
 	isSyncedMempool map[string]bool
-	syncRatio       map[string]float64
+	SyncRatio       map[string]float64
 	syncProgress    float64
 }
 
@@ -75,7 +75,7 @@ func NewBot(token string) (*Bot, error) {
 		bestHeight:      make(map[string]int),
 		isSynced:        make(map[string]bool),
 		isSyncedMempool: make(map[string]bool),
-		syncRatio:       make(map[string]float64),
+		SyncRatio:       make(map[string]float64),
 	}
 	return bot, nil
 }
@@ -118,7 +118,7 @@ func (b *Bot) Start() {
 func (b *Bot) startBBKeeper() {
 	ticker := time.NewTicker(30 * time.Second)
 	go func() {
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 		b.checkBlockBooks()
 		for {
 			<-ticker.C
@@ -260,19 +260,23 @@ func (b *Bot) checkBlockBook(coin string) {
 		return
 	}
 	b.stuckCount[coin]++
-	if b.bestHeight[coin] != res.BlockBook.BestHeight && res.BlockBook.InSync {
+
+	if b.bestHeight[coin] <= res.BlockBook.BestHeight {
 		b.stuckCount[coin] = 0
 		b.isSynced[coin] = res.BlockBook.InSync
 		b.bestHeight[coin] = res.BlockBook.BestHeight
 		if res.BlockBook.BestHeight != 0 && res.Backend.Blocks != 0 {
-			b.syncRatio[coin] = 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
-			if b.syncRatio[coin] >= 100.00 {
-				b.syncRatio[coin] = 99
+			syncRatio := 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
+			if syncRatio >= 100.00 {
+				b.SyncRatio[coin] = 99.99
+			} else {
+				b.SyncRatio[coin] = syncRatio
 			}
 		}
 	}
-	if b.syncRatio[coin] >= 99 && res.BlockBook.MempoolSize != 0 && res.BlockBook.InSyncMempool {
-		b.syncRatio[coin] = 100.00
+
+	if b.SyncRatio[coin] == 99.99 && res.BlockBook.MempoolSize != 0 && res.BlockBook.InSyncMempool {
+		b.SyncRatio[coin] = 100.00
 		b.isSyncedMempool[coin] = true
 	}
 	b.mu.Unlock()
@@ -282,7 +286,9 @@ func (b *Bot) checkBlockBooks() {
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
 	b.mu.Lock()
-	//log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
+	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
+		log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCount["BTC"], b.stuckCount["ETH"])
+	}
 	if b.stuckCount["BTC"] >= 70 || b.stuckCount["ETH"] >= 50 {
 		b.stuckCount["BTC"] = 0
 		b.stuckCount["ETH"] = 0

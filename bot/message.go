@@ -411,7 +411,7 @@ func (b *Bot) checkNodeMessage() string {
 [Blockchain syncing status]
 BTC: <b>#%d</b> (%.3f%%)
 ETH: <b>#%d</b> (%.3f%%)
-	`, b.syncProgress, b.bestHeight["BTC"], b.syncRatio["BTC"], b.bestHeight["ETH"], b.syncRatio["ETH"])
+	`, b.syncProgress, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
 	b.mu.RUnlock()
 	return text
 }

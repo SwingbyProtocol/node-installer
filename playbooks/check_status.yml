@@ -8,7 +8,7 @@
     - name: check infura nodes
       shell: |
         if [ -d "/var/swingby/mainnet" ]; then 
-          du -bs /var/swingby/mainnet 2> /dev/null
+          sh -c "du -bs /var/swingby/mainnet 2> /dev/null" || true
         fi
       register: output
     - local_action:

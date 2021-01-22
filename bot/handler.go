@@ -353,7 +353,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			if parcent >= 100.00 {
 				b.syncProgress = 99.99
 			}
-			if b.isSynced["BTC"] && b.isSynced["ETH"] {
+			if b.SyncRatio["BTC"] == 100 && b.SyncRatio["ETH"] == 100 {
 				b.syncProgress = 100.00
 			}
 			if parcent < 99.99 {

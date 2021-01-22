@@ -6,7 +6,7 @@
 - OS Ubuntu 20.04 LTS
 - CPUs >= 4
 - Memory >= 16GB
-- Disk space >= 1.5TB
+- Disk space >= 1.7TB
 - Swap memory >= 5GB
 - Network bandwidth >= 500Mbps
 
