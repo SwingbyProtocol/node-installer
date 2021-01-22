@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	syncSnapshotSize = 817083983700
-	varDiskSizeMiB   = 1430511
+	syncSnapshotBytes       = 1123759607180
+	minimumMountPathSizeMiB = 1430511
 )
 
 func (b *Bot) handleMessage(msg *tgbotapi.Message) {
@@ -31,16 +31,21 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleReplyMessage(msg)
 
 	b.handleSetupServer(cmd)
-	b.handleSetupDomain(cmd)
 	b.handleSetupYourBot(cmd)
+
 	b.handleSetupNode(cmd)
-	b.handleUpgradeYourBot(cmd)
-	b.handleSetupInfura(cmd)
-	b.handleDeployInfura(cmd)
-	b.handleCheckStatus(cmd)
+	b.handleSetupDomain(cmd)
+	b.handleEnableDomain(cmd)
+
 	b.handleDeployNode(cmd)
 	b.handleDeployNodeDebug(cmd)
-	b.handleEnableDomain(cmd)
+	b.handleGetLogs(cmd)
+
+	b.handleSetupInfura(cmd)
+	b.handleDeployInfura(cmd)
+
+	b.handleCheckStatus(cmd)
+	b.handleUpgradeYourBot(cmd)
 
 	// Default response of say hi
 	if cmd == "hi" || cmd == "Hi" {
@@ -80,6 +85,7 @@ func (b *Bot) handleReplyMessage(msg *tgbotapi.Message) {
 
 		if mode == "setup_node_moniker" {
 			b.updateNodeMoniker(replyMsg)
+			return
 		}
 		if mode == "setup_node_eth_addr" {
 			b.updateETHAddr(replyMsg)
@@ -120,17 +126,6 @@ func (b *Bot) handleSetupServer(cmd string) {
 	}
 }
 
-func (b *Bot) handleSetupDomain(cmd string) {
-	if cmd == "/setup_domain" {
-		newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true, false)
-		if err != nil {
-			return
-		}
-		b.Messages[newMsg.MessageID] = "setup_domain"
-		return
-	}
-}
-
 func (b *Bot) handleSetupYourBot(cmd string) {
 	if cmd == "/setup_your_bot" {
 		// Disable if remote is `true`
@@ -151,7 +146,7 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 		}
 		onSuccess := func() {
 			diskSpace, _ := getDiskSpaceFromFile()
-			if diskSpace <= varDiskSizeMiB {
+			if diskSpace <= minimumMountPathSizeMiB {
 				b.SendMsg(b.ID, rejectDeployBotByDiskSpaceMessage(), false, false)
 				b.cooldown()
 				return
@@ -189,11 +184,28 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 
 func (b *Bot) handleSetupNode(cmd string) {
 	if cmd == "/setup_node" {
+		if !b.isRemote {
+			return
+		}
 		msg, err := b.SendMsg(b.ID, b.makeNodeText(), true, false)
 		if err != nil {
 			return
 		}
 		b.Messages[msg.MessageID] = "setup_node_set_network"
+		return
+	}
+}
+
+func (b *Bot) handleSetupDomain(cmd string) {
+	if cmd == "/setup_domain" {
+		if !b.isRemote {
+			return
+		}
+		newMsg, err := b.SendMsg(b.ID, b.setupDomainText(), true, false)
+		if err != nil {
+			return
+		}
+		b.Messages[newMsg.MessageID] = "setup_domain"
 		return
 	}
 }
@@ -244,6 +256,9 @@ func (b *Bot) handleUpgradeYourBot(cmd string) {
 
 func (b *Bot) handleSetupInfura(cmd string) {
 	if cmd == "/setup_infura" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
@@ -287,6 +302,9 @@ func (b *Bot) handleSetupInfura(cmd string) {
 
 func (b *Bot) handleDeployInfura(cmd string) {
 	if cmd == "/deploy_infura" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
@@ -335,6 +353,9 @@ func (b *Bot) handleDeployInfura(cmd string) {
 
 func (b *Bot) handleCheckStatus(cmd string) {
 	if cmd == "/check_status" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
@@ -345,15 +366,15 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			syncedSize, _ := getDirSizeFromFile()
-			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotSize)
+			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotBytes)
 			if parcent >= 100.00 {
 				b.syncProgress = 99.99
 			}
-			if b.SyncRatio["BTC"] == 100 && b.SyncRatio["ETH"] == 100 {
-				b.syncProgress = 100.00
-			}
 			if parcent < 99.99 {
 				b.syncProgress = parcent
+			}
+			if b.SyncRatio["BTC"] == 100.00 && b.SyncRatio["ETH"] == 100.00 {
+				b.syncProgress = 100.00
 			}
 			b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
 			b.cooldown()
@@ -370,11 +391,19 @@ func (b *Bot) handleCheckStatus(cmd string) {
 
 func (b *Bot) handleDeployNode(cmd string) {
 	if cmd == "/deploy_node" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
 		if b.syncProgress <= 99.99 {
-			b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
+			b.SendMsg(b.ID, rejectDeployNodeByInfuraMessage(), false, false)
+			b.cooldown()
+			return
+		}
+		if b.nConf.checkConfig() != nil {
+			b.SendMsg(b.ID, rejectDeployNodeByConfigMessage(), false, false)
 			b.cooldown()
 			return
 		}
@@ -404,11 +433,19 @@ func (b *Bot) handleDeployNode(cmd string) {
 
 func (b *Bot) handleDeployNodeDebug(cmd string) {
 	if cmd == "/deploy_node_debug" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
 		if b.syncProgress <= 99.99 {
-			b.SendMsg(b.ID, rejectDeployNodeMessage(), false, false)
+			b.SendMsg(b.ID, rejectDeployNodeByInfuraMessage(), false, false)
+			b.cooldown()
+			return
+		}
+		if b.nConf.checkConfig() != nil {
+			b.SendMsg(b.ID, rejectDeployNodeByConfigMessage(), false, false)
 			b.cooldown()
 			return
 		}
@@ -436,8 +473,25 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 	}
 }
 
+func (b *Bot) handleGetLogs(cmd string) {
+	if cmd == "/get_node_logs" {
+		if !b.isRemote {
+			return
+		}
+		path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+		err := b.sendLogFile(path)
+		if err != nil {
+			b.SendMsg(b.ID, errorLogFileMessage(), false, false)
+		}
+		return
+	}
+}
+
 func (b *Bot) handleEnableDomain(cmd string) {
 	if cmd == "/enable_domain" {
+		if !b.isRemote {
+			return
+		}
 		if b.checkProcess() {
 			return
 		}
@@ -551,16 +605,16 @@ func (b *Bot) updateETHAddr(msg string) {
 		b.nConf.CoinB = "BTCB"
 	}
 	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
-	isLoad, err := b.generateKeys(path)
+	_, err := b.generateKeys(path)
 	if err != nil {
-		log.Info(err)
+		log.Error(err)
 		return
 	}
-	if !isLoad {
-		b.sendKeyStoreFile(path)
-	}
-	b.SendMsg(b.ID, b.makeStakeTxText(), false, true)
-	newMsg, _ := b.SendMsg(b.ID, b.askStakeTxText(), true, false)
+	// if !isLoad {
+	// 	b.sendLogFile(path)
+	// }
+	b.SendMsg(b.ID, b.makeStakeAddrText(), false, true)
+	newMsg, _ := b.SendMsg(b.ID, b.askStakeAddrText(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
 }
 

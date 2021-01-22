@@ -175,6 +175,15 @@ func (n *NodeConfig) SetTSSGroup(members int, threshold int) {
 	n.Threshold = threshold
 }
 
+func (n *NodeConfig) checkConfig() error {
+	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", dataPath, n.Network)
+	_, err := ioutil.ReadFile(pConfigFileName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (n *NodeConfig) storeConfig() error {
 	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", dataPath, n.Network)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", n.Moniker)

@@ -29,49 +29,11 @@ func (b *Bot) generateKeys(basePath string) (bool, error) {
 
 	b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
 	return true, nil
-
-	// pEntropy, err := bip39.NewEntropy(256)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// // Gen a new address from new entropy
-	// pMnemonic, err := bip39.NewMnemonic(pEntropy)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// if b.nConf.IsTestnet {
-	// 	types.Network = types.TestNetwork
-	// }
-	// pKey, err := keys.NewMnemonicKeyManager(pMnemonic)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// log.Info(pMnemonic)
-	// b.nConf.StakeAddr = pKey.GetAddr().String()
-	// password, _ := generateRandomBytes(24)
-	// log.Infof("Deposit address: %s, pass: %s", b.nConf.StakeAddr, hex.EncodeToString(password))
-	// keydata, err := pKey.ExportAsKeyStore(hex.EncodeToString(password))
-	// if err != nil {
-	// 	return false, err
-	// }
-	// data, _ := json.Marshal(keydata)
-	// err = ioutil.WriteFile(stakeKeyPath, data, 0660)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// // Check keystore
-	// _, err = keys.NewKeyStoreKeyManager(stakeKeyPath, hex.EncodeToString(password))
-	// if err != nil {
-	// 	return false, err
-	// }
-	// b.nConf.Memo = fmt.Sprintf("%s,%s", pP2PKeyHex, b.nConf.RewardAddressETH)
-	// return false, nil
 }
 
 func generateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
-	// Note that err == nil only if we read len(b) bytes.
 	if err != nil {
 		return nil, err
 	}

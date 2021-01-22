@@ -11,10 +11,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func (b *Bot) sendKeyStoreFile(path string) {
-	stakeKeyPath := fmt.Sprintf("%s/key_%s.json", path, b.nConf.Network)
-	msg := tgbotapi.NewDocumentUpload(b.ID, stakeKeyPath)
-	b.bot.Send(msg)
+func (b *Bot) sendLogFile(path string) error {
+	logPath := fmt.Sprintf("%s/data/logs.log", path)
+	msg := tgbotapi.NewDocumentUpload(b.ID, logPath)
+	_, err := b.bot.Send(msg)
+	return err
 }
 
 func generateHostsfile(nodeIP string, target string) error {

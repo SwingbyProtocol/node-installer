@@ -157,21 +157,21 @@ func (b *Bot) loadSystemEnv() {
 		if err == nil {
 			b.ID = int64(intID)
 		}
-		log.Infof("ChatID=%d", b.ID)
+		log.Infof("Set ChatID=%d", b.ID)
 	}
 	if os.Getenv("IP_ADDR") != "" {
 		err := generateHostsfile(os.Getenv("IP_ADDR"), "server")
 		if err == nil {
-			log.Infof("IP address stored IP_ADDR=%s", os.Getenv("IP_ADDR"))
+			log.Infof("Set IP_ADDR=%s", os.Getenv("IP_ADDR"))
 		}
 	}
 	if os.Getenv("CONT_NAME") != "" {
 		b.containerName = os.Getenv("CONT_NAME")
-		log.Infof("CONT_NAME=%s", b.containerName)
+		log.Infof("Set CONT_NAME=%s", b.containerName)
 	}
 	if os.Getenv("HOST_USER") != "" {
 		b.hostUser = os.Getenv("HOST_USER")
-		log.Infof("HOST_USER=%s", b.hostUser)
+		log.Infof("Set HOST_USER=%s", b.hostUser)
 	}
 	if os.Getenv("SSH_KEY") != "" {
 		storeSSHKeyfile(os.Getenv("SSH_KEY"))
@@ -195,7 +195,7 @@ func (b *Bot) loadHostAndKeys() error {
 		return err
 	}
 	b.nodeIP = host
-	log.Infof("Loaded target IPv4:%s for your server from hosts file.", host)
+	log.Infof("Loaded Server IPv4:%s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {

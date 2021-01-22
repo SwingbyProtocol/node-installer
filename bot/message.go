@@ -92,7 +92,7 @@ Your bot is moving out to your server....
 func rejectDeployBotByDiskSpaceMessage() string {
 	text := fmt.Sprintf(`
 Oh sorry. 
-The server hasn't enough Disk space on "/var" mount path.
+The server hasn't enough Disk space on "/var/swingby" mount path.
 Minimum <b>1.5TB</b> space required to install Swingby node.
 	`)
 	return text
@@ -183,7 +183,7 @@ if you want to skip, type 'none'
 	return text
 }
 
-func (b *Bot) makeStakeTxText() string {
+func (b *Bot) makeStakeAddrText() string {
 	text := fmt.Sprintf(`
 OK. Your new p2p node key is generated.
 
@@ -198,12 +198,12 @@ description:
 
 <b>%s</b>
 
-<b>Note: minimum stake amount is least 150,000 SWINGBYs with 1 month lock<b>
+<b>Note: minimum stake amount is least 150,000 SWINGBYs with 1 month lock</b>
 `, b.nConf.Memo)
 	return text
 }
 
-func (b *Bot) askStakeTxText() string {
+func (b *Bot) askStakeAddrText() string {
 	text := fmt.Sprintf(`
 Your staking BNB address is:
 
@@ -301,11 +301,20 @@ Deploying your Swingby node.... (v%s)
 	return text
 }
 
-func rejectDeployNodeMessage() string {
+func rejectDeployNodeByInfuraMessage() string {
 	text := fmt.Sprintf(`
 This command is not avaialbe now.
 Infura syncing should be 100.00%% done
 Please try /check_status first.
+`)
+	return text
+}
+
+func rejectDeployNodeByConfigMessage() string {
+	text := fmt.Sprintf(`
+This command is not avaialbe now.
+You have to node config.
+Please try /setup_node first.
 `)
 	return text
 }
@@ -421,5 +430,12 @@ func errorCheckNodeMessage() string {
 	text := fmt.Sprintf(`
 Node data checking is failed, could you try it later.
 	`)
+	return text
+}
+
+func errorLogFileMessage() string {
+	text := fmt.Sprintf(`
+Error: Log file is not exist...
+`)
 	return text
 }
