@@ -31,32 +31,27 @@ var Networks = map[string]string{
 }
 
 type Bot struct {
-	Messages           map[int]string
-	ID                 int64
-	mu                 *sync.RWMutex
-	bot                *tgbotapi.BotAPI
-	api                *api.Resolver
-	nodeVersion        string
-	botVersion         string
-	hostUser           string
-	nodeIP             string
-	containerName      string
-	sshKey             string
-	nConf              *NodeConfig
-	isRemote           bool
-	isLocked           bool
-	isConfirmed        map[string]bool
-	bestHeightBTC      int
-	stuckCountBTC      int
-	bestHeightETH      int
-	stuckCountETH      int
-	isSyncedBTC        bool
-	isSyncedETH        bool
-	isSyncedMempoolBTC bool
-	isSyncedMempoolETH bool
-	syncProgress       float64
-	syncBTCRatio       float64
-	syncETHRatio       float64
+	Messages        map[int]string
+	ID              int64
+	mu              *sync.RWMutex
+	bot             *tgbotapi.BotAPI
+	api             *api.Resolver
+	nodeVersion     string
+	botVersion      string
+	hostUser        string
+	nodeIP          string
+	containerName   string
+	sshKey          string
+	nConf           *NodeConfig
+	isRemote        bool
+	isLocked        bool
+	isConfirmed     map[string]bool
+	stuckCount      map[string]int
+	bestHeight      map[string]int
+	isSynced        map[string]bool
+	isSyncedMempool map[string]bool
+	syncRatio       map[string]float64
+	syncProgress    float64
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -65,17 +60,21 @@ func NewBot(token string) (*Bot, error) {
 		return nil, err
 	}
 	bot := &Bot{
-		Messages:      make(map[int]string),
-		ID:            0,
-		mu:            new(sync.RWMutex),
-		bot:           b,
-		api:           api.NewResolver("", 200),
-		nodeVersion:   nodeVersion,
-		botVersion:    botVersion,
-		hostUser:      "root",
-		containerName: "node_installer",
-		nConf:         NewNodeConfig(),
-		isConfirmed:   make(map[string]bool),
+		Messages:        make(map[int]string),
+		ID:              0,
+		mu:              new(sync.RWMutex),
+		bot:             b,
+		api:             api.NewResolver("", 200),
+		nodeVersion:     nodeVersion,
+		botVersion:      botVersion,
+		hostUser:        "root",
+		containerName:   "node_installer",
+		nConf:           NewNodeConfig(),
+		isConfirmed:     make(map[string]bool),
+		stuckCount:      make(map[string]int),
+		isSynced:        make(map[string]bool),
+		isSyncedMempool: make(map[string]bool),
+		syncRatio:       make(map[string]float64),
 	}
 	return bot, nil
 }
@@ -246,68 +245,46 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 	}()
 }
 
+func (b *Bot) checkBlockBook(coin string) {
+	uri := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
+	if coin == "ETH" {
+		uri = fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
+	}
+	res := BlockBook{}
+	err := b.api.GetRequest(uri, &res)
+	b.mu.Lock()
+	if err != nil {
+		b.stuckCount[coin]++
+		b.mu.Unlock()
+		return
+	}
+	b.stuckCount[coin]++
+	if b.bestHeight[coin] != res.BlockBook.BestHeight && res.BlockBook.InSync {
+		b.stuckCount[coin] = 0
+		b.isSynced[coin] = res.BlockBook.InSync
+		b.bestHeight[coin] = res.BlockBook.BestHeight
+		if res.BlockBook.BestHeight != 0 && res.Backend.Blocks != 0 {
+			b.syncRatio[coin] = 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
+			if b.syncRatio[coin] == 100.00 {
+				b.syncRatio[coin] = 99
+			}
+		}
+		if res.BlockBook.MempoolSize != 0 && res.BlockBook.InSyncMempool {
+			b.syncRatio[coin] = 100.00
+			b.isSyncedMempool[coin] = true
+		}
+	}
+	b.mu.Unlock()
+}
+
 func (b *Bot) checkBlockBooks() {
-	resBTC := BlockBook{}
-	resETH := BlockBook{}
-	uriBTC := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
-	err := b.api.GetRequest(uriBTC, &resBTC)
-	if err != nil {
-		b.mu.Lock()
-		b.stuckCountBTC++
-		b.mu.Unlock()
-	}
-	if b.bestHeightBTC == resBTC.BlockBook.BestHeight && resBTC.BlockBook.InSync {
-		b.mu.Lock()
-		b.stuckCountBTC++
-		b.mu.Unlock()
-	} else {
-		b.mu.Lock()
-		b.stuckCountBTC = 0
-		b.mu.Unlock()
-	}
-	b.mu.Lock()
-	b.isSyncedBTC = resBTC.BlockBook.InSync
-	b.bestHeightBTC = resBTC.BlockBook.BestHeight
-	if resBTC.BlockBook.BestHeight != 0 && resBTC.Backend.Blocks != 0 {
-		b.syncBTCRatio = 100 * float64(resBTC.BlockBook.BestHeight) / float64(resBTC.Backend.Blocks)
-	}
-	if resBTC.BlockBook.MempoolSize != 0 && resBTC.BlockBook.InSyncMempool {
-		b.isSyncedMempoolBTC = true
-	}
-	b.mu.Unlock()
-
-	uriETH := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
-	err = b.api.GetRequest(uriETH, &resETH)
-	if err != nil {
-		b.mu.Lock()
-		b.stuckCountETH++
-		b.mu.Unlock()
-	}
-	if b.bestHeightETH == resETH.BlockBook.BestHeight && resETH.BlockBook.InSync {
-		b.mu.Lock()
-		b.stuckCountETH++
-		b.mu.Unlock()
-	} else {
-		b.mu.Lock()
-		b.stuckCountETH = 0
-		b.mu.Unlock()
-	}
-	b.mu.Lock()
-	b.isSyncedETH = resETH.BlockBook.InSync
-	b.bestHeightETH = resETH.BlockBook.BestHeight
-	if resETH.BlockBook.BestHeight != 0 && resETH.Backend.Blocks != 0 {
-		b.syncETHRatio = 100 * float64(resETH.BlockBook.BestHeight) / float64(resETH.Backend.Blocks)
-	}
-	if resETH.BlockBook.MempoolSize != 0 && resETH.BlockBook.InSyncMempool {
-		b.isSyncedMempoolETH = true
-	}
-	b.mu.Unlock()
-
+	b.checkBlockBook("BTC")
+	b.checkBlockBook("ETH")
 	b.mu.Lock()
 	//log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCountBTC, b.stuckCountETH)
-	if b.stuckCountBTC >= 70 || b.stuckCountETH >= 50 {
-		b.stuckCountBTC = 0
-		b.stuckCountETH = 0
+	if b.stuckCount["BTC"] >= 70 || b.stuckCount["ETH"] >= 50 {
+		b.stuckCount["BTC"] = 0
+		b.stuckCount["ETH"] = 0
 		log.Info("Restarting blockbook...")
 		b.restartBlockbook()
 	}

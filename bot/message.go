@@ -403,24 +403,16 @@ Getting the latest node status...
 }
 
 func (b *Bot) checkNodeMessage() string {
-	isMemBTC := " "
-	isMemETH := " "
-	b.mu.Lock()
-	if b.isSyncedMempoolBTC {
-		isMemBTC = "+ "
-	}
-	if b.isSyncedMempoolETH {
-		isMemETH = "+ "
-	}
+	b.mu.RLock()
 	text := fmt.Sprintf(`
 [Syncing status]
 <b>%.2f%%</b> finished.
 
 [Blockchain syncing status]
-BTC: <b>#%d</b> (%.3f%% %s)
-ETH: <b>#%d</b> (%.3f%% %s)
-	`, b.syncProgress, b.bestHeightBTC, b.syncBTCRatio, isMemBTC, b.bestHeightETH, b.syncETHRatio, isMemETH)
-	b.mu.Unlock()
+BTC: <b>#%d</b> (%.3f%%)
+ETH: <b>#%d</b> (%.3f%%)
+	`, b.syncProgress, b.bestHeight["BTC"], b.syncRatio["BTC"], b.bestHeight["ETH"], b.syncRatio["ETH"])
+	b.mu.RUnlock()
 	return text
 }
 
