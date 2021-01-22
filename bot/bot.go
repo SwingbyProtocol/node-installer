@@ -72,6 +72,7 @@ func NewBot(token string) (*Bot, error) {
 		nConf:           NewNodeConfig(),
 		isConfirmed:     make(map[string]bool),
 		stuckCount:      make(map[string]int),
+		bestHeight:      make(map[string]int),
 		isSynced:        make(map[string]bool),
 		isSyncedMempool: make(map[string]bool),
 		syncRatio:       make(map[string]float64),
@@ -265,14 +266,14 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.bestHeight[coin] = res.BlockBook.BestHeight
 		if res.BlockBook.BestHeight != 0 && res.Backend.Blocks != 0 {
 			b.syncRatio[coin] = 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
-			if b.syncRatio[coin] == 100.00 {
+			if b.syncRatio[coin] >= 100.00 {
 				b.syncRatio[coin] = 99
 			}
 		}
-		if res.BlockBook.MempoolSize != 0 && res.BlockBook.InSyncMempool {
-			b.syncRatio[coin] = 100.00
-			b.isSyncedMempool[coin] = true
-		}
+	}
+	if b.syncRatio[coin] >= 99 && res.BlockBook.MempoolSize != 0 && res.BlockBook.InSyncMempool {
+		b.syncRatio[coin] = 100.00
+		b.isSyncedMempool[coin] = true
 	}
 	b.mu.Unlock()
 }
