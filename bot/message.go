@@ -49,7 +49,8 @@ This Bot: <b>v%s</b>
 func (b *Bot) makeSetupIPText() string {
 	text := fmt.Sprintf(`
 OK. 
-Please let me know your server IP address (Only accept IPv4)
+Could you reply your server IP address 
+(Only support IPv4)
 [Configuration step 1/2]
 	`)
 	return text

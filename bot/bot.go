@@ -256,6 +256,8 @@ func (b *Bot) checkBlockBook(coin string) {
 	b.mu.Lock()
 	if err != nil {
 		b.stuckCount[coin]++
+		b.bestHeight[coin] = 0
+		b.SyncRatio[coin] = 0
 		b.mu.Unlock()
 		return
 	}
@@ -285,17 +287,17 @@ func (b *Bot) checkBlockBook(coin string) {
 func (b *Bot) checkBlockBooks() {
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
-	b.mu.Lock()
+	b.mu.RLock()
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
 		log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}
-	if b.stuckCount["BTC"] >= 70 || b.stuckCount["ETH"] >= 50 {
-		b.stuckCount["BTC"] = 0
-		b.stuckCount["ETH"] = 0
+	if b.stuckCount["BTC"] >= 71 || b.stuckCount["ETH"] >= 51 {
+		b.mu.RUnlock()
 		log.Info("Restarting blockbook...")
 		b.restartBlockbook()
+		return
 	}
-	b.mu.Unlock()
+	b.mu.RUnlock()
 }
 
 func (b *Bot) restartBlockbook() {
@@ -305,6 +307,10 @@ func (b *Bot) restartBlockbook() {
 	path := fmt.Sprintf("./playbooks/mainnet_blockbook.yml")
 	onSuccess := func() {
 		log.Info("Blockbooks are restarted")
+		b.mu.Lock()
+		b.stuckCount["BTC"] = 0
+		b.stuckCount["ETH"] = 0
+		b.mu.Unlock()
 	}
 	onError := func(err error) {
 		log.Error(err)

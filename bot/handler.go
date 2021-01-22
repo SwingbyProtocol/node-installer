@@ -179,7 +179,6 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 			b.execAnsible("./playbooks/bot_install.yml", extVars, onSuccess, onError)
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
 			b.cooldown()
 		}
@@ -235,7 +234,6 @@ func (b *Bot) handleUpgradeYourBot(cmd string) {
 			os.Exit(0)
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDeployBotMessage(), false, false)
 			b.cooldown()
 		}
@@ -275,7 +273,6 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			b.cooldown()
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorSetupInfuraMessage(), false, false)
 			b.cooldown()
 		}
@@ -324,7 +321,6 @@ func (b *Bot) handleDeployInfura(cmd string) {
 			b.cooldown()
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDeployInfuraMessage(), false, false)
 			b.cooldown()
 		}
@@ -363,7 +359,6 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			b.cooldown()
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
 			b.cooldown()
 		}
@@ -399,7 +394,6 @@ func (b *Bot) handleDeployNode(cmd string) {
 			b.cooldown()
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
 			b.cooldown()
 		}
@@ -434,7 +428,6 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 			b.cooldown()
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
 			b.cooldown()
 		}
@@ -460,7 +453,6 @@ func (b *Bot) handleEnableDomain(cmd string) {
 
 		}
 		onError := func(err error) {
-			log.Error(err)
 			b.SendMsg(b.ID, errorDomainMessage(), false, false)
 			b.cooldown()
 
