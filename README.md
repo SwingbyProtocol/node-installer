@@ -45,9 +45,8 @@ $ chmod +x scripts/start_build_and_install.sh && scripts/start_build_and_install
 9. Talk to your `telegram bot` with `/start` command to moving bot into your server.
 
 ## Development 
-```
-$ export BOT_TOKEN={your bot token}
-$ go run main.go
+```golang
+$ BOT_TOKEN={your bot token} go run main.go
 ```
 
 ## Build
