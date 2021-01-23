@@ -19,7 +19,7 @@ https://docs.docker.com/engine/install/linux-postinstall/#your-kernel-does-not-s
 ```
 $ git clone https://github.com/SwingbyProtocol/node-installer && cd node-installer
 ```
-Install steps (Let's do on your local machine)
+Install steps (Let's execute on your local machine)
 1. Install `Docker` from https://docker.io to your local machine. (Macbook is preffered)
 2. Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`
 3. Setup your instance on the cloud service provider
@@ -38,11 +38,11 @@ $ chmod 600 data/ssh_key
 ```bash
 $ export BOT_TOKEN={your bot token}
 ```
-- Run Bot on your local machine.
+8. Run Bot on your local machine.
 ```bash
 $ chmod +x scripts/start_build_and_install.sh && scripts/start_build_and_install.sh
 ```
-8. Talk to your `telegram bot` with `/start` command to moving bot into your server.
+9. Talk to your `telegram bot` with `/start` command to moving bot into your server.
 
 ## Development 
 ```
