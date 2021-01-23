@@ -40,7 +40,7 @@ $ export BOT_TOKEN={your bot token}
 ```
 8. Run Bot on your local machine.
 ```bash
-$ chmod +x scripts/start_build_and_install.sh && scripts/start_build_and_install.sh
+$ chmod +x scripts/install.sh && scripts/install.sh
 ```
 9. Talk to your `telegram bot` with `/start` command to moving bot into your server.
 
