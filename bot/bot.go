@@ -269,7 +269,7 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.bestHeight[coin] = res.BlockBook.BestHeight
 		if res.BlockBook.BestHeight != 0 && res.Backend.Blocks != 0 {
 			syncRatio := 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
-			if syncRatio >= 100.00 {
+			if syncRatio >= 99.99 {
 				b.SyncRatio[coin] = 99.99
 			} else {
 				b.SyncRatio[coin] = syncRatio
