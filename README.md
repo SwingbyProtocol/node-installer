@@ -18,8 +18,8 @@ https://docs.docker.com/engine/install/linux-postinstall/#your-kernel-does-not-s
 ## Getting Started
 - Install `Docker` from https://docker.io to your local machine. (Macbook is preffered)
 - Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`
-- Setup your instance of your cloud service provider and get ip address and ssh private key 
-- Or you can generate ssh-key pair by command like this `$ ssh-keygen -t rsa -b 4096 -f swingby_server_key` (no pass is preffered)
+- Setup your instance of your cloud service provider and get ip address and ssh private key Or you can generate ssh-key pair by command like this `$ ssh-keygen -t rsa -b 4096 -f ssh_key` (no pass is preffered).
+- Clone repository `git clone https://github.com/SwingbyProtocol/node-installer` and `cd node-installer`
 - Store your ssh private key to accesss instance into `data/ssh_key` 
 - Run `$ chmod 600 data/ssh_key` to set permission `600` to your ssh private key `data/ssh_key`
 - Run `$ export BOT_TOKEN={your bot token}`

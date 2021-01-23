@@ -39,6 +39,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 
 	b.handleDeployNode(cmd)
 	b.handleDeployNodeDebug(cmd)
+	b.handleStopNode(cmd)
 	b.handleGetLogs(cmd)
 
 	b.handleSetupInfura(cmd)
@@ -466,6 +467,33 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 		}
 		onError := func(err error) {
 			b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
+			b.cooldown()
+		}
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleStopNode(cmd string) {
+	if cmd == "/stop_node" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, b.makeStopNodeMessage(), false, false)
+		path := fmt.Sprintf("./playbooks/stop_node.yml")
+		onSuccess := func() {
+			b.SendMsg(b.ID, b.doneStopNodeMessage(), false, false)
+			b.cooldown()
+
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, b.errorStopNodeMessage(), false, false)
 			b.cooldown()
 		}
 		b.execAnsible(path, extVars, onSuccess, onError)

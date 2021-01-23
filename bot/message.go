@@ -29,6 +29,7 @@ You can install your meta node and manage node via this bot.
 /deploy_node to deploy your node
 /setup_domain to setup domain for your server
 /enable_domain to enalbe domain for your server
+/stop_node to stop your node
 
 [Deploy Infura]
 /setup_infura to setup infura containers
@@ -227,7 +228,8 @@ func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Swingby node config has been updated. 
-Let's start deploy => /deploy_node
+Next step is installing infura.
+Let's start => /setup_infura.
 	`)
 	return text
 }
@@ -254,7 +256,7 @@ OK. Your server subdomain is
 
 <b>%s</b>
 
-your server IP is :
+IP address is
 
 <b>%s</b>
 
@@ -331,6 +333,27 @@ func errorDeployNodeMessage() string {
 	text := fmt.Sprintf(`
 Deployment is not completed. Please kindly check error logs
 	`)
+	return text
+}
+
+func (b *Bot) makeStopNodeMessage() string {
+	text := fmt.Sprintf(`
+Stopping your Swingby node.... (v%s)
+	`, b.nodeVersion)
+	return text
+}
+
+func (b *Bot) errorStopNodeMessage() string {
+	text := fmt.Sprintf(`
+Something wrong. Please kindly check error logs
+	`)
+	return text
+}
+
+func (b *Bot) doneStopNodeMessage() string {
+	text := fmt.Sprintf(`
+Your Swingby node has been stopped!
+`)
 	return text
 }
 
@@ -421,7 +444,10 @@ func (b *Bot) checkNodeMessage() string {
 [Blockchain syncing status]
 BTC: <b>#%d</b> (%.3f%%)
 ETH: <b>#%d</b> (%.3f%%)
-	`, b.syncProgress, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
+
+After reached 99.99%% of progress,
+You can start deploy infura containers by /deploy_infura
+`, b.syncProgress, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
 	b.mu.RUnlock()
 	return text
 }

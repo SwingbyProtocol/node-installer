@@ -1,0 +1,13 @@
+- name: Stop swingby node
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: stop swingby node
+      shell: |
+        docker stop swingby_node
+      register: output
+
+    - debug: var=output.stdout_lines
