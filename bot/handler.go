@@ -36,6 +36,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleSetupNode(cmd)
 	b.handleSetupDomain(cmd)
 	b.handleEnableDomain(cmd)
+	b.handleEnableDomainIndexer(cmd)
 
 	b.handleDeployNode(cmd)
 	b.handleDeployNodeDebug(cmd)
@@ -524,8 +525,39 @@ func (b *Bot) handleEnableDomain(cmd string) {
 			return
 		}
 		extVars := map[string]string{
-			"HOST_USER": b.hostUser,
-			"DOMAIN":    b.nConf.Domain,
+			"HOST_USER":     b.hostUser,
+			"DOMAIN":        b.nConf.Domain,
+			"WITH_IDNEXERS": "false",
+		}
+		b.SendMsg(b.ID, b.makeDomainMessage(), false, false)
+		path := fmt.Sprintf("./playbooks/enable_domain.yml")
+		onSuccess := func() {
+			b.SendMsg(b.ID, b.doneDomainMessage(), false, false)
+			b.cooldown()
+
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, errorDomainMessage(), false, false)
+			b.cooldown()
+
+		}
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleEnableDomainIndexer(cmd string) {
+	if cmd == "/enable_domain_indexer" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER":     b.hostUser,
+			"DOMAIN":        b.nConf.Domain,
+			"WITH_IDNEXERS": "true",
 		}
 		b.SendMsg(b.ID, b.makeDomainMessage(), false, false)
 		path := fmt.Sprintf("./playbooks/enable_domain.yml")

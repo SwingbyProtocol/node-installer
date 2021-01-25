@@ -228,7 +228,8 @@ func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Swingby node config has been updated. 
-Next step is installing infura.
+
+Next step is installing infura package.
 Let's start => /setup_infura.
 	`)
 	return text
@@ -446,7 +447,11 @@ BTC: <b>#%d</b> (%.3f%%)
 ETH: <b>#%d</b> (%.3f%%)
 
 After reached 99.99%% of progress,
-You can start deploy infura containers by /deploy_infura
+You can start deploy infura containers 
+by /deploy_infura
+
+After reached 100.00%% of progress,
+You can install node by /deploy_node
 `, b.syncProgress, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
 	b.mu.RUnlock()
 	return text

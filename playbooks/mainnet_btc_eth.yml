@@ -28,7 +28,8 @@
           --logger.level {{LOG_LEVEL}} \
           -k {{K_UNTIL}} \
           --p2p.connect {{BOOTSTRAP_NODE_1}} \
-          --p2p.connect {{BOOTSTRAP_NODE_2}}
+          --p2p.connect {{BOOTSTRAP_NODE_2}} \
+          --p2p.connect {{BOOTSTRAP_NODE_3}}
 
       register: output
 

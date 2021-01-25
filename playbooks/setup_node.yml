@@ -7,6 +7,8 @@
   tasks:
     - name: download docker-blockbook && install dependencies
       shell: |
+        apt update
+        apt install wget -y
         rm -rf docker-blockbook-master
         wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
         tar -xf master.tar.gz         
