@@ -29,6 +29,7 @@ WORKDIR /app
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/bin/bot_linux_amd64 /app/bot_linux_amd64
 COPY playbooks /app/playbooks
+COPY .version.json /app/.version.json
 
 # Install ansible
 RUN apt-get update \

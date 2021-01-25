@@ -22,8 +22,6 @@ const (
 )
 
 const (
-	NodeVersion = "0.1.0"
-	BotVersion  = "1.0.0"
 	VersionJSON = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
 	DataPath    = "./data"
 	Network1    = "mainnet_btc_eth"

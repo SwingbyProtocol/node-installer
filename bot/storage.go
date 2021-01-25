@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,20 @@ func (b *Bot) sendLogFile(path string) error {
 	msg := tgbotapi.NewDocumentUpload(b.ID, logPath)
 	_, err := b.bot.Send(msg)
 	return err
+}
+
+func getVersion() (*Version, error) {
+	ver := &Version{}
+	path := fmt.Sprintf(".version.json")
+	str, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(str, ver)
+	if err != nil {
+		return nil, err
+	}
+	return ver, nil
 }
 
 func generateHostsfile(nodeIP string, target string) error {

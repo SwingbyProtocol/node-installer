@@ -42,14 +42,18 @@ func NewBot(token string) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
+	ver, err := getVersion()
+	if err != nil {
+		panic(err)
+	}
 	bot := &Bot{
 		Messages:        make(map[int]string),
 		ID:              0,
 		mu:              new(sync.RWMutex),
 		bot:             b,
 		api:             api.NewResolver("", 200),
-		nodeVersion:     NodeVersion,
-		botVersion:      BotVersion,
+		nodeVersion:     ver.NodeVersion,
+		botVersion:      ver.BotVersion,
 		hostUser:        "root",
 		containerName:   "node_installer",
 		nConf:           NewNodeConfig(),
@@ -68,13 +72,14 @@ func (b *Bot) Start() {
 	b.api.SetTimeout(15 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	log.Infof("Authorized on account %s", b.bot.Self.UserName)
+	log.Infof("Version: %s, [node: %s]", b.botVersion, b.nodeVersion)
+	log.Infof("Authorized on account: %s", b.bot.Self.UserName)
 
 	b.loadSystemEnv()
 	b.loadHostAndKeys()
 	b.nConf.loadConfig()
 
-	log.Infof("Now keygenUntil is %s", b.nConf.KeygenUntil)
+	log.Infof("Loaded KeygenUntil: %s", b.nConf.KeygenUntil)
 
 	if b.isRemote {
 		b.startBBKeeper()
@@ -311,19 +316,19 @@ func (b *Bot) checkNewVersion() {
 	}
 	bVersion, nVersion := b.Versions()
 	if v.BotVersion != bVersion && v.NodeVersion != nVersion {
-		log.Info(upgradeBothMessage(v.BotVersion, v.NodeVersion))
+		log.Infof("the new version of bot [v%s] node [v%s] is coming!", v.BotVersion, v.NodeVersion)
 		b.SendMsg(b.ID, upgradeBothMessage(v.BotVersion, v.NodeVersion), false, false)
 		b.SetVersion(v.BotVersion, v.NodeVersion)
 		return
 	}
 	if v.BotVersion != bVersion {
-		log.Info(upgradeBotMessage(v.BotVersion))
+		log.Infof("the new version of bot [v%s] is coming!", v.BotVersion)
 		b.SendMsg(b.ID, upgradeBotMessage(v.BotVersion), false, false)
 		b.SetVersion(v.BotVersion, nVersion)
 		return
 	}
 	if v.NodeVersion != nVersion {
-		log.Info(upgradeNodeMessage(v.NodeVersion))
+		log.Infof("the new version of node [v%s] is coming!", v.NodeVersion)
 		b.SendMsg(b.ID, upgradeNodeMessage(v.NodeVersion), false, false)
 		b.SetVersion(bVersion, v.NodeVersion)
 		return
