@@ -13,23 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	nodeVersion = "0.1.0"
-	botVersion  = "1.0.0"
-	dataPath    = "./data"
-	network1    = "mainnet_btc_eth"
-	network2    = "mainnet_btc_bc"
-	network3    = "testnet_tbtc_goerli"
-	network4    = "testnet_tbtc_bc"
-)
-
-var Networks = map[string]string{
-	"1": network1,
-	"2": network2,
-	"3": network3,
-	"4": network4,
-}
-
 type Bot struct {
 	Messages        map[int]string
 	ID              int64
@@ -65,8 +48,8 @@ func NewBot(token string) (*Bot, error) {
 		mu:              new(sync.RWMutex),
 		bot:             b,
 		api:             api.NewResolver("", 200),
-		nodeVersion:     nodeVersion,
-		botVersion:      botVersion,
+		nodeVersion:     NodeVersion,
+		botVersion:      BotVersion,
 		hostUser:        "root",
 		containerName:   "node_installer",
 		nConf:           NewNodeConfig(),
@@ -123,6 +106,7 @@ func (b *Bot) startBBKeeper() {
 		for {
 			<-ticker.C
 			b.checkBlockBooks()
+			b.checkNewVersion()
 		}
 	}()
 }
@@ -217,7 +201,7 @@ func (b *Bot) loadHostAndKeys() error {
 func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSuccess func(), onError func(err error)) {
 	ansibler.AnsibleAvoidHostKeyChecking()
 
-	sshKeyFilePath := fmt.Sprintf("%s/ssh_key", dataPath)
+	sshKeyFilePath := fmt.Sprintf("%s/ssh_key", DataPath)
 	ansiblePlaybookConnectionOptions := &ansibler.AnsiblePlaybookConnectionOptions{
 		AskPass:    false,
 		PrivateKey: sshKeyFilePath,
@@ -294,13 +278,13 @@ func (b *Bot) checkBlockBooks() {
 	if b.stuckCount["BTC"] >= 71 || b.stuckCount["ETH"] >= 51 {
 		b.mu.RUnlock()
 		log.Info("Restarting blockbook...")
-		b.restartBlockbook()
+		b.restartBlockbooks()
 		return
 	}
 	b.mu.RUnlock()
 }
 
-func (b *Bot) restartBlockbook() {
+func (b *Bot) restartBlockbooks() {
 	extVars := map[string]string{
 		"HOST_USER": b.hostUser,
 	}
@@ -316,4 +300,19 @@ func (b *Bot) restartBlockbook() {
 		log.Error(err)
 	}
 	b.execAnsible(path, extVars, onSuccess, onError)
+}
+
+func (b *Bot) checkNewVersion() {
+	v := Version{}
+	err := b.api.GetRequest(VersionJSON, &v)
+	if err != nil {
+		log.Info(err)
+		return
+	}
+	if v.BotVersion != b.botVersion {
+		log.Infof("The new bot[v%s] is coming", v.BotVersion)
+	}
+	if v.BotVersion != b.botVersion {
+		log.Infof("The new node[v%s] is coming", v.NodeVersion)
+	}
 }

@@ -507,7 +507,7 @@ func (b *Bot) handleGetLogs(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+		path := fmt.Sprintf("%s/%s", DataPath, b.nConf.Network)
 		err := b.sendLogFile(path)
 		if err != nil {
 			b.SendMsg(b.ID, errorLogFileMessage(), false, false)
@@ -646,25 +646,25 @@ func (b *Bot) updateETHAddr(msg string) {
 	}
 	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
 	switch b.nConf.Network {
-	case network1:
+	case Network1:
 		b.nConf.SetMainnet()
 		b.nConf.SetTSSGroup(10, 31)
 		b.nConf.CoinA = "WBTC"
 		b.nConf.CoinB = "BTC"
-	case network2:
+	case Network2:
 		b.nConf.SetMainnet()
 		b.nConf.CoinA = "BTCB"
 		b.nConf.CoinB = "BTC"
-	case network3:
+	case Network3:
 		b.nConf.SetTestnet()
 		b.nConf.SetTSSGroup(50, 25)
 		b.nConf.CoinA = "BTCE"
 		b.nConf.CoinB = "BTC"
-	case network4:
+	case Network4:
 		b.nConf.SetTestnet()
 		b.nConf.CoinB = "BTCB"
 	}
-	path := fmt.Sprintf("%s/%s", dataPath, b.nConf.Network)
+	path := fmt.Sprintf("%s/%s", DataPath, b.nConf.Network)
 	_, err := b.generateKeys(path)
 	if err != nil {
 		log.Error(err)

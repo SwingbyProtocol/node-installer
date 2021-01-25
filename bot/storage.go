@@ -24,7 +24,7 @@ func generateHostsfile(nodeIP string, target string) error {
 		return errors.New("IP addr error")
 	}
 	text := fmt.Sprintf("[%s]\n%s", target, nodeIP)
-	path := fmt.Sprintf("%s/hosts", dataPath)
+	path := fmt.Sprintf("%s/hosts", DataPath)
 	err := ioutil.WriteFile(path, []byte(text), 0666)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func generateHostsfile(nodeIP string, target string) error {
 }
 
 func getFileHostfile() (string, error) {
-	path := fmt.Sprintf("%s/hosts", dataPath)
+	path := fmt.Sprintf("%s/hosts", DataPath)
 	str, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -71,7 +71,7 @@ func getDiskSpaceFromFile() (int, error) {
 }
 
 func getFileSSHKeyfie() (string, error) {
-	path := fmt.Sprintf("%s/ssh_key", dataPath)
+	path := fmt.Sprintf("%s/ssh_key", DataPath)
 	str, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -85,7 +85,7 @@ func storeSSHKeyfile(key string) error {
 	if last != "\n" {
 		text = fmt.Sprintf("%s%s", text, "\n")
 	}
-	path := fmt.Sprintf("%s/ssh_key", dataPath)
+	path := fmt.Sprintf("%s/ssh_key", DataPath)
 	err := ioutil.WriteFile(path, []byte(text), 0600)
 	if err != nil {
 		return err

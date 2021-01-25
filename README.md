@@ -14,6 +14,8 @@ The docker host should supports swap memory. [details](https://docs.docker.com/c
 
 To enable swap memory, set up your configuration and restart your instance according to this document.
 https://docs.docker.com/engine/install/linux-postinstall/#your-kernel-does-not-support-cgroup-swap-limit-capabilities
+
+Note: `ufw` should be disabled to running to install Swingby node.
  
 ## Getting Started
 ```

@@ -22,6 +22,24 @@ const (
 )
 
 const (
+	NodeVersion = "0.1.0"
+	BotVersion  = "1.0.0"
+	VersionJSON = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
+	DataPath    = "./data"
+	Network1    = "mainnet_btc_eth"
+	Network2    = "mainnet_btc_bc"
+	Network3    = "testnet_tbtc_goerli"
+	Network4    = "testnet_tbtc_bc"
+)
+
+var Networks = map[string]string{
+	"1": Network1,
+	"2": Network2,
+	"3": Network3,
+	"4": Network4,
+}
+
+const (
 	GethRPC      = "10.2.0.1:8545"
 	BlockBookBTC = "10.2.0.1:9130"
 	BlockBookETH = "10.2.0.1:9131"
@@ -176,7 +194,7 @@ func (n *NodeConfig) SetTSSGroup(members int, threshold int) {
 }
 
 func (n *NodeConfig) checkConfig() error {
-	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", dataPath, n.Network)
+	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", DataPath, n.Network)
 	_, err := ioutil.ReadFile(pConfigFileName)
 	if err != nil {
 		return err
@@ -185,7 +203,7 @@ func (n *NodeConfig) checkConfig() error {
 }
 
 func (n *NodeConfig) storeConfig() error {
-	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", dataPath, n.Network)
+	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", DataPath, n.Network)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", n.Moniker)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**node_preferred_uri**", n.PreferredURI)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", n.CoinA)
@@ -222,7 +240,7 @@ func (n *NodeConfig) saveConfig() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/node_config.json", dataPath), []byte(data), 0600)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/node_config.json", DataPath), []byte(data), 0600)
 	if err != nil {
 		return err
 	}
@@ -230,7 +248,7 @@ func (n *NodeConfig) saveConfig() error {
 }
 
 func (n *NodeConfig) loadConfig() error {
-	str, err := ioutil.ReadFile(fmt.Sprintf("%s/node_config.json", dataPath))
+	str, err := ioutil.ReadFile(fmt.Sprintf("%s/node_config.json", DataPath))
 	if err != nil {
 		return err
 	}
