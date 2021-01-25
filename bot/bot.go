@@ -309,10 +309,36 @@ func (b *Bot) checkNewVersion() {
 		log.Info(err)
 		return
 	}
-	if v.BotVersion != b.botVersion {
-		log.Infof("The new bot[v%s] is coming", v.BotVersion)
+	bVersion, nVersion := b.Versions()
+	if v.BotVersion != bVersion && v.NodeVersion != nVersion {
+		log.Info(upgradeBothMessage(v.BotVersion, v.NodeVersion))
+		b.SendMsg(b.ID, upgradeBothMessage(v.BotVersion, v.NodeVersion), false, false)
+		b.SetVersion(v.BotVersion, v.NodeVersion)
+		return
 	}
-	if v.BotVersion != b.botVersion {
-		log.Infof("The new node[v%s] is coming", v.NodeVersion)
+	if v.BotVersion != bVersion {
+		log.Info(upgradeBotMessage(v.BotVersion))
+		b.SendMsg(b.ID, upgradeBotMessage(v.BotVersion), false, false)
+		b.SetVersion(v.BotVersion, nVersion)
+		return
 	}
+	if v.NodeVersion != nVersion {
+		log.Info(upgradeNodeMessage(v.NodeVersion))
+		b.SendMsg(b.ID, upgradeNodeMessage(v.NodeVersion), false, false)
+		b.SetVersion(bVersion, v.NodeVersion)
+		return
+	}
+}
+
+func (b *Bot) Versions() (string, string) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.botVersion, b.nodeVersion
+}
+
+func (b *Bot) SetVersion(bV string, nV string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.botVersion = bV
+	b.nodeVersion = nV
 }

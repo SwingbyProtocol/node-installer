@@ -471,3 +471,30 @@ Error: Log file is not exist...
 `)
 	return text
 }
+
+func upgradeBotMessage(newVersion string) string {
+	text := fmt.Sprintf(`
+The new bot[v%s] is coming!
+Let's upgrade /upgrade_your_bot
+	`, newVersion)
+	return text
+}
+
+func upgradeNodeMessage(newVersion string) string {
+	text := fmt.Sprintf(`
+The new node[v%s] is coming!
+Let's deploy again /deploy_node
+	`, newVersion)
+	return text
+}
+
+func upgradeBothMessage(newBotVersion string, newNodeVersion string) string {
+	text := fmt.Sprintf(`
+The new bot[v%s] and the new node[v%s] is coming!
+
+Let's upgrade /upgrade_your_bot
+
+then, Let's deploy again /deploy_node
+	`, newBotVersion, newNodeVersion)
+	return text
+}
