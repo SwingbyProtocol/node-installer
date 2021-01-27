@@ -4,6 +4,6 @@ build:
 		go build -o bin/bot .
 
 docker:
-		docker build -t swingbylabs/node-installer:latest .
+		docker build -t swingbylabs/node-installer:1.0.2 .
 push:
-		docker push swingbylabs/node-installer:latest
+		docker push swingbylabs/node-installer:1.0.2

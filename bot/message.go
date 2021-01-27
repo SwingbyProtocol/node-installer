@@ -126,6 +126,7 @@ func (b *Bot) doneUpgradeBotMessage() string {
 	text := fmt.Sprintf(`
 System has been upgraded! 
 You can start with /start command.
+And check the latest status. /check_status
 	`)
 	return text
 }
