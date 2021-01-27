@@ -126,7 +126,7 @@ func (b *Bot) doneUpgradeBotMessage() string {
 	text := fmt.Sprintf(`
 System has been upgraded! 
 You can start with /start command.
-	`)
+`)
 	return text
 }
 
@@ -474,7 +474,7 @@ Error: Log file is not exist...
 
 func upgradeBotMessage(newVersion string) string {
 	text := fmt.Sprintf(`
-The new bot[v%s] is coming!
+The new bot [v%s] is coming!
 Let's upgrade /upgrade_your_bot
 	`, newVersion)
 	return text
@@ -482,7 +482,7 @@ Let's upgrade /upgrade_your_bot
 
 func upgradeNodeMessage(newVersion string) string {
 	text := fmt.Sprintf(`
-The new node[v%s] is coming!
+The new node [v%s] is coming!
 Let's deploy again /deploy_node
 	`, newVersion)
 	return text
@@ -490,11 +490,12 @@ Let's deploy again /deploy_node
 
 func upgradeBothMessage(newBotVersion string, newNodeVersion string) string {
 	text := fmt.Sprintf(`
-The new bot[v%s] and the new node[v%s] is coming!
+The bot[v%s] and node [v%s] is coming!
 
 Let's upgrade /upgrade_your_bot
 
-then, Let's deploy again /deploy_node
+then, Let's deploy again by
+/check_status and /deploy_node
 	`, newBotVersion, newNodeVersion)
 	return text
 }

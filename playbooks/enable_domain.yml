@@ -14,10 +14,10 @@
         cd nginx-certbot-master
         DIR=/var/swingby/nginx_data DOMAIN={{DOMAIN}} FORWARD=172.17.0.1 PORT=8067 WITH_IDNEXERS={{WITH_IDNEXERS}} ./init-letsencrypt.sh
         if [ ! -e "/var/swingby/nginx_data/certbot/conf/live/{{DOMAIN}}/cert.pem" ]; then
-          DIR=/var/swingby/nginx_data docker-compose down
+          DIR=/var/swingby/nginx_data docker-compose down --remove-orphans
           exit 0
         fi
-        DIR=/var/swingby/nginx_data docker-compose down
+        DIR=/var/swingby/nginx_data docker-compose down --remove-orphans
         DIR=/var/swingby/nginx_data docker-compose up -d
 
       register: output
