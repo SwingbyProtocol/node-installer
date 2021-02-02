@@ -35,6 +35,7 @@ type Bot struct {
 	isSyncedMempool map[string]bool
 	SyncRatio       map[string]float64
 	syncProgress    float64
+	isStartBB       bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -252,6 +253,10 @@ func (b *Bot) checkBlockBook(coin string) {
 	}
 	b.stuckCount[coin]++
 
+	if !b.isStartBB {
+		b.isStartBB = true
+	}
+
 	if b.bestHeight[coin] <= res.BlockBook.BestHeight {
 		b.stuckCount[coin] = 0
 		b.isSynced[coin] = res.BlockBook.InSync
@@ -274,9 +279,14 @@ func (b *Bot) checkBlockBook(coin string) {
 }
 
 func (b *Bot) checkBlockBooks() {
+
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
 	b.mu.RLock()
+	if !b.isStartBB {
+		b.mu.RUnlock()
+		return
+	}
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
 		log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}

@@ -28,7 +28,7 @@ You can install your meta node and manage node via this bot.
 [Deploy Node]
 /deploy_node to deploy your node
 /setup_domain to setup domain for your server
-/enable_domain to enalbe domain for your server
+/enable_domain to enable domain for your server
 /stop_node to stop your node
 
 [Deploy Infura]
@@ -474,7 +474,7 @@ Error: Log file is not exist...
 
 func upgradeBotMessage(newVersion string) string {
 	text := fmt.Sprintf(`
-The new bot [v%s] is coming!
+The new bot [v%s] is released!
 Let's upgrade /upgrade_your_bot
 	`, newVersion)
 	return text
@@ -482,7 +482,7 @@ Let's upgrade /upgrade_your_bot
 
 func upgradeNodeMessage(newVersion string) string {
 	text := fmt.Sprintf(`
-The new node [v%s] is coming!
+The new node [v%s] is released!
 Let's deploy again /deploy_node
 	`, newVersion)
 	return text
@@ -490,7 +490,7 @@ Let's deploy again /deploy_node
 
 func upgradeBothMessage(newBotVersion string, newNodeVersion string) string {
 	text := fmt.Sprintf(`
-The bot[v%s] and node [v%s] is coming!
+The bot[v%s] and node [v%s] is released!
 
 Let's upgrade /upgrade_your_bot
 
