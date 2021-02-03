@@ -50,8 +50,8 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleUpgradeYourBot(cmd)
 
 	// Default response of say hi
-	if cmd == "hi" || cmd == "Hi" {
-		b.SendMsg(b.ID, `Let's start with /start`, false, false)
+	if cmd == "/hi" || cmd == "/Hi" || cmd == "/help" {
+		b.SendMsg(b.ID, `OK. Let's start with /start`, false, false)
 	}
 }
 

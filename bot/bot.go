@@ -73,14 +73,12 @@ func (b *Bot) Start() {
 	b.api.SetTimeout(15 * time.Second)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	log.Infof("Version: %s, [node: %s]", b.botVersion, b.nodeVersion)
-	log.Infof("Authorized on account: %s", b.bot.Self.UserName)
-
 	b.loadSystemEnv()
 	b.loadHostAndKeys()
 	b.nConf.loadConfig()
-
 	log.Infof("Loaded KeygenUntil: %s", b.nConf.KeygenUntil)
+	log.Infof("Authorized on bot account: %s", b.bot.Self.UserName)
+	log.Infof("Bot is ready with Version: %s, [node: %s]", b.botVersion, b.nodeVersion)
 
 	if b.isRemote {
 		b.startBBKeeper()
@@ -141,6 +139,7 @@ func (b *Bot) cooldown() {
 func (b *Bot) loadSystemEnv() {
 	if os.Getenv("REMOTE") == "true" {
 		b.isRemote = true
+		log.Infof("Set Remote mode")
 	}
 	if os.Getenv("CHAT_ID") != "" {
 		intID, err := strconv.Atoi(os.Getenv("CHAT_ID"))
@@ -166,6 +165,9 @@ func (b *Bot) loadSystemEnv() {
 	if os.Getenv("SSH_KEY") != "" {
 		storeSSHKeyfile(os.Getenv("SSH_KEY"))
 		log.Info("SSH private key is stored")
+	}
+	if os.Getenv("TAG") != "" {
+		b.botVersion = os.Getenv("TAG")
 	}
 }
 
@@ -288,7 +290,7 @@ func (b *Bot) checkBlockBooks() {
 		return
 	}
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
-		log.Infof("BTC blockbook stuck_count: %d, ETH blockbook stuck_count: %d", b.stuckCount["BTC"], b.stuckCount["ETH"])
+		log.Infof("Bblockbooks are not online stuck_count: BTC:%d, ETH:%d", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}
 	if b.stuckCount["BTC"] >= 71 || b.stuckCount["ETH"] >= 51 {
 		b.mu.RUnlock()

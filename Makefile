@@ -4,9 +4,9 @@ build:
 		go build -o bin/bot .
 
 docker:
-		docker build -t swingbylabs/node-installer:1.0.2 .
+		docker build -t swingbylabs/node-installer:latest .
 push:
-		docker push swingbylabs/node-installer:1.0.2
-push-latest:
-		docker tag swingbylabs/node-installer:1.0.2 swingbylabs/node-installer:latest
 		docker push swingbylabs/node-installer:latest
+push-release:
+		docker tag swingbylabs/node-installer:latest swingbylabs/node-installer:1.0.3
+		docker push swingbylabs/node-installer:1.0.3
