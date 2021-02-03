@@ -27,6 +27,7 @@ You can install your Swingby node and manage it via this bot.
 [Setup Node]
 /setup_node 
  |- configure your node
+ 
 [Deploy Node]
 /deploy_node 
  |- deploy your node
