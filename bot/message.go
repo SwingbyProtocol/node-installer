@@ -9,8 +9,10 @@ This is <b>Swingby node-installer bot</b>
 You can install your meta node and manage node via this bot.
 
 [Setup Node]
-/setup_server_config to configure your server
-/setup_your_bot to move out your bot to your server.
+/setup_server_config 
+ |- configure your server
+/setup_your_bot 
+ |- move out your bot to your server.
 
 [Version]
 Swingby Node: <b>v%s</b>
@@ -20,28 +22,38 @@ This Bot: <b>v%s</b>
 		text = fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-You can install your meta node and manage node via this bot.
+You can install your Swingby node and manage it via this bot.
 
 [Setup Node]
-/setup_node to configure your node
-
+/setup_node 
+ |- configure your node
 [Deploy Node]
-/deploy_node to deploy your node
-/setup_domain to setup domain for your server
-/enable_domain to enable domain for your server
-/stop_node to stop your node
+/deploy_node 
+ |- deploy your node
+/setup_domain 
+ |- configure domain
+/enable_domain 
+ |- attach domain to your server
+/stop_node
+ |- stop your node
 
 [Deploy Infura]
-/setup_infura to setup infura containers
-/deploy_infura to deploy infura services into your server
+/setup_infura 
+ |- setup infura containers
+/deploy_infura 
+ |- deploy infura services
 
 [System management]
-/check_status to check status of system
-/upgrade_your_bot to upgrade this bot app
+/check_status 
+ |- checking status of system
+/upgrade_your_bot 
+ |- upgrade bot to latest version 
+/get_node_logs
+ |- getting the latest logs of node
 
 [Version]
 Swingby Node: <b>v%s</b>
-This Bot: <b>v%s</b>
+Bot: <b>v%s</b>
 	`, b.nodeVersion, b.botVersion)
 	}
 	return text
