@@ -1,0 +1,16 @@
+- name: Check status
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: set iptables
+      shell: |
+        iptables -D DOCKER-USER -p tcp --match tcp --dport 8545 -j DROP
+        iptables -I DOCKER-USER -p tcp --match tcp --dport 8545 -j ACCEPT
+        iptables -L DOCKER-USER
+
+      register: output
+
+    - debug: var=output.stdout_lines

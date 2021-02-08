@@ -49,6 +49,8 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleCheckStatus(cmd)
 	b.handleUpgradeYourBot(cmd)
 
+	b.handleDisableGethPort(cmd)
+
 	// Default response of say hi
 	if cmd == "/hi" || cmd == "/Hi" || cmd == "/help" {
 		b.SendMsg(b.ID, `OK. Let's start with /start`, false, false)
@@ -386,6 +388,33 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			b.cooldown()
 		}
 		path := fmt.Sprintf("./playbooks/check_status.yml")
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleDisableGethPort(cmd string) {
+	if cmd == "/disable_geth_port" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+			"IP_ADDR":   b.nodeIP,
+		}
+		//b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
+		onSuccess := func() {
+			//b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
+			b.cooldown()
+		}
+		onError := func(err error) {
+			//b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
+			b.cooldown()
+		}
+		path := fmt.Sprintf("./playbooks/disable_geth_port.yml")
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
