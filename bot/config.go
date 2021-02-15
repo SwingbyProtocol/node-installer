@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	WalletContract  = "0x0fc2c6513ffc15d92a7593cede8b44cec3d85122"
-	LPtokenContract = "0xefcf527fdd2084de2ac9ba34463be4a245b45efa"
+	WalletContract  = "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e"
+	LPtokenContract = "0x22883a3db06737ece21f479a8009b8b9f22b6cc9"
 	WBTCContract    = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
 )
 
@@ -38,10 +38,12 @@ var Networks = map[string]string{
 }
 
 const (
-	GethRPC      = "10.2.0.1:8545"
-	BlockBookBTC = "10.2.0.1:9130"
-	BlockBookETH = "10.2.0.1:9131"
-	StopTrigger  = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
+	GethRPC        = "http://10.2.0.1:8545"
+	BlockBookBTC   = "http://10.2.0.1:9130"
+	BlockBookBTCWS = "wss://10.2.0.1:9130/websocket"
+	BlockBookETH   = "http://10.2.0.1:9131"
+	BlockBookETHWS = "wss://10.2.0.1:9131/websocket"
+	StopTrigger    = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
 )
 
 var BootstrapNodeMain = []string{
@@ -97,14 +99,14 @@ threshold = **threshold_placeholder**
 keygen_until = "2020-12-13T12:00:00Z"
 
 [btc]
-rest_uri = "http://**btc_blockbook_endpoint**"
-ws_uri = "ws://**btc_blockbook_endpoint**/websocket"
+rest_uri = "**btc_blockbook_endpoint**"
+ws_uri = "**btc_blockbook_ws_endpoint**"
 # miner_fee = 0.0003
 
 [eth]
-rpc_uri = "http://**eth_rpc_endpoint**"
-rest_uri = "http://**eth_blockbook_endpoint**"
-ws_uri = "ws://**eth_blockbook_endpoint**/websocket"
+rpc_uri = "**eth_rpc_endpoint**"
+rest_uri = "**eth_blockbook_endpoint**"
+ws_uri = "**eth_blockbook_endpoint**"
 wallet_contract_addr = "**eth_wallet_contract**"
 lp_token_contract_addr = "**eth_lpt_contract**"
 btc_token_contract_addr = "**btc_token_contract_addr**"
@@ -130,7 +132,9 @@ type NodeConfig struct {
 	RewardAddressBNB string
 	GethRPC          string
 	BlockBookBTC     string
+	BlockBookBTCWS   string
 	BlockBookETH     string
+	BlockBookETHWS   string
 	StakeAddr        string
 	StakeTx          string
 	WalletContract   string
@@ -152,7 +156,9 @@ func NewNodeConfig() *NodeConfig {
 		GethRPC:        GethRPC,
 		BNBSeed:        BnbSeedNodesMain[0],
 		BlockBookBTC:   BlockBookBTC,
+		BlockBookBTCWS: BlockBookBTCWS,
 		BlockBookETH:   BlockBookETH,
+		BlockBookETHWS: BlockBookETHWS,
 		KeygenUntil:    initTime.Format(time.RFC3339),
 		BootstrapNode:  BootstrapNodeMain,
 		Network:        Networks["1"],
@@ -200,7 +206,7 @@ func (n *NodeConfig) checkConfig() error {
 	return nil
 }
 
-func (n *NodeConfig) storeConfig() error {
+func (n *NodeConfig) storeConfigToml() error {
 	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", DataPath, n.Network)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", n.Moniker)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**node_preferred_uri**", n.PreferredURI)
@@ -213,9 +219,12 @@ func (n *NodeConfig) storeConfig() error {
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", n.Threshold))
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", n.BlockBookBTC)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_ws_endpoint**", n.BlockBookBTCWS)
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_rpc_endpoint**", n.GethRPC)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_endpoint**", n.BlockBookETH)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_blockbook_ws_endpoint**", n.BlockBookETHWS)
+
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_wallet_contract**", n.WalletContract)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_lpt_contract**", n.LPtoken)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_token_contract_addr**", n.WBTCContract)
