@@ -106,7 +106,7 @@ ws_uri = "**btc_blockbook_ws_endpoint**"
 [eth]
 rpc_uri = "**eth_rpc_endpoint**"
 rest_uri = "**eth_blockbook_endpoint**"
-ws_uri = "**eth_blockbook_endpoint**"
+ws_uri = "**eth_blockbook_ws_endpoint**"
 wallet_contract_addr = "**eth_wallet_contract**"
 lp_token_contract_addr = "**eth_lpt_contract**"
 btc_token_contract_addr = "**btc_token_contract_addr**"
