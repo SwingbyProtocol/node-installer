@@ -367,6 +367,7 @@ func (b *Bot) handleSetGlobalInfura(cmd string) {
 		b.nConf.BlockBookETH = "https://eth2.trezor.io"
 		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
 		b.nConf.GethRPC = "http://51.159.36.216:8545"
+		b.SendMsg(b.ID, "Ok. set global mode", false, false)
 		return
 	}
 }
@@ -381,6 +382,7 @@ func (b *Bot) handleSetLocalInfura(cmd string) {
 		b.nConf.BlockBookETH = BlockBookETH
 		b.nConf.BlockBookETHWS = BlockBookETHWS
 		b.nConf.GethRPC = GethRPC
+		b.SendMsg(b.ID, "Ok. set local mode", false, false)
 		return
 	}
 }
