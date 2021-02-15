@@ -40,9 +40,9 @@ var Networks = map[string]string{
 const (
 	GethRPC        = "http://10.2.0.1:8545"
 	BlockBookBTC   = "http://10.2.0.1:9130"
-	BlockBookBTCWS = "wss://10.2.0.1:9130/websocket"
+	BlockBookBTCWS = "ws://10.2.0.1:9130/websocket"
 	BlockBookETH   = "http://10.2.0.1:9131"
-	BlockBookETHWS = "wss://10.2.0.1:9131/websocket"
+	BlockBookETHWS = "ws://10.2.0.1:9131/websocket"
 	StopTrigger    = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
 )
 
