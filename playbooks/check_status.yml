@@ -18,12 +18,4 @@
 
     - debug: var=output.stdout_lines
 
-    - name: set iptables
-      shell: |
-        iptables -D DOCKER-USER -p tcp --match multiport --dport 8545,9130,9131,8067 -j DROP
-        iptables -I DOCKER-USER -p tcp --match multiport --dport 8545,9130,9131,8067 -j DROP
-        iptables -L DOCKER-USER
-
-      register: output
-
-    - debug: var=output.stdout_lines
+  
