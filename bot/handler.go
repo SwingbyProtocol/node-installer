@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	syncSnapshotBytes       = 1123759607180
+	syncSnapshotBytes       = 1175750002860
 	minimumMountPathSizeMiB = 1430511
 )
 
