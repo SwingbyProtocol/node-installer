@@ -362,10 +362,24 @@ func (b *Bot) handleSetGlobalInfura(cmd string) {
 			return
 		}
 		b.nConf.BlockBookBTC = "https://btc1.trezor.io"
-		b.nConf.BlockBookBTCWS = "wss://btc1.trezor.io/websoket"
+		b.nConf.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
 		b.nConf.BlockBookETH = "https://eth2.trezor.io"
-		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websoket"
+		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
 		b.nConf.GethRPC = "http://51.159.36.216:8545"
+		return
+	}
+}
+
+func (b *Bot) handleSetLocalInfura(cmd string) {
+	if cmd == "/set_local_infura" {
+		if !b.isRemote {
+			return
+		}
+		b.nConf.BlockBookBTC = BlockBookBTC
+		b.nConf.BlockBookBTCWS = BlockBookBTCWS
+		b.nConf.BlockBookETH = BlockBookETH
+		b.nConf.BlockBookETHWS = BlockBookETHWS
+		b.nConf.GethRPC = GethRPC
 		return
 	}
 }
