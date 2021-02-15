@@ -84,6 +84,10 @@ func (b *Bot) Start() {
 		b.startBBKeeper()
 	}
 
+	if b.nConf.BlockBookBTCWS == "" {
+		b.nConf = NewNodeConfig()
+	}
+
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
 		log.Error(err)
@@ -239,9 +243,9 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 }
 
 func (b *Bot) checkBlockBook(coin string) {
-	uri := fmt.Sprintf("http://%s/api/", b.nConf.BlockBookBTC)
+	uri := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
 	if coin == "ETH" {
-		uri = fmt.Sprintf("http://%s/api/", b.nConf.BlockBookETH)
+		uri = fmt.Sprintf("%s/api/", b.nConf.BlockBookETH)
 	}
 	res := BlockBook{}
 	err := b.api.GetRequest(uri, &res)

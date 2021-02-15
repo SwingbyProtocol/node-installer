@@ -45,6 +45,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 
 	b.handleSetupInfura(cmd)
 	b.handleDeployInfura(cmd)
+	b.handleSetGlobalInfura(cmd)
 
 	b.handleCheckStatus(cmd)
 	b.handleUpgradeYourBot(cmd)
@@ -355,6 +356,20 @@ func (b *Bot) handleDeployInfura(cmd string) {
 	}
 }
 
+func (b *Bot) handleSetGlobalInfura(cmd string) {
+	if cmd == "/set_global_infura" {
+		if !b.isRemote {
+			return
+		}
+		b.nConf.BlockBookBTC = "https://btc1.trezor.io"
+		b.nConf.BlockBookBTCWS = "wss://btc1.trezor.io/websoket"
+		b.nConf.BlockBookETH = "https://eth2.trezor.io"
+		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websoket"
+		b.nConf.GethRPC = "http://51.159.36.216:8545"
+		return
+	}
+}
+
 func (b *Bot) handleCheckStatus(cmd string) {
 	if cmd == "/check_status" {
 		if !b.isRemote {
@@ -438,6 +453,8 @@ func (b *Bot) handleDeployNode(cmd string) {
 			b.cooldown()
 			return
 		}
+		b.nConf.storeConfigToml()
+		b.nConf.saveConfig()
 		extVars := map[string]string{
 			"HOST_USER":        b.hostUser,
 			"TAG":              b.nodeVersion,
@@ -642,7 +659,7 @@ func (b *Bot) setupDomain(msg string) {
 	}
 	if check == 1 {
 		b.nConf.SetDomain(msg)
-		b.nConf.storeConfig()
+		b.nConf.storeConfigToml()
 		b.nConf.saveConfig()
 		b.nConf.loadConfig()
 	}
@@ -658,7 +675,7 @@ func (b *Bot) updateStakeAddr(msg string) {
 	if check == 1 {
 		b.nConf.StakeAddr = msg
 	}
-	b.nConf.storeConfig()
+	b.nConf.storeConfigToml()
 	b.nConf.saveConfig()
 	b.nConf.loadConfig()
 	b.SendMsg(b.ID, doneConfigGenerateText(), false, false)
