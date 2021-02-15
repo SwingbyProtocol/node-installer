@@ -46,6 +46,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleSetupInfura(cmd)
 	b.handleDeployInfura(cmd)
 	b.handleSetGlobalInfura(cmd)
+	b.handleSetLocalInfura(cmd)
 
 	b.handleCheckStatus(cmd)
 	b.handleUpgradeYourBot(cmd)
