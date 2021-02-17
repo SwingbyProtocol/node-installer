@@ -47,7 +47,7 @@ You can install your Swingby node and manage it via this bot.
 [System management]
 /check_status 
  |- checking status of system
-/upgrade_your_bot 
+/upgrade_bot 
  |- upgrade bot to latest version 
 /get_node_logs
  |- getting the latest logs of node
@@ -488,7 +488,7 @@ Error: Log file is not exist...
 func upgradeBotMessage(newVersion string) string {
 	text := fmt.Sprintf(`
 The new bot [v%s] is released!
-Let's upgrade /upgrade_your_bot
+Let's upgrade /upgrade_bot
 	`, newVersion)
 	return text
 }
@@ -505,7 +505,7 @@ func upgradeBothMessage(newBotVersion string, newNodeVersion string) string {
 	text := fmt.Sprintf(`
 The bot[v%s] and node [v%s] is released!
 
-Let's upgrade /upgrade_your_bot
+Let's upgrade /upgrade_bot
 
 then, Let's deploy again by
 /check_status and /deploy_node

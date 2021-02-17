@@ -49,7 +49,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleSetLocalInfura(cmd)
 
 	b.handleCheckStatus(cmd)
-	b.handleUpgradeYourBot(cmd)
+	b.handleUpgradeBot(cmd)
 
 	b.handleDisableGethPort(cmd)
 
@@ -216,8 +216,8 @@ func (b *Bot) handleSetupDomain(cmd string) {
 	}
 }
 
-func (b *Bot) handleUpgradeYourBot(cmd string) {
-	if cmd == "/upgrade_your_bot" {
+func (b *Bot) handleUpgradeBot(cmd string) {
+	if cmd == "/upgrade_bot" {
 		if !b.isRemote {
 			return
 		}
