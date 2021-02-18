@@ -109,7 +109,7 @@ func (b *Bot) Start() {
 func (b *Bot) startBBKeeper() {
 	ticker := time.NewTicker(30 * time.Second)
 	go func() {
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 		b.checkBlockBooks()
 		for {
 			<-ticker.C

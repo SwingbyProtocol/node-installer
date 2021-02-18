@@ -489,6 +489,9 @@ func upgradeBotMessage(newVersion string) string {
 	text := fmt.Sprintf(`
 The new bot [v%s] is released!
 Let's upgrade /upgrade_bot
+
+And then, Let's deploy node again.
+/deploy_node
 	`, newVersion)
 	return text
 }
