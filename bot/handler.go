@@ -138,7 +138,7 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 		if b.isRemote {
 			return
 		}
-		err := b.loadHostAndKeys()
+		err := b.loadAndCreateHostIPAndKeys()
 		if err != nil {
 			log.Info(err)
 			return
@@ -221,7 +221,7 @@ func (b *Bot) handleUpgradeBot(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		err := b.loadHostAndKeys()
+		err := b.loadAndCreateHostIPAndKeys()
 		if err != nil {
 			log.Info(err)
 			return
@@ -660,7 +660,7 @@ func (b *Bot) setupUser(msg string) {
 	if check == 1 {
 		b.hostUser = msg
 	}
-	err := b.loadHostAndKeys()
+	err := b.loadAndCreateHostIPAndKeys()
 	if err != nil {
 		text := fmt.Sprintf("SSH_KEY loading error. please check data/ssh_key file again")
 		b.SendMsg(b.ID, text, false, false)

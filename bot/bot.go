@@ -74,7 +74,7 @@ func (b *Bot) Start() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	b.loadSystemEnv()
-	b.loadHostAndKeys()
+	b.loadAndCreateHostIPAndKeys()
 	b.nConf.loadConfig()
 	log.Infof("Loaded KeygenUntil: %s", b.nConf.KeygenUntil)
 	log.Infof("Authorized on bot account: %s", b.bot.Self.UserName)
@@ -153,10 +153,9 @@ func (b *Bot) loadSystemEnv() {
 		log.Infof("Set ChatID=%d", b.ID)
 	}
 	if os.Getenv("IP_ADDR") != "" {
-		err := generateHostsfile(os.Getenv("IP_ADDR"), "server")
-		if err == nil {
-			log.Infof("Set IP_ADDR=%s", os.Getenv("IP_ADDR"))
-		}
+		b.nodeIP = os.Getenv("IP_ADDR")
+		log.Infof("Set IP_ADDR=%s", b.nodeIP)
+
 	}
 	if os.Getenv("CONT_NAME") != "" {
 		b.containerName = os.Getenv("CONT_NAME")
@@ -167,7 +166,7 @@ func (b *Bot) loadSystemEnv() {
 		log.Infof("Set HOST_USER=%s", b.hostUser)
 	}
 	if os.Getenv("SSH_KEY") != "" {
-		storeSSHKeyfile(os.Getenv("SSH_KEY"))
+		b.sshKey = os.Getenv(("SSH_KEY"))
 		log.Info("SSH private key is stored")
 	}
 	if os.Getenv("TAG") != "" {
@@ -185,17 +184,19 @@ func (b *Bot) SendMsg(id int64, text string, isReply bool, hidePreview bool) (tg
 	return b.bot.Send(msg)
 }
 
-func (b *Bot) loadHostAndKeys() error {
+func (b *Bot) loadAndCreateHostIPAndKeys() error {
 	host, err := getFileHostfile()
 	if err != nil {
-		return err
+		generateHostsfile(b.nodeIP, "server")
+		host = b.nodeIP
 	}
 	b.nodeIP = host
 	log.Infof("Loaded Server IPv4:%s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {
-		return err
+		storeSSHKeyfile(b.sshKey)
+		key = b.sshKey
 	}
 	err = storeSSHKeyfile(key)
 	if err != nil {
