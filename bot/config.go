@@ -16,12 +16,6 @@ const (
 )
 
 const (
-	WalletContractTest  = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	LPtokenContractTest = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-	WBTCContractTest    = "0xf50b87c16bfb0781a86d4a7e91eb9e1da16906c4"
-)
-
-const (
 	VersionJSON = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
 	DataPath    = "./data"
 	Network1    = "mainnet_btc_eth"
@@ -52,12 +46,6 @@ var BootstrapNodeMain = []string{
 	"116.203.56.22:12133", // https://motion-re-0080.yen.farm
 }
 
-var BootstrapNodeTest = []string{
-	"49.12.68.127:12131",  // https://moonfly-re-0078.yen.farm
-	"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
-	"116.203.56.22:12133", // https://motion-re-0080.yen.farm
-}
-
 var BnbSeedNodesMain = []string{
 	"tcp://dataseed2.defibit.io:80",
 }
@@ -76,7 +64,7 @@ preferred_uri = "**node_preferred_uri**"
 
 [logger]
 level = "INFO"
-max_file_size_MB = 100
+max_file_size_MB = 10
 max_backup_files = 100
 max_retain_files_days = 14
 use_console_logger = true
@@ -177,14 +165,6 @@ func (n *NodeConfig) SetMainnet() {
 	n.LPtoken = LPtokenContract
 	n.BootstrapNode = BootstrapNodeMain
 	n.WBTCContract = WBTCContract
-}
-
-func (n *NodeConfig) SetTestnet() {
-	n.IsTestnet = true
-	n.WalletContract = WalletContractTest
-	n.LPtoken = LPtokenContractTest
-	n.BootstrapNode = BootstrapNodeTest
-	n.WBTCContract = WBTCContractTest
 }
 
 func (n *NodeConfig) SetDomain(domain string) {

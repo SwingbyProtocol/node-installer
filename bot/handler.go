@@ -426,7 +426,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 }
 
 func (b *Bot) handleDisableGethPort(cmd string) {
-	if cmd == "/disable_geth_port" {
+	if cmd == "/open_geth_port" {
 		if !b.isRemote {
 			return
 		}
@@ -440,13 +440,15 @@ func (b *Bot) handleDisableGethPort(cmd string) {
 		//b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			//b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
+			b.SendMsg(b.ID, "Ok. port 8545 is opened", false, false)
 			b.cooldown()
 		}
 		onError := func(err error) {
 			//b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
+			b.SendMsg(b.ID, "Something wrong", false, false)
 			b.cooldown()
 		}
-		path := fmt.Sprintf("./playbooks/disable_geth_port.yml")
+		path := fmt.Sprintf("./playbooks/open_geth_port.yml")
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
@@ -719,13 +721,13 @@ func (b *Bot) updateETHAddr(msg string) {
 		b.nConf.CoinA = "BTCB"
 		b.nConf.CoinB = "BTC"
 	case Network3:
-		b.nConf.SetTestnet()
-		b.nConf.SetTSSGroup(50, 25)
-		b.nConf.CoinA = "BTCE"
-		b.nConf.CoinB = "BTC"
+		// b.nConf.SetTestnet()
+		// b.nConf.SetTSSGroup(50, 25)
+		// b.nConf.CoinA = "BTCE"
+		// b.nConf.CoinB = "BTC"
 	case Network4:
-		b.nConf.SetTestnet()
-		b.nConf.CoinB = "BTCB"
+		// b.nConf.SetTestnet()
+		// b.nConf.CoinB = "BTCB"
 	}
 	path := fmt.Sprintf("%s/%s", DataPath, b.nConf.Network)
 	_, err := b.generateKeys(path)

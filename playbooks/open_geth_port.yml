@@ -1,4 +1,4 @@
-- name: Check status
+- name: Open geth port
   hosts: server
   user: "{{HOST_USER}}"
   become: yes
@@ -7,7 +7,7 @@
   tasks:
     - name: disable geth port on iptables
       shell: |
-        iptables -D DOCKER-USER -p tcp --match tcp --dport 8545 -j DROP
+        iptables -D DOCKER-USER -p tcp --match tcp --dport 8545 -j ACCEPT
         iptables -I DOCKER-USER -p tcp --match tcp --dport 8545 -j ACCEPT
         iptables -L DOCKER-USER
 
