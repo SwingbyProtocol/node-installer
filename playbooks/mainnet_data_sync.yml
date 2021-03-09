@@ -9,6 +9,8 @@
       shell: |
         cd docker-blockbook-master/deployments/mainnet
         DIR=/var/swingby docker-compose down
+        
+        killall b2-linux
 
         cd /var/swingby
         rm -f ./b2-linux
