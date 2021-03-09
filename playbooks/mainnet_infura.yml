@@ -8,6 +8,7 @@
     - name: restart infura nodes
       shell: |
         cd docker-blockbook-master/deployments/mainnet
+        docker pull ethereum/client-go:stable
         DIR=/var/swingby docker-compose down
         DIR=/var/swingby docker-compose up -d --build
 

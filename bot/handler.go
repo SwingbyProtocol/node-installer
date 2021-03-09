@@ -366,7 +366,7 @@ func (b *Bot) handleSetGlobalInfura(cmd string) {
 		b.nConf.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
 		b.nConf.BlockBookETH = "https://eth2.trezor.io"
 		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
-		b.nConf.GethRPC = "http://51.159.36.216:8545"
+		b.nConf.GethRPC = "http://51.159.56.104:8545"
 		b.SendMsg(b.ID, "Ok. set global mode", false, false)
 		return
 	}
