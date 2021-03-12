@@ -310,7 +310,7 @@ func (b *Bot) restartBlockbooks() {
 	extVars := map[string]string{
 		"HOST_USER": b.hostUser,
 	}
-	path := fmt.Sprintf("./playbooks/mainnet_blockbook.yml")
+	path := fmt.Sprintf("./playbooks/%s/restart_blockbook.yml", b.nConf.Network)
 	onSuccess := func() {
 		log.Info("Blockbooks are restarted")
 		b.mu.Lock()

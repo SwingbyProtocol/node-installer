@@ -18,10 +18,10 @@ const (
 const (
 	VersionJSON = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
 	DataPath    = "./data"
-	Network1    = "mainnet_btc_eth"
-	Network2    = "mainnet_btc_bc"
-	Network3    = "testnet_tbtc_goerli"
-	Network4    = "testnet_tbtc_bc"
+	Network1    = "btc_eth"
+	Network2    = "btc_bsc"
+	Network3    = "tbtc_goerli"
+	Network4    = "tbtc_bsc"
 )
 
 var Networks = map[string]string{

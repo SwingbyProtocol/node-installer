@@ -297,11 +297,8 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			b.SendMsg(b.ID, errorSetupInfuraMessage(), false, false)
 			b.cooldown()
 		}
-		targetPath := "./playbooks/mainnet_data_sync.yml"
-		if b.nConf.IsTestnet {
-			targetPath = "./playbooks/testnet_data_sync.yml"
-		}
-		b.execAnsible(targetPath, extVars, onSuccess, onError)
+		path := fmt.Sprintf("./playbooks/%s/snapshot_sync.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
 }
@@ -348,11 +345,8 @@ func (b *Bot) handleDeployInfura(cmd string) {
 			b.SendMsg(b.ID, errorDeployInfuraMessage(), false, false)
 			b.cooldown()
 		}
-		targetPath := "./playbooks/mainnet_infura.yml"
-		if b.nConf.IsTestnet {
-			targetPath = "./playbooks/testnet_infura.yml"
-		}
-		b.execAnsible(targetPath, extVars, onSuccess, onError)
+		path := fmt.Sprintf("./playbooks/%s/deploy_infura.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
 }
@@ -484,7 +478,7 @@ func (b *Bot) handleDeployNode(cmd string) {
 			"LOG_LEVEL":        "INFO",
 		}
 		b.SendMsg(b.ID, b.makeDeployNodeMessage(), false, false)
-		path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
+		path := fmt.Sprintf("./playbooks/%s/deploy_node.yml", b.nConf.Network)
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
 			b.cooldown()
@@ -526,7 +520,7 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 			"LOG_LEVEL":        "DEBUG",
 		}
 		b.SendMsg(b.ID, b.makeDeployNodeMessage(), false, false)
-		path := fmt.Sprintf("./playbooks/%s.yml", b.nConf.Network)
+		path := fmt.Sprintf("./playbooks/%s/deploy_node.yml", b.nConf.Network)
 		onSuccess := func() {
 			b.SendMsg(b.ID, doneDeployNodeMessage(), false, false)
 			b.cooldown()
