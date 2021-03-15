@@ -415,7 +415,8 @@ func confirmDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 This command will restarts geth nodes.
 <b>it may takes a long time to sync blockchain again. </b>
-if you sure this, please go ahead /deploy_infura
+if you sure this, please go ahead.
+=> /deploy_infura
 `)
 	return text
 }
@@ -442,10 +443,11 @@ Deployment has been rejected. Please kindly check error logs.
 	return text
 }
 
-func makeCheckNodeMessage() string {
+func (b *Bot) makeCheckNodeMessage() string {
 	text := fmt.Sprintf(`
 Getting the latest node status...
-`)
+NodeIP--<b>%s</b>
+`, b.nodeIP)
 	return text
 }
 
@@ -456,6 +458,7 @@ func (b *Bot) checkNodeMessage() string {
 <b>%.2f%%</b> finished.
 
 [Blockchain syncing status]
+[mode: <b>%s</b>]
 BTC: <b>#%d</b> (%.3f%%)
 ETH: <b>#%d</b> (%.3f%%)
 
@@ -466,7 +469,7 @@ You can start deploy infura containers by
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
 	b.mu.RUnlock()
 	return text
 }

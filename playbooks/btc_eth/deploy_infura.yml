@@ -5,10 +5,16 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: restart infura nodes
+    - name: download latest docker-blockbook repo && restart infura nodes
       shell: |
+        rm -rf docker-blockbook-master
+        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
+        tar -xf master.tar.gz         
+        rm -f master.tar.gz
+
+        docker system prune -f
         cd docker-blockbook-master/deployments/mainnet
-        docker pull ethereum/client-go:stable
+        docker pull ethereum/client-go:v1.10.1
         DIR=/var/swingby docker-compose down
         DIR=/var/swingby docker-compose up -d --build bitcoind geth
         sleep 40

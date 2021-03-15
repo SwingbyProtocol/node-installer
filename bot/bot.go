@@ -27,6 +27,7 @@ type Bot struct {
 	sshKey          string
 	nConf           *NodeConfig
 	isRemote        bool
+	infura          string
 	isLocked        bool
 	isConfirmed     map[string]bool
 	stuckCount      map[string]int
@@ -58,6 +59,7 @@ func NewBot(token string) (*Bot, error) {
 		hostUser:        "root",
 		containerName:   "node_installer",
 		nConf:           NewNodeConfig(),
+		infura:          "local",
 		isConfirmed:     make(map[string]bool),
 		stuckCount:      make(map[string]int),
 		bestHeight:      make(map[string]int),
@@ -86,6 +88,10 @@ func (b *Bot) Start() {
 
 	if b.nConf.BlockBookBTCWS == "" {
 		b.nConf = NewNodeConfig()
+	}
+
+	if b.nConf.Network == "mainnet_btc_eth" {
+		b.nConf.Network = Network1
 	}
 
 	updates, err := b.bot.GetUpdatesChan(u)
@@ -251,6 +257,11 @@ func (b *Bot) checkBlockBook(coin string) {
 	res := BlockBook{}
 	err := b.api.GetRequest(uri, &res)
 	b.mu.Lock()
+	if b.nConf.BlockBookBTC != BlockBookBTC {
+		b.infura = "global"
+	} else {
+		b.infura = "local"
+	}
 	if err != nil {
 		b.stuckCount[coin]++
 		b.bestHeight[coin] = 0
@@ -275,6 +286,8 @@ func (b *Bot) checkBlockBook(coin string) {
 			} else {
 				b.SyncRatio[coin] = syncRatio
 			}
+		} else {
+			b.SyncRatio[coin] = 0
 		}
 	}
 

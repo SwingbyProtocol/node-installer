@@ -393,7 +393,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			"HOST_USER": b.hostUser,
 			"IP_ADDR":   b.nodeIP,
 		}
-		b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
+		b.SendMsg(b.ID, b.makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			syncedSize, _ := getDirSizeFromFile()
 			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotBytes)
