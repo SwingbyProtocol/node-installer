@@ -44,7 +44,7 @@ func loadStakeKey(path string) (string, error) {
 	data := keys.EncryptedKeyJSON{}
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return "", errors.New("stake key is not exist")
+		return "", errors.New("Stake key is not exist")
 	}
 	err = json.Unmarshal(file, &data)
 	if err != nil {

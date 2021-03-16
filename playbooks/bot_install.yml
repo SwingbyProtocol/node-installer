@@ -7,9 +7,6 @@
   tasks:
     - name: setup bot
       shell: |
-        if [ ! -d "/var/swingby/node/btc_eth" ]; then 
-          cp -r /var/swingby/node/mainnet_btc_eth /var/swingby/node/btc_eth
-        fi
         docker rm -f {{CONT_NAME}} 2> /dev/null || true
         docker pull swingbylabs/node-installer:{{TAG}}
         docker run -d \

@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ type Bot struct {
 	nConf           *NodeConfig
 	isRemote        bool
 	infura          string
+	validInfura     bool
 	isLocked        bool
 	isConfirmed     map[string]bool
 	stuckCount      map[string]int
@@ -35,6 +37,7 @@ type Bot struct {
 	isSynced        map[string]bool
 	isSyncedMempool map[string]bool
 	SyncRatio       map[string]float64
+	infuraVersions  map[string]string
 	syncProgress    float64
 	isStartBB       bool
 }
@@ -66,6 +69,7 @@ func NewBot(token string) (*Bot, error) {
 		isSynced:        make(map[string]bool),
 		isSyncedMempool: make(map[string]bool),
 		SyncRatio:       make(map[string]float64),
+		infuraVersions:  make(map[string]string),
 	}
 	return bot, nil
 }
@@ -266,6 +270,7 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.stuckCount[coin]++
 		b.bestHeight[coin] = 0
 		b.SyncRatio[coin] = 0
+		b.infuraVersions[coin] = ""
 		b.mu.Unlock()
 		return
 	}
@@ -273,6 +278,10 @@ func (b *Bot) checkBlockBook(coin string) {
 
 	if !b.isStartBB {
 		b.isStartBB = true
+	}
+
+	if res.Backend.Version != "" {
+		b.infuraVersions[coin] = res.Backend.Version
 	}
 
 	if b.bestHeight[coin] <= res.BlockBook.BestHeight {
@@ -302,13 +311,22 @@ func (b *Bot) checkBlockBooks() {
 
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
+
+	b.mu.Lock()
+	if regexp.MustCompile(`210000`).MatchString(b.infuraVersions["BTC"]) && regexp.MustCompile(`Geth/v1.10.1`).MatchString(b.infuraVersions["ETH"]) {
+		b.validInfura = true
+	} else {
+		b.validInfura = false
+	}
+	b.mu.Unlock()
+
 	b.mu.RLock()
 	if !b.isStartBB {
 		b.mu.RUnlock()
 		return
 	}
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
-		log.Infof("Bblockbooks are not online stuck_count: BTC:%d, ETH:%d", b.stuckCount["BTC"], b.stuckCount["ETH"])
+		log.Infof("Blockbooks are not online stuck_count: BTC:%d, ETH:%d", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}
 	if b.stuckCount["BTC"] >= 71 || b.stuckCount["ETH"] >= 51 {
 		b.mu.RUnlock()

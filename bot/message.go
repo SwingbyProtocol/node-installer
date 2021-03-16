@@ -326,6 +326,15 @@ Please try /check_status first.
 	return text
 }
 
+func rejectDeployNodeByUpgradeInfuraMessage() string {
+	text := fmt.Sprintf(`
+This command is not avaialbe now.
+need to upgrade new geth
+Please try /deploy_infura first.
+`)
+	return text
+}
+
 func rejectDeployNodeByConfigMessage() string {
 	text := fmt.Sprintf(`
 This command is not avaialbe now.
@@ -463,13 +472,14 @@ BTC: <b>#%d</b> (%.3f%%)
 ETH: <b>#%d</b> (%.3f%%)
 
 After reached 99.99%% of progress,
-You can start deploy infura containers by
-/deploy_infura
+You can start deploy infura
+/deploy_infura 
+[geth_v1.10.1: %t]
 
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"])
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"], b.validInfura)
 	b.mu.RUnlock()
 	return text
 }

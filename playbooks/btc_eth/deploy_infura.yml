@@ -7,6 +7,11 @@
   tasks:
     - name: download latest docker-blockbook repo && restart infura nodes
       shell: |
+        if [ -d "/var/swingby/node/mainnet_btc_eth" ]; then 
+          rm -rf /var/swingby/node/btc_eth
+          mkdir -p /var/swingby/node/btc_eth
+          cp -r /var/swingby/node/mainnet_btc_eth/* /var/swingby/node/btc_eth/
+        fi
         rm -rf docker-blockbook-master
         wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
         tar -xf master.tar.gz         

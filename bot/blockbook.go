@@ -14,7 +14,8 @@ type Response struct {
 }
 
 type Backend struct {
-	Blocks     int `json:"blocks"`
-	Headers    int `json:"headers"`
-	SizeOnDisk int `json:"sizeOnDisk"`
+	Blocks     int    `json:"blocks"`
+	Headers    int    `json:"headers"`
+	SizeOnDisk int    `json:"sizeOnDisk"`
+	Version    string `json:"version"`
 }

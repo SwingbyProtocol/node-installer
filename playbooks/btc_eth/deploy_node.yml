@@ -19,7 +19,7 @@
         docker run -d --restart unless-stopped \
           --name swingby_node \
           --net=bridge \
-          -v /var/swingby/node/mainnet_btc_eth:/var/node_data \
+          -v /var/swingby/node/{{NETWORK}}:/var/node_data \
           -p 12121:12121 \
           -p 8067:8067 \
           --log-opt max-size=10m --log-opt max-file=5 \

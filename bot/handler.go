@@ -461,6 +461,11 @@ func (b *Bot) handleDeployNode(cmd string) {
 			b.cooldown()
 			return
 		}
+		if !b.validInfura {
+			b.SendMsg(b.ID, rejectDeployNodeByUpgradeInfuraMessage(), false, false)
+			b.cooldown()
+			return
+		}
 		if b.nConf.checkConfig() != nil {
 			b.SendMsg(b.ID, rejectDeployNodeByConfigMessage(), false, false)
 			b.cooldown()
@@ -471,6 +476,7 @@ func (b *Bot) handleDeployNode(cmd string) {
 		extVars := map[string]string{
 			"HOST_USER":        b.hostUser,
 			"TAG":              b.nodeVersion,
+			"NETWORK":          b.nConf.Network,
 			"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 			"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
 			"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
@@ -505,6 +511,11 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 			b.cooldown()
 			return
 		}
+		if !b.validInfura {
+			b.SendMsg(b.ID, rejectDeployNodeByUpgradeInfuraMessage(), false, false)
+			b.cooldown()
+			return
+		}
 		if b.nConf.checkConfig() != nil {
 			b.SendMsg(b.ID, rejectDeployNodeByConfigMessage(), false, false)
 			b.cooldown()
@@ -513,6 +524,7 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 		extVars := map[string]string{
 			"HOST_USER":        b.hostUser,
 			"TAG":              b.nodeVersion,
+			"NETWORK":          b.nConf.Network,
 			"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 			"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
 			"BOOTSTRAP_NODE_3": b.nConf.BootstrapNode[2],
