@@ -5,7 +5,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: disable geth port on iptables
+    - name: Open geth port via iptables
       shell: |
         iptables -D DOCKER-USER -p tcp --match tcp --dport 8545 -j ACCEPT
         iptables -I DOCKER-USER -p tcp --match tcp --dport 8545 -j ACCEPT
