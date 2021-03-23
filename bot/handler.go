@@ -51,8 +51,8 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleCheckStatus(cmd)
 	b.handleUpgradeBot(cmd)
 
-	b.handleDisableGethPort(cmd)
-
+	b.handleOpenGethPort(cmd)
+	b.handleOpenBlockBooksPort(cmd)
 	// Default response of say hi
 	if cmd == "/hi" || cmd == "/Hi" || cmd == "/help" {
 		b.SendMsg(b.ID, `OK. Let's start with /start`, false, false)
@@ -419,7 +419,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 	}
 }
 
-func (b *Bot) handleDisableGethPort(cmd string) {
+func (b *Bot) handleOpenGethPort(cmd string) {
 	if cmd == "/open_geth_port" {
 		if !b.isRemote {
 			return
@@ -431,10 +431,14 @@ func (b *Bot) handleDisableGethPort(cmd string) {
 			"HOST_USER": b.hostUser,
 			"IP_ADDR":   b.nodeIP,
 		}
+		port := "8545"
+		if b.nConf.Network == Network2 {
+			port = "8575"
+		}
 		//b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			//b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
-			b.SendMsg(b.ID, "Ok. port 8545 is opened", false, false)
+			b.SendMsg(b.ID, fmt.Sprintf("Ok. port %s is opened", port), false, false)
 			b.cooldown()
 		}
 		onError := func(err error) {
@@ -442,7 +446,40 @@ func (b *Bot) handleDisableGethPort(cmd string) {
 			b.SendMsg(b.ID, "Something wrong", false, false)
 			b.cooldown()
 		}
-		path := fmt.Sprintf("./playbooks/open_geth_port.yml")
+		path := fmt.Sprintf("./playbooks/%s/open_geth_port.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleOpenBlockBooksPort(cmd string) {
+	if cmd == "/open_blockbooks_port" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+			"IP_ADDR":   b.nodeIP,
+		}
+		port := "9130, 9131"
+		if b.nConf.Network == Network2 {
+			port = "9130, 9132"
+		}
+		//b.SendMsg(b.ID, makeCheckNodeMessage(), false, false)
+		onSuccess := func() {
+			//b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
+			b.SendMsg(b.ID, fmt.Sprintf("Ok. port %s is opened", port), false, false)
+			b.cooldown()
+		}
+		onError := func(err error) {
+			//b.SendMsg(b.ID, errorCheckNodeMessage(), false, false)
+			b.SendMsg(b.ID, "Something wrong", false, false)
+			b.cooldown()
+		}
+		path := fmt.Sprintf("./playbooks/%s/open_blockbooks_port.yml", b.nConf.Network)
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}

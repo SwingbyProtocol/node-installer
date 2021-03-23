@@ -1,0 +1,19 @@
+- name: Open geth port
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: disable geth port on iptables
+      shell: |
+        iptables -D DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
+        iptables -I DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
+
+        iptables -D DOCKER-USER -p tcp --match tcp --dport 9131 -j ACCEPT
+        iptables -I DOCKER-USER -p tcp --match tcp --dport 9131 -j ACCEPT
+        iptables -L DOCKER-USER
+
+      register: output
+
+    - debug: var=output.stdout_lines
