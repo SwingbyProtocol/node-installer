@@ -361,6 +361,10 @@ func (b *Bot) handleSetGlobalInfura(cmd string) {
 		b.nConf.BlockBookETH = "https://eth2.trezor.io"
 		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
 		b.nConf.GethRPC = "http://51.159.56.104:8545"
+
+		if b.nConf.Network == Network2 {
+			// TODO: set to foundation nodes
+		}
 		b.SendMsg(b.ID, "Ok. set global mode", false, false)
 		return
 	}
@@ -376,6 +380,12 @@ func (b *Bot) handleSetLocalInfura(cmd string) {
 		b.nConf.BlockBookETH = BlockBookETH
 		b.nConf.BlockBookETHWS = BlockBookETHWS
 		b.nConf.GethRPC = GethRPC
+
+		if b.nConf.Network == Network2 {
+			b.nConf.BlockBookETH = BlockBookBSC
+			b.nConf.BlockBookETHWS = BlockBookBSCWS
+			b.nConf.GethRPC = BscRPC
+		}
 		b.SendMsg(b.ID, "Ok. set local mode", false, false)
 		return
 	}
@@ -677,7 +687,6 @@ func (b *Bot) handleEnableDomainIndexer(cmd string) {
 		onError := func(err error) {
 			b.SendMsg(b.ID, errorDomainMessage(), false, false)
 			b.cooldown()
-
 		}
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return

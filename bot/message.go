@@ -157,6 +157,7 @@ Please put target network number on following list.
 now: <b>%s</b>
 
 1) BTC --- Ethereum (mainnet)
+2) BTC --- BSC (mainnet)
 
 [Configuration step 1/4]
 `, b.nConf.Network)
