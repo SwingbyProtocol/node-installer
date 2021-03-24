@@ -7,7 +7,7 @@
   tasks:
     - name: restart blockbooks
       shell: |
-        docker restart bb_btc_mainnet bb_eth_mainnet
+        docker restart bb_btc_mainnet bb_bsc_mainnet
 
       register: output
 
