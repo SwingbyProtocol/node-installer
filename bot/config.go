@@ -10,26 +10,66 @@ import (
 )
 
 const (
-	WalletContract  = "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e"
-	LPtokenContract = "0x22883a3db06737ece21f479a8009b8b9f22b6cc9"
-	WBTCContract    = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+	VersionJSON     = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
+	DataPath        = "./data"
+	Network1        = "btc_eth"
+	Network2        = "btc_bsc"
+	Network3        = "tbtc_goerli"
+	Network4        = "tbtc_bsc"
+	GethLockVersion = "Geth/v1.10.1"
+	BSCLockVersion  = "Geth/v1.0.6"
+	BTCLockVersion  = "210000"
 )
 
-const (
-	VersionJSON = "https://raw.githubusercontent.com/SwingbyProtocol/node-installer/master/.version.json"
-	DataPath    = "./data"
-	Network1    = "btc_eth"
-	Network2    = "btc_bsc"
-	Network3    = "tbtc_goerli"
-	Network4    = "tbtc_bsc"
+var (
+	Networks = map[string]string{
+		"1": Network1,
+		"2": Network2,
+		"3": Network3,
+		"4": Network4,
+	}
+	WalletContract = map[string]string{
+		Network1: "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e",
+	}
+	LPtokenContract = map[string]string{
+		Network1: "0x22883a3db06737ece21f479a8009b8b9f22b6cc9",
+	}
+	WBTCContract = map[string]string{
+		Network1: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+	}
+	BootstrapNodeMain = map[string][]string{
+		Network1: {
+			"49.12.68.127:12131",  // https://moonfly-re-0078.yen.farm
+			"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
+			"116.203.56.22:12133", // https://motion-re-0080.yen.farm
+		},
+	}
+	stopTrigger = map[string]string{
+		Network1: "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json",
+	}
+	epochBlock = map[string]int{
+		Network1: 3,
+		Network2: 15,
+	}
+	maxShare = map[string]int{
+		Network1: 50,
+		Network2: 50,
+	}
+	maxNode = map[string]int{
+		Network1: 60,
+		Network2: 60,
+	}
+	keygenPeer = map[string]int{
+		Network1: 32,
+		Network2: 32,
+	}
+	syncSnapshotBytes = map[string]int{
+		Network1: 1175750002860,
+	}
+	minimumMountPathSizeMiB = map[string]int{
+		Network1: 1430511,
+	}
 )
-
-var Networks = map[string]string{
-	"1": Network1,
-	"2": Network2,
-	"3": Network3,
-	"4": Network4,
-}
 
 const (
 	GethRPC        = "http://10.2.0.1:8545"
@@ -40,14 +80,7 @@ const (
 	BlockBookETHWS = "ws://10.2.0.1:9131/websocket"
 	BlockBookBSC   = "http://10.2.0.1:9132"
 	BlockBookBSCWS = "ws://10.2.0.1:9132/websocket"
-	StopTrigger    = "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json"
 )
-
-var BootstrapNodeMain = []string{
-	"49.12.68.127:12131",  // https://moonfly-re-0078.yen.farm
-	"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
-	"116.203.56.22:12133", // https://motion-re-0080.yen.farm
-}
 
 var BnbSeedNodesMain = []string{
 	"tcp://dataseed2.defibit.io:80",
@@ -58,6 +91,9 @@ const baseConfig = `
 moniker = "**node_moniker_placeholder**"
 listen = "0.0.0.0"
 port = 12121
+
+[general]
+epoch_blocks = **epoch_block**
 
 [rest]
 listen = "0.0.0.0"
@@ -87,6 +123,9 @@ stop_trigger_uri = "**stop_trigger_uri**"
 
 [tss]
 threshold = **threshold_placeholder**
+max_shares = **max_shares**
+max_nodes = **max_nodes**
+keygen_peers = **keygen_peers**
 keygen_until = "2020-12-13T12:00:00Z"
 
 [btc]
@@ -136,7 +175,10 @@ type NodeConfig struct {
 	KeygenUntil      string
 	IsTestnet        bool
 	Threshold        int
-	Members          int
+	EpochBlock       int
+	MaxShares        int
+	MaxNodes         int
+	KeygenPeers      int
 }
 
 func NewNodeConfig() *NodeConfig {
@@ -151,33 +193,72 @@ func NewNodeConfig() *NodeConfig {
 		BlockBookETH:   BlockBookETH,
 		BlockBookETHWS: BlockBookETHWS,
 		KeygenUntil:    initTime.Format(time.RFC3339),
-		BootstrapNode:  BootstrapNodeMain,
-		Network:        Networks["1"],
+		Network:        Network1,
+		BootstrapNode:  BootstrapNodeMain[Network1],
 		Moniker:        "Default Node",
-		WalletContract: WalletContract,
-		LPtoken:        LPtokenContract,
-		WBTCContract:   WBTCContract,
-		StopTrigger:    StopTrigger,
+		WalletContract: WalletContract[Network1],
+		LPtoken:        LPtokenContract[Network1],
+		WBTCContract:   WBTCContract[Network1],
+		StopTrigger:    stopTrigger[Network1],
 	}
 	return nConf
 }
 
-func (n *NodeConfig) SetMainnet() {
+func (n *NodeConfig) SetNetwork(network string) {
+	n.Network = network
 	n.IsTestnet = false
-	n.WalletContract = WalletContract
-	n.LPtoken = LPtokenContract
-	n.BootstrapNode = BootstrapNodeMain
-	n.WBTCContract = WBTCContract
+	n.WalletContract = WalletContract[network]
+	n.LPtoken = LPtokenContract[network]
+	n.BootstrapNode = BootstrapNodeMain[network]
+	n.WBTCContract = WBTCContract[network]
+	n.BootstrapNode = BootstrapNodeMain[network]
+	n.StopTrigger = stopTrigger[network]
+	n.EpochBlock = epochBlock[network]
+	n.MaxShares = maxShare[network]
+	n.MaxNodes = maxNode[Network1]
+	n.KeygenPeers = keygenPeer[Network1]
+
+	switch n.Network {
+	case Network1:
+		n.CoinA = "WBTC"
+		n.CoinB = "BTC"
+	case Network2:
+		n.CoinA = "BTCB"
+		n.CoinB = "BTC"
+	}
+}
+
+func (n *NodeConfig) SetGlobalNode() {
+	n.BlockBookBTC = "https://btc1.trezor.io"
+	n.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
+	n.BlockBookETH = "https://eth2.trezor.io"
+	n.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
+	switch n.Network {
+	case Network1:
+		n.GethRPC = "http://51.159.56.104:8545"
+	case Network2:
+		n.GethRPC = BscRPC
+	}
+}
+
+func (n *NodeConfig) SetLocalNode() {
+	n.BlockBookBTC = BlockBookBTC
+	n.BlockBookBTCWS = BlockBookBTCWS
+	switch n.Network {
+	case Network1:
+		n.GethRPC = GethRPC
+		n.BlockBookETH = BlockBookETH
+		n.BlockBookETHWS = BlockBookETHWS
+	case Network2:
+		n.GethRPC = BscRPC
+		n.BlockBookETH = BlockBookBSC
+		n.BlockBookETHWS = BlockBookBSCWS
+	}
 }
 
 func (n *NodeConfig) SetDomain(domain string) {
 	n.Domain = domain
 	n.PreferredURI = fmt.Sprintf("https://%s", domain)
-}
-
-func (n *NodeConfig) SetTSSGroup(members int, threshold int) {
-	n.Members = members
-	n.Threshold = threshold
 }
 
 func (n *NodeConfig) checkConfig() error {
@@ -192,14 +273,19 @@ func (n *NodeConfig) checkConfig() error {
 func (n *NodeConfig) storeConfigToml() error {
 	pConfigFileName := fmt.Sprintf("%s/%s/config.toml", DataPath, n.Network)
 	newBaseConfig := strings.ReplaceAll(baseConfig, "**node_moniker_placeholder**", n.Moniker)
+
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**epoch_block**", fmt.Sprintf("%d", n.EpochBlock))
+
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**node_preferred_uri**", n.PreferredURI)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_A**", n.CoinA)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**coin_B**", n.CoinB)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stop_trigger_uri**", n.StopTrigger)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**is_testnet**", fmt.Sprintf("%t", n.IsTestnet))
 
-	//newBaseConfig = strings.ReplaceAll(newBaseConfig, "**participants_placeholder**", fmt.Sprintf("%d", n.Members))
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**threshold_placeholder**", fmt.Sprintf("%d", n.Threshold))
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**max_shares**", fmt.Sprintf("%d", n.MaxShares))
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**max_nodes**", fmt.Sprintf("%d", n.MaxNodes))
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**keygen_peers**", fmt.Sprintf("%d", n.KeygenPeers))
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_endpoint**", n.BlockBookBTC)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_blockbook_ws_endpoint**", n.BlockBookBTCWS)

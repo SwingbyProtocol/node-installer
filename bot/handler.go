@@ -11,11 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	syncSnapshotBytes       = 1175750002860
-	minimumMountPathSizeMiB = 1430511
-)
-
 func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	commands := strings.Split(msg.Text, "@")
 	cmd := commands[0]
@@ -152,7 +147,7 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 		}
 		onSuccess := func() {
 			diskSpace, _ := getDiskSpaceFromFile()
-			if diskSpace <= minimumMountPathSizeMiB {
+			if diskSpace <= minimumMountPathSizeMiB[b.nConf.Network] {
 				b.SendMsg(b.ID, rejectDeployBotByDiskSpaceMessage(), false, false)
 				b.cooldown()
 				return
@@ -356,15 +351,8 @@ func (b *Bot) handleSetGlobalInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		b.nConf.BlockBookBTC = "https://btc1.trezor.io"
-		b.nConf.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
-		b.nConf.BlockBookETH = "https://eth2.trezor.io"
-		b.nConf.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
-		b.nConf.GethRPC = "http://51.159.56.104:8545"
-
-		if b.nConf.Network == Network2 {
-			// TODO: set to foundation nodes
-		}
+		b.nConf.SetGlobalNode()
+		b.nConf.saveConfig()
 		b.SendMsg(b.ID, "Ok. set global mode", false, false)
 		return
 	}
@@ -375,17 +363,8 @@ func (b *Bot) handleSetLocalInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		b.nConf.BlockBookBTC = BlockBookBTC
-		b.nConf.BlockBookBTCWS = BlockBookBTCWS
-		b.nConf.BlockBookETH = BlockBookETH
-		b.nConf.BlockBookETHWS = BlockBookETHWS
-		b.nConf.GethRPC = GethRPC
-
-		if b.nConf.Network == Network2 {
-			b.nConf.BlockBookETH = BlockBookBSC
-			b.nConf.BlockBookETHWS = BlockBookBSCWS
-			b.nConf.GethRPC = BscRPC
-		}
+		b.nConf.SetLocalNode()
+		b.nConf.saveConfig()
 		b.SendMsg(b.ID, "Ok. set local mode", false, false)
 		return
 	}
@@ -406,7 +385,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		b.SendMsg(b.ID, b.makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			syncedSize, _ := getDirSizeFromFile()
-			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotBytes)
+			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotBytes[b.nConf.Network])
 			if parcent >= 99.998 {
 				b.syncProgress = 99.99
 			}
@@ -746,6 +725,7 @@ func (b *Bot) updateStakeAddr(msg string) {
 	if check == 1 {
 		b.nConf.StakeAddr = msg
 	}
+	b.nConf.SetLocalNode()
 	b.nConf.storeConfigToml()
 	b.nConf.saveConfig()
 	b.nConf.loadConfig()
@@ -762,34 +742,12 @@ func (b *Bot) updateETHAddr(msg string) {
 		b.nConf.RewardAddressETH = address
 	}
 	b.SendMsg(b.ID, b.makeStoreKeyText(), false, false)
-	switch b.nConf.Network {
-	case Network1:
-		b.nConf.SetMainnet()
-		b.nConf.SetTSSGroup(10, 31)
-		b.nConf.CoinA = "WBTC"
-		b.nConf.CoinB = "BTC"
-	case Network2:
-		b.nConf.SetMainnet()
-		b.nConf.CoinA = "BTCB"
-		b.nConf.CoinB = "BTC"
-	case Network3:
-		// b.nConf.SetTestnet()
-		// b.nConf.SetTSSGroup(50, 25)
-		// b.nConf.CoinA = "BTCE"
-		// b.nConf.CoinB = "BTC"
-	case Network4:
-		// b.nConf.SetTestnet()
-		// b.nConf.CoinB = "BTCB"
-	}
 	path := fmt.Sprintf("%s/%s", DataPath, b.nConf.Network)
 	_, err := b.generateKeys(path)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	// if !isLoad {
-	// 	b.sendLogFile(path)
-	// }
 	b.SendMsg(b.ID, b.makeStakeAddrText(), false, true)
 	newMsg, _ := b.SendMsg(b.ID, b.askStakeAddrText(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_stake_addr"
@@ -815,7 +773,7 @@ func (b *Bot) updateNetwork(msg string) {
 		return
 	}
 	if check == 1 {
-		b.nConf.Network = network
+		b.nConf.SetNetwork(network)
 	}
 	newMsg, _ := b.SendMsg(b.ID, b.makeUpdateMoniker(), true, false)
 	b.Messages[newMsg.MessageID] = "setup_node_moniker"

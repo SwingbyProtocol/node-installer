@@ -107,7 +107,11 @@ func rejectDeployBotByDiskSpaceMessage() string {
 	text := fmt.Sprintf(`
 Oh sorry. 
 The server hasn't enough Disk space on "/var/swingby" mount path.
-Minimum <b>1.5TB</b> space required to install Swingby node.
+
+- Minimum <b>1.5TB for BTC-ETH network </b> 
+- Minimum <b>900GB for BTC-BSC network </b> 
+
+space required to install Swingby node.
 	`)
 	return text
 }
@@ -189,7 +193,7 @@ if you want to skip, type 'none'
 
 func (b *Bot) makeRewardAddressETH() string {
 	text := fmt.Sprintf(`
-OK. Please put your ETH reward address. 
+OK. Please put your ETH/BSC reward address. 
 now: <b>%s</b>
 [Configuration step 3/4]
 if you want to skip, type 'none'
@@ -213,7 +217,11 @@ description:
 
 <b>%s</b>
 
-<b>Note: minimum stake amount is least 150,000 SWINGBYs with 1 month lock</b>
+<b>
+Note: stake amount is least 50,000 SWINGBYs 
+with over 1 month timelock
+(recommended: at least 3 months)
+</b>
 `, b.nConf.Memo)
 	return text
 }
@@ -463,6 +471,15 @@ NodeIP--<b>%s</b>
 
 func (b *Bot) checkNodeMessage() string {
 	b.mu.RLock()
+	coinBSYmbol := "ETH"
+	nodeVersion := GethLockVersion
+	switch b.nConf.Network {
+	case Network1:
+	case Network2:
+		coinBSYmbol = "BSC"
+		nodeVersion = BSCLockVersion
+	}
+
 	text := fmt.Sprintf(`
 [Syncing status]
 <b>%.2f%%</b> finished.
@@ -470,17 +487,17 @@ func (b *Bot) checkNodeMessage() string {
 [Blockchain syncing status]
 [mode: <b>%s</b>]
 BTC: <b>#%d</b> (%.3f%%)
-ETH: <b>#%d</b> (%.3f%%)
+%s: <b>#%d</b> (%.3f%%)
 
 After reached 99.99%% of progress,
 You can start deploy infura
 /deploy_infura 
-[geth_v1.10.1: %t]
+[%s: %t]
 
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], b.bestHeight["ETH"], b.SyncRatio["ETH"], b.validInfura)
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], nodeVersion, b.validInfura)
 	b.mu.RUnlock()
 	return text
 }

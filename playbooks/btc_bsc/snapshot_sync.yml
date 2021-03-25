@@ -18,8 +18,8 @@
         chmod +x ./b2-linux
         ./b2-linux authorize-account 00082ac5807077d0000000004 K000r0mfkimneB/ZOgXCwMVNQtDzWHo
         if ! pgrep -x "b2-linux" > /dev/null; then
-          nohup ./b2-linux sync b2://var-swingby/mainnet/geth /var/swingby/mainnet/geth > /tmp/geth.log &
-          nohup ./b2-linux sync b2://var-swingby/mainnet/bb_eth /var/swingby/mainnet/bb_eth > /tmp/bb_eth.log &
+          nohup ./b2-linux sync b2://var-swingby/mainnet/bsc /var/swingby/mainnet/bsc > /tmp/bsc.log &
+          nohup ./b2-linux sync b2://var-swingby/mainnet/bb_bsc /var/swingby/mainnet/bb_bsc > /tmp/bb_bsc.log &
           nohup ./b2-linux sync b2://var-swingby/mainnet/bitcoind /var/swingby/mainnet/bitcoind > /tmp/bitcoind.log &
           nohup ./b2-linux sync b2://var-swingby/mainnet/bb_bitcoin /var/swingby/mainnet/bb_bitcoin > /tmp/bb_bitcoin.log &
         fi

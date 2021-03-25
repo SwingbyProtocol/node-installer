@@ -10,8 +10,8 @@
         iptables -D DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
         iptables -I DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
 
-        iptables -D DOCKER-USER -p tcp --match tcp --dport 9131 -j ACCEPT
-        iptables -I DOCKER-USER -p tcp --match tcp --dport 9131 -j ACCEPT
+        iptables -D DOCKER-USER -p tcp --match tcp --dport 9132 -j ACCEPT
+        iptables -I DOCKER-USER -p tcp --match tcp --dport 9132 -j ACCEPT
         iptables -L DOCKER-USER
 
       register: output
