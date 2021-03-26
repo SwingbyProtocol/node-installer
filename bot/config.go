@@ -51,6 +51,10 @@ var (
 		Network1: 3,
 		Network2: 15,
 	}
+	threshold = map[string]int{
+		Network1: 31,
+		Network2: 31,
+	}
 	maxShare = map[string]int{
 		Network1: 50,
 		Network2: 50,
@@ -65,9 +69,11 @@ var (
 	}
 	syncSnapshotBytes = map[string]int{
 		Network1: 1175750002860,
+		Network2: 971003535776,
 	}
 	minimumMountPathSizeMiB = map[string]int{
 		Network1: 1430511,
+		Network2: 965978,
 	}
 )
 
@@ -214,9 +220,10 @@ func (n *NodeConfig) SetNetwork(network string) {
 	n.BootstrapNode = BootstrapNodeMain[network]
 	n.StopTrigger = stopTrigger[network]
 	n.EpochBlock = epochBlock[network]
+	n.Threshold = threshold[network]
 	n.MaxShares = maxShare[network]
-	n.MaxNodes = maxNode[Network1]
-	n.KeygenPeers = keygenPeer[Network1]
+	n.MaxNodes = maxNode[network]
+	n.KeygenPeers = keygenPeer[network]
 
 	switch n.Network {
 	case Network1:

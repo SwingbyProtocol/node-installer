@@ -38,7 +38,7 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.infuraVersions[coin] = res.Backend.Version
 	}
 
-	if b.bestHeight[coin] <= res.BlockBook.BestHeight {
+	if b.bestHeight[coin] != res.BlockBook.BestHeight {
 		b.stuckCount[coin] = 0
 		b.isSynced[coin] = res.BlockBook.InSync
 		b.bestHeight[coin] = res.BlockBook.BestHeight
