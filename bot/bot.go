@@ -38,7 +38,6 @@ type Bot struct {
 	SyncRatio       map[string]float64
 	infuraVersions  map[string]string
 	syncProgress    float64
-	isStartBB       bool
 }
 
 func NewBot(token string) (*Bot, error) {

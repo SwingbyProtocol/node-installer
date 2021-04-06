@@ -21,7 +21,6 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.infura = "local"
 	}
 	if err != nil {
-		b.stuckCount[coin]++
 		b.bestHeight[coin] = 0
 		b.SyncRatio[coin] = 0
 		b.infuraVersions[coin] = ""
@@ -29,10 +28,6 @@ func (b *Bot) checkBlockBook(coin string) {
 		return
 	}
 	b.stuckCount[coin]++
-
-	if !b.isStartBB {
-		b.isStartBB = true
-	}
 
 	if res.Backend.Version != "" {
 		b.infuraVersions[coin] = res.Backend.Version
@@ -89,14 +84,10 @@ func (b *Bot) checkBlockBooks() {
 	b.mu.Unlock()
 
 	b.mu.RLock()
-	if !b.isStartBB {
-		b.mu.RUnlock()
-		return
-	}
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
-		log.Infof("Blockbooks are not online stuck_count: BTC:%d, ETH:%d", b.stuckCount["BTC"], b.stuckCount["ETH"])
+		log.Infof("Blockbooks keeper is online stuck_count: BTC:%d, ETH:%d", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}
-	if b.stuckCount["BTC"] >= 71 || b.stuckCount["ETH"] >= 51 {
+	if b.stuckCount["BTC"] >= 141 || b.stuckCount["ETH"] >= 51 {
 		b.mu.RUnlock()
 		log.Info("Restarting blockbook...")
 		b.restartBlockbooks()

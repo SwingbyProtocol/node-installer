@@ -30,12 +30,15 @@ var (
 	}
 	WalletContract = map[string]string{
 		Network1: "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e",
+		Network2: "0xaD22900062e4cd766102A1f33E530F5303fe1aDF",
 	}
 	LPtokenContract = map[string]string{
 		Network1: "0x22883a3db06737ece21f479a8009b8b9f22b6cc9",
+		Network2: "0xdBa68BeF9b541999Fd9650FF72C19d5E1ceeCd10",
 	}
-	WBTCContract = map[string]string{
+	BTCTContract = map[string]string{
 		Network1: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+		Network2: "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
 	}
 	BootstrapNodeMain = map[string][]string{
 		Network1: {
@@ -43,9 +46,15 @@ var (
 			"49.12.7.120:12132",   // https://livemex-re-0079.yen.farm
 			"116.203.56.22:12133", // https://motion-re-0080.yen.farm
 		},
+		Network2: {
+			"51.159.134.173:12124", // https://ra-cailum.zoo.farm
+			"51.158.68.138:12125",  // https://irish.zoo.farm
+			"51.159.134.173:12126", // https://gwaden.yen.farm
+		},
 	}
 	stopTrigger = map[string]string{
 		Network1: "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json",
+		Network2: "https://btc-bsc-mainnet.s3-ap-southeast-1.amazonaws.com/platform_status.json",
 	}
 	epochBlock = map[string]int{
 		Network1: 3,
@@ -148,6 +157,9 @@ lp_token_contract_addr = "**eth_lpt_contract**"
 btc_token_contract_addr = "**btc_token_contract_addr**"
 # miner_fee = 0.00015
 
+[bsc_fees]
+miner_fee = 0.000015
+
 [bnb]
 rpc_uri = "**rpc_uri_placeholder**"
 http_uri = "https://explorer.binance.org"
@@ -175,7 +187,7 @@ type NodeConfig struct {
 	StakeTx          string
 	WalletContract   string
 	LPtoken          string
-	WBTCContract     string
+	BTCTContract     string
 	StopTrigger      string
 	Memo             string
 	KeygenUntil      string
@@ -204,7 +216,7 @@ func NewNodeConfig() *NodeConfig {
 		Moniker:        "Default Node",
 		WalletContract: WalletContract[Network1],
 		LPtoken:        LPtokenContract[Network1],
-		WBTCContract:   WBTCContract[Network1],
+		BTCTContract:   BTCTContract[Network1],
 		StopTrigger:    stopTrigger[Network1],
 	}
 	return nConf
@@ -216,7 +228,7 @@ func (n *NodeConfig) SetNetwork(network string) {
 	n.WalletContract = WalletContract[network]
 	n.LPtoken = LPtokenContract[network]
 	n.BootstrapNode = BootstrapNodeMain[network]
-	n.WBTCContract = WBTCContract[network]
+	n.BTCTContract = BTCTContract[network]
 	n.BootstrapNode = BootstrapNodeMain[network]
 	n.StopTrigger = stopTrigger[network]
 	n.EpochBlock = epochBlock[network]
@@ -238,13 +250,15 @@ func (n *NodeConfig) SetNetwork(network string) {
 func (n *NodeConfig) SetGlobalNode() {
 	n.BlockBookBTC = "https://btc1.trezor.io"
 	n.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
-	n.BlockBookETH = "https://eth2.trezor.io"
-	n.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
 	switch n.Network {
 	case Network1:
-		n.GethRPC = "http://51.159.56.104:8545"
+		n.GethRPC = "http://51.159.56.104:8545" // foundation geth_1
+		n.BlockBookETH = "https://eth2.trezor.io"
+		n.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
 	case Network2:
-		n.GethRPC = BscRPC
+		n.GethRPC = "http://51.159.36.216:8575" // foundation bsc_1
+		n.BlockBookETH = "http://51.159.36.216:9132"
+		n.BlockBookETHWS = "ws://51.159.36.216:9132/websocket"
 	}
 }
 
@@ -303,7 +317,7 @@ func (n *NodeConfig) storeConfigToml() error {
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_wallet_contract**", n.WalletContract)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**eth_lpt_contract**", n.LPtoken)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_token_contract_addr**", n.WBTCContract)
+	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**btc_token_contract_addr**", n.BTCTContract)
 	//newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", n.RewardAddressETH)
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", n.BNBSeed)

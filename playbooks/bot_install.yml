@@ -21,7 +21,7 @@
           -e SSH_KEY="{{SSH_KEY}}" \
           -e REMOTE="{{REMOTE}}" \
           swingbylabs/node-installer:{{TAG}}
-        docker system prune -f
+
       register: output
 
     - debug: var=output.stdout_lines

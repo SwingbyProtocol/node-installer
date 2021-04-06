@@ -103,13 +103,13 @@ Your bot is moving out to your server....
 	return text
 }
 
-func rejectDeployBotByDiskSpaceMessage() string {
+func rejectDeployInfuraByDiskSpaceMessage() string {
 	text := fmt.Sprintf(`
 Oh sorry. 
 The server hasn't enough Disk space on "/var/swingby" mount path.
 
 - Minimum <b>1.5TB for BTC-ETH network </b> 
-- Minimum <b>900GB for BTC-BSC network </b> 
+- Minimum <b>1.0TB for BTC-BSC network </b> 
 
 space required to install Swingby node.
 	`)

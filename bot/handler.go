@@ -145,12 +145,7 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 			"HOST_USER": b.hostUser,
 		}
 		onSuccess := func() {
-			diskSpace, _ := getDiskSpaceFromFile()
-			if diskSpace <= minimumMountPathSizeMiB[b.nConf.Network] {
-				b.SendMsg(b.ID, rejectDeployBotByDiskSpaceMessage(), false, false)
-				b.cooldown()
-				return
-			}
+
 			extVars := map[string]string{
 				"TAG":       b.botVersion,
 				"CONT_NAME": b.containerName,
@@ -260,6 +255,12 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			return
 		}
 		if b.checkProcess() {
+			return
+		}
+		diskSpace, _ := getDiskSpaceFromFile()
+		if diskSpace <= minimumMountPathSizeMiB[b.nConf.Network] {
+			b.SendMsg(b.ID, rejectDeployInfuraByDiskSpaceMessage(), false, false)
+			b.cooldown()
 			return
 		}
 		if !b.isConfirmed["setup_infura"] {
