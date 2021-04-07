@@ -47,9 +47,9 @@ var (
 			"116.203.56.22:12133", // https://motion-re-0080.yen.farm
 		},
 		Network2: {
-			"51.159.134.173:12124", // https://ra-cailum.zoo.farm
-			"51.158.68.138:12125",  // https://irish.zoo.farm
-			"51.159.134.173:12126", // https://gwaden.yen.farm
+			"163.172.141.211:12124", // https://ra-cailum.zoo.farm
+			"51.158.68.138:12125",   // https://irish.zoo.farm
+			"51.159.134.173:12126",  // https://gwaden.yen.farm
 		},
 	}
 	stopTrigger = map[string]string{
