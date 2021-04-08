@@ -21,6 +21,7 @@
         mkdir -p /var/swingby/mainnet
 
         if ! pgrep -x "b2-linux" > /dev/null; then
+          rm -rf /var/swingby/mainnet/*
           nohup ./b2-linux sync b2://var-swingby/mainnet/bsc /var/swingby/mainnet/bsc > /tmp/bsc.log 2> /tmp/bsc_err.log &
           nohup ./b2-linux sync b2://var-swingby/mainnet/bb_bsc /var/swingby/mainnet/bb_bsc > /tmp/bb_bsc.log 2> /tmp/bb_bsc_err.log &
           nohup ./b2-linux sync b2://var-swingby/mainnet/bitcoind /var/swingby/mainnet/bitcoind > /tmp/bitcoind.log 2> /tmp/bitcoind_err.log &

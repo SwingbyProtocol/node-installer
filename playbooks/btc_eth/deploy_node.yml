@@ -17,6 +17,7 @@
         docker image prune -f
         docker pull swingbylabs/swapd-go:{{TAG}}
         docker run -d --restart unless-stopped \
+          --cpus 3.9 \
           --name swingby_node \
           --net=bridge \
           -v /var/swingby/node/{{NETWORK}}:/var/node_data \

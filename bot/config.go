@@ -74,7 +74,7 @@ var (
 	}
 	keygenPeer = map[string]int{
 		Network1: 32,
-		Network2: 32,
+		Network2: 35,
 	}
 	syncSnapshotBytes = map[string]int{
 		Network1: 1175750002860,
@@ -129,9 +129,9 @@ compress = true
 testnet = **is_testnet**
 coin_1 = "**coin_A**"
 coin_2 = "**coin_B**"
+fee_percent = 0.2
 stop_trigger_uri = "**stop_trigger_uri**"
 # (using defaults in code)
-# fee_percent = 0.2
 # max_amount = 1
 # min_amount_swap = 0.0004
 # min_amount_refund = 0.001
@@ -146,7 +146,7 @@ keygen_until = "2020-12-13T12:00:00Z"
 [btc]
 rest_uri = "**btc_blockbook_endpoint**"
 ws_uri = "**btc_blockbook_ws_endpoint**"
-# miner_fee = 0.0003
+miner_fee = 0.0002
 
 [eth]
 rpc_uri = "**eth_rpc_endpoint**"
@@ -155,7 +155,6 @@ ws_uri = "**eth_blockbook_ws_endpoint**"
 wallet_contract_addr = "**eth_wallet_contract**"
 lp_token_contract_addr = "**eth_lpt_contract**"
 btc_token_contract_addr = "**btc_token_contract_addr**"
-# miner_fee = 0.00015
 
 [bsc_fees]
 miner_fee = 0.000015
@@ -163,7 +162,6 @@ miner_fee = 0.000015
 [bnb]
 rpc_uri = "**rpc_uri_placeholder**"
 http_uri = "https://explorer.binance.org"
-# miner_fee = 0.000001
 stake_addr = "**stake_addr**"
 `
 
