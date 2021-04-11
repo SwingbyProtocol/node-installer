@@ -79,17 +79,17 @@ func (b *Bot) Start() {
 	u.Timeout = 60
 	b.loadSystemEnv()
 	b.loadAndCreateHostIPAndKeys()
-	b.nConf.loadConfig()
+	err := b.nConf.loadConfig()
+	if err != nil {
+		log.Info(err)
+	}
 	log.Infof("Loaded KeygenUntil: %s", b.nConf.KeygenUntil)
+	log.Infof("Loaded BB_BTC: %s, BB_ETH: %s, GETH: %s", b.nConf.BlockBookBTC, b.nConf.BlockBookETH, b.nConf.GethRPC)
 	log.Infof("Authorized on bot account: %s", b.bot.Self.UserName)
 	log.Infof("Bot is ready with Version: %s, [node: %s]", b.botVersion, b.nodeVersion)
 
 	if b.isRemote {
 		b.startBBKeeper()
-	}
-
-	if b.nConf.BlockBookBTCWS == "" {
-		b.nConf = NewNodeConfig()
 	}
 
 	if b.nConf.Network == "mainnet_btc_eth" {

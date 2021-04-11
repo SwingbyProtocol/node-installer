@@ -246,17 +246,19 @@ func (n *NodeConfig) SetNetwork(network string) {
 }
 
 func (n *NodeConfig) SetGlobalNode() {
-	n.BlockBookBTC = "https://btc1.trezor.io"
-	n.BlockBookBTCWS = "wss://btc1.trezor.io/websocket"
 	switch n.Network {
 	case Network1:
+		n.BlockBookBTC = "http://btc-eth-indexer.swingby.network:9130"
+		n.BlockBookBTCWS = "wss://btc-eth-indexer.swingby.network/btc-websocket"
 		n.GethRPC = "http://51.159.56.104:8545" // foundation geth_1
-		n.BlockBookETH = "https://eth2.trezor.io"
-		n.BlockBookETHWS = "wss://eth2.trezor.io/websocket"
+		n.BlockBookETH = "http://btc-eth-indexer.swingby.network:9131"
+		n.BlockBookETHWS = "wss://btc-eth-indexer.swingby.network/eth-websocket"
 	case Network2:
+		n.BlockBookBTC = "http://btc-bsc-indexer.swingby.network:9130"
+		n.BlockBookBTCWS = "wss://btc-bsc-indexer.swingby.network/btc-websocket"
 		n.GethRPC = "http://51.159.36.216:8575" // foundation bsc_1
-		n.BlockBookETH = "http://51.159.36.216:9132"
-		n.BlockBookETHWS = "ws://51.159.36.216:9132/websocket"
+		n.BlockBookETH = "http://btc-bsc-indexer.swingby.network:9132"
+		n.BlockBookETHWS = "wss://btc-bsc-indexer.swingby.network/bsc-websocket"
 	}
 }
 
