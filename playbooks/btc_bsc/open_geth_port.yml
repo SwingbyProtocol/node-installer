@@ -7,8 +7,8 @@
   tasks:
     - name: Open geth port via iptables
       shell: |
-        iptables -D DOCKER-USER -p tcp --match tcp --dport 8575 -j ACCEPT
-        iptables -I DOCKER-USER -p tcp --match tcp --dport 8575 -j ACCEPT
+        iptables -D DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 8575 --ctdir ORIGINAL -j ACCEPT
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 8575 --ctdir ORIGINAL -j ACCEPT
         iptables -L DOCKER-USER
 
       register: output

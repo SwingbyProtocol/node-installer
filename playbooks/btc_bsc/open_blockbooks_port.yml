@@ -5,13 +5,13 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: Open geth port via iptables
+    - name: Open blockbooks port
       shell: |
-        iptables -D DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
-        iptables -I DOCKER-USER -p tcp --match tcp --dport 9130 -j ACCEPT
+        iptables -D DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9130 --ctdir ORIGINAL -j ACCEPT
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9130 --ctdir ORIGINAL -j ACCEPT
 
-        iptables -D DOCKER-USER -p tcp --match tcp --dport 9132 -j ACCEPT
-        iptables -I DOCKER-USER -p tcp --match tcp --dport 9132 -j ACCEPT
+        iptables -D DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9132 --ctdir ORIGINAL -j ACCEPT
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9132 --ctdir ORIGINAL -j ACCEPT
         iptables -L DOCKER-USER
 
       register: output
