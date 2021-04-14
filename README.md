@@ -25,11 +25,11 @@ Install steps (Let's execute on your local machine)
 1. Install `Docker` from https://docker.io to your local machine. (Macbook is preffered)
 2. Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`
 3. Setup your instance on the cloud service provider
-4. Get IP address (v4) and SSH private key.
 if you haven't SSH key, you can create SSH key pair (no passphrase)
 ```
 $ ssh-keygen -t rsa -b 4096 -f ssh_key
 ```
+4. Get IP address (v4) and SSH private key for your server.
 5. Store your SSH private key into `data/ssh_key` 
 6. Set permission `600` to `data/ssh_key` file
 ```bash
