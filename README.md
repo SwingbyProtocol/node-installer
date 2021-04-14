@@ -24,7 +24,8 @@ $ git clone https://github.com/SwingbyProtocol/node-installer && cd node-install
 Install steps (Let's execute on your local machine)
 1. Install `Docker` from https://docker.io to your local machine. (Macbook is preffered)
 2. Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`
-3. Setup your instance on the cloud service provider
+3. Setup your instance on the cloud service provider.
+
 if you haven't SSH key, you can create SSH key pair (no passphrase)
 ```
 $ ssh-keygen -t rsa -b 4096 -f ssh_key
