@@ -25,29 +25,3 @@
       register: output
 
     - debug: var=output.stdout_lines
-
-    - name: check disk space
-      shell: |
-        df -mT /var/swingby | awk 'NR>1 { print $3 }'
-      register: output
-    - local_action:
-        module: copy
-        content: "{{ output.stdout }}"
-        dest: "/tmp/var_size"
-
-    - debug: var=output.stdout_lines
-
-    - name: check mounth path space
-      shell: |
-        if [ -d "/var/swingby/mainnet" ]; then 
-          sh -c "du -bs /var/swingby/mainnet 2> /dev/null" || true
-        fi
-      register: output
-    - local_action:
-        module: copy
-        content: "{{ output.stdout }}"
-        dest: "/tmp/dir_size"
-
-    - debug: var=output.stdout_lines
-
-    
