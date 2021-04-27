@@ -37,6 +37,7 @@ type Bot struct {
 	isSyncedMempool map[string]bool
 	SyncRatio       map[string]float64
 	infuraVersions  map[string]string
+	etherScanHeight int64
 	syncProgress    float64
 }
 

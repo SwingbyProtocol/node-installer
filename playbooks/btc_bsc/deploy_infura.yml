@@ -18,7 +18,7 @@
         DIR=/var/swingby ./setup_bsc.sh
         DIR=/var/swingby ./init_bsc.sh
         DIR=/var/swingby docker-compose up -d --build bitcoind bsc
-        sleep 40
+        sleep 50
         DIR=/var/swingby docker-compose up -d --build bb_btc bb_bsc
 
       register: output

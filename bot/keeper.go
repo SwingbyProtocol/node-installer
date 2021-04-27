@@ -3,9 +3,14 @@ package bot
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
+
+type BlockRpc struct {
+	Result string `json:"result"`
+}
 
 func (b *Bot) checkBlockBook(coin string) {
 	uri := fmt.Sprintf("%s/api/", b.nConf.BlockBookBTC)
@@ -56,10 +61,36 @@ func (b *Bot) checkBlockBook(coin string) {
 	b.mu.Unlock()
 }
 
+func (b *Bot) getRemoteNodes() {
+	res := BlockRpc{}
+	url := "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber"
+	b.mu.RLock()
+	if b.nConf.Network == Network2 {
+		url = "https://api.bscscan.com/api?module=proxy&action=eth_blockNumber"
+	}
+	b.mu.RUnlock()
+	err := b.api.GetRequest(url, &res)
+	if err != nil {
+		log.Error("failed to load etherscan height")
+		return
+	}
+	if len(res.Result) >= 5 {
+		value, err := strconv.ParseInt(res.Result[2:], 16, 64)
+		if err != nil {
+			return
+		}
+		b.mu.Lock()
+		b.etherScanHeight = value
+		b.mu.Unlock()
+	}
+}
+
 func (b *Bot) checkBlockBooks() {
 
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
+
+	b.getRemoteNodes()
 
 	b.mu.Lock()
 	switch b.nConf.Network {

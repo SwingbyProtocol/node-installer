@@ -488,6 +488,7 @@ func (b *Bot) checkNodeMessage() string {
 [mode: <b>%s</b>]
 BTC: <b>#%d</b> (%.3f%%)
 %s: <b>#%d</b> (%.3f%%)
+|- target: [#%d]
 
 After reached 99.99%% of progress,
 You can start deploy infura
@@ -497,7 +498,7 @@ You can start deploy infura
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], nodeVersion, b.validInfura)
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, nodeVersion, b.validInfura)
 	b.mu.RUnlock()
 	return text
 }
