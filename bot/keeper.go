@@ -61,7 +61,7 @@ func (b *Bot) checkBlockBook(coin string) {
 	b.mu.Unlock()
 }
 
-func (b *Bot) getRemoteNodes() {
+func (b *Bot) getRemoteNodesHeight() {
 	res := BlockRpc{}
 	url := "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber"
 	b.mu.RLock()
@@ -90,7 +90,7 @@ func (b *Bot) checkBlockBooks() {
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
 
-	b.getRemoteNodes()
+	b.getRemoteNodesHeight()
 
 	b.mu.Lock()
 	switch b.nConf.Network {
