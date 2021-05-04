@@ -41,6 +41,8 @@ You can install your Swingby node and manage it via this bot.
 [Deploy Infura]
 /setup_infura 
  |- setup infura containers
+/resync_infura
+ |- re-syncing snapshot
 /deploy_infura 
  |- deploy infura services
 
@@ -389,7 +391,14 @@ Your Swingby node has been stopped!
 	return text
 }
 
-func confirmSetupInfuraMessage() string {
+func makeResyncInfuraMessage() string {
+	text := fmt.Sprintf(`
+Re-syncing infura packages...
+`)
+	return text
+}
+
+func confirmResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
 <b>This command removes your blockchain data.</b>
 And blockchain data will be rollback to latest snapshot.
@@ -398,9 +407,34 @@ If you sure this, please go ahead /setup_infura
 	return text
 }
 
+func doneResyncInfuraMessage() string {
+	text := fmt.Sprintf(`
+Re-Syncing of the snapshot data....
+(This process may takes long time...)
+You can check the syncing progress by /check_status
+	`)
+	return text
+}
+
+func errorResyncInfuraMessage() string {
+	text := fmt.Sprintf(`
+Someting wrong. Please kindly check error logs
+	`)
+	return text
+}
+
 func makeSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
 Installing infura packages...
+`)
+	return text
+}
+
+func confirmSetupInfuraMessage() string {
+	text := fmt.Sprintf(`
+<b>This command removes your blockchain data.</b>
+And blockchain data will be rollback to latest snapshot.
+If you sure this, please go ahead /setup_infura
 `)
 	return text
 }

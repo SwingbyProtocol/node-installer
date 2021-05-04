@@ -38,6 +38,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleGetLogs(cmd)
 
 	b.handleSetupInfura(cmd)
+	b.handleResyncInfura(cmd)
 	b.handleDeployInfura(cmd)
 	b.handleSetGlobalInfura(cmd)
 	b.handleSetLocalInfura(cmd)
@@ -292,6 +293,49 @@ func (b *Bot) handleSetupInfura(cmd string) {
 			b.cooldown()
 		}
 		path := fmt.Sprintf("./playbooks/%s/snapshot_sync.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleResyncInfura(cmd string) {
+	if cmd == "/resync_infura" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		if !b.isConfirmed["resync_infura"] {
+			b.SendMsg(b.ID, confirmResyncInfuraMessage(), false, false)
+			b.mu.Lock()
+			b.isConfirmed["resync_infura"] = true
+			b.mu.Unlock()
+			go func() {
+				time.Sleep(10 * time.Second)
+				b.mu.Lock()
+				b.isConfirmed["resync_infura"] = false
+				b.mu.Unlock()
+			}()
+			b.cooldown()
+			return
+		}
+		b.mu.Lock()
+		b.isConfirmed["resync_infura"] = false
+		b.mu.Unlock()
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, makeResyncInfuraMessage(), false, false)
+		onSuccess := func() {
+			b.SendMsg(b.ID, doneResyncInfuraMessage(), false, false)
+			b.cooldown()
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, errorResyncInfuraMessage(), false, false)
+			b.cooldown()
+		}
+		path := fmt.Sprintf("./playbooks/%s/snapshot_resync.yml", b.nConf.Network)
 		b.execAnsible(path, extVars, onSuccess, onError)
 		return
 	}
