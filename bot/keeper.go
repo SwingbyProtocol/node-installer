@@ -85,12 +85,26 @@ func (b *Bot) getRemoteNodesHeight() {
 	}
 }
 
+func (b *Bot) notifyBehindBlocks() {
+	b.mu.Lock()
+	if b.bestHeight["ETH"] == b.etherScanHeight {
+		b.isStartCheckHeight = true
+	}
+	if b.isStartCheckHeight && b.bestHeight["ETH"]+20 <= b.etherScanHeight {
+		b.SendMsg(b.ID, "Your ETH/BSC syncing is over 20 blocks behind", false, false)
+		b.isStartCheckHeight = false
+	}
+	b.mu.Unlock()
+}
+
 func (b *Bot) checkBlockBooks() {
 
 	b.checkBlockBook("BTC")
 	b.checkBlockBook("ETH")
 
 	b.getRemoteNodesHeight()
+
+	b.notifyBehindBlocks()
 
 	b.mu.Lock()
 	switch b.nConf.Network {
@@ -142,6 +156,7 @@ func (b *Bot) restartBlockbooks() {
 		b.stuckCount["BTC"] = 0
 		b.stuckCount["ETH"] = 0
 		b.mu.Unlock()
+		b.SendMsg(b.ID, restartBlockbookMessage(), false, false)
 	}
 	onError := func(err error) {
 		log.Error(err)

@@ -6,11 +6,11 @@ type BlockBook struct {
 }
 
 type Response struct {
-	Syncmode      bool `json:"syncMode"`
-	InSync        bool `json:"inSync"`
-	BestHeight    int  `json:"bestHeight"`
-	MempoolSize   int  `json:"mempoolSize"`
-	InSyncMempool bool `json:"inSyncMempool"`
+	Syncmode      bool  `json:"syncMode"`
+	InSync        bool  `json:"inSync"`
+	BestHeight    int64 `json:"bestHeight"`
+	MempoolSize   int   `json:"mempoolSize"`
+	InSyncMempool bool  `json:"inSyncMempool"`
 }
 
 type Backend struct {

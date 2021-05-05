@@ -522,7 +522,7 @@ func (b *Bot) checkNodeMessage() string {
 [mode: <b>%s</b>]
 BTC: <b>#%d</b> (%.3f%%)
 %s: <b>#%d</b> (%.3f%%)
-|- target: [#%d]
+|- target: <b>[#%d]</b>
 
 After reached 99.99%% of progress,
 You can start deploy infura
@@ -579,5 +579,15 @@ Let's upgrade /upgrade_bot
 then, Let's deploy again by
 /check_status and /deploy_node
 	`, newBotVersion, newNodeVersion)
+	return text
+}
+
+func restartBlockbookMessage() string {
+	text := fmt.Sprintf(`
+Hi. Your blockbooks are restarted because syncing is stopped.
+
+Your node may not ONLINE at the moment.
+Please watch node status /check_status
+	`)
 	return text
 }

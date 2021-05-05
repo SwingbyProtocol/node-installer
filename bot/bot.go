@@ -14,31 +14,32 @@ import (
 )
 
 type Bot struct {
-	Messages        map[int]string
-	ID              int64
-	mu              *sync.RWMutex
-	bot             *tgbotapi.BotAPI
-	api             *api.Resolver
-	nodeVersion     string
-	botVersion      string
-	hostUser        string
-	nodeIP          string
-	containerName   string
-	sshKey          string
-	nConf           *NodeConfig
-	isRemote        bool
-	infura          string
-	validInfura     bool
-	isLocked        bool
-	isConfirmed     map[string]bool
-	stuckCount      map[string]int
-	bestHeight      map[string]int
-	isSynced        map[string]bool
-	isSyncedMempool map[string]bool
-	SyncRatio       map[string]float64
-	infuraVersions  map[string]string
-	etherScanHeight int64
-	syncProgress    float64
+	Messages           map[int]string
+	ID                 int64
+	mu                 *sync.RWMutex
+	bot                *tgbotapi.BotAPI
+	api                *api.Resolver
+	nodeVersion        string
+	botVersion         string
+	hostUser           string
+	nodeIP             string
+	containerName      string
+	sshKey             string
+	nConf              *NodeConfig
+	isRemote           bool
+	infura             string
+	validInfura        bool
+	isLocked           bool
+	isConfirmed        map[string]bool
+	stuckCount         map[string]int
+	bestHeight         map[string]int64
+	isSynced           map[string]bool
+	isSyncedMempool    map[string]bool
+	SyncRatio          map[string]float64
+	infuraVersions     map[string]string
+	etherScanHeight    int64
+	syncProgress       float64
+	isStartCheckHeight bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -64,7 +65,7 @@ func NewBot(token string) (*Bot, error) {
 		infura:          "local",
 		isConfirmed:     make(map[string]bool),
 		stuckCount:      make(map[string]int),
-		bestHeight:      make(map[string]int),
+		bestHeight:      make(map[string]int64),
 		isSynced:        make(map[string]bool),
 		isSyncedMempool: make(map[string]bool),
 		SyncRatio:       make(map[string]float64),
