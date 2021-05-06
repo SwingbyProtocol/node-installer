@@ -402,7 +402,7 @@ func confirmResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
 <b>This command removes your blockchain data.</b>
 And blockchain data will be rollback to latest snapshot.
-If you sure this, please go ahead /setup_infura
+If you sure this, please go ahead /resync_infura
 `)
 	return text
 }
