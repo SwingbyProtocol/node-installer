@@ -71,7 +71,7 @@ func (b *Bot) getRemoteNodesHeight() {
 	b.mu.RUnlock()
 	err := b.api.GetRequest(url, &res)
 	if err != nil {
-		log.Error("failed to load etherscan height")
+		log.Error("Error: failed to load etherscan height")
 		return
 	}
 	if len(res.Result) >= 5 {
@@ -87,11 +87,13 @@ func (b *Bot) getRemoteNodesHeight() {
 
 func (b *Bot) notifyBehindBlocks() {
 	b.mu.Lock()
-	if b.bestHeight["ETH"] == b.etherScanHeight {
+	if !b.isStartCheckHeight && b.bestHeight["ETH"] == b.etherScanHeight {
 		b.isStartCheckHeight = true
+		b.SendMsg(b.ID, "Your ETH/BSC is fully synced", false, false)
+		log.Info("Subscribe ETH/BSC chain status")
 	}
 	if b.isStartCheckHeight && b.bestHeight["ETH"]+20 <= b.etherScanHeight {
-		b.SendMsg(b.ID, "Your ETH/BSC syncing is over 20 blocks behind", false, false)
+		b.SendMsg(b.ID, "Your ETH/BSC synchronization is delayed over 20 blocks", false, false)
 		b.isStartCheckHeight = false
 	}
 	b.mu.Unlock()
