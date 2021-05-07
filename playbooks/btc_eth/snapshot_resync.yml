@@ -21,7 +21,7 @@
         mkdir -p /var/swingby/mainnet
 
         if ! pgrep -x "b2-linux" > /dev/null; then
-          nohup ./b2-linux sync --delete --excludeDirRegex '^.*(bb_bsc|bsc).*$' b2://var-swingby/mainnet /var/swingby/mainnet > /tmp/re-syncing.log 2> /tmp/re-syncing_err.log &
+          nohup ./b2-linux sync --delete --replaceNewer --excludeAllSymlinks --excludeDirRegex '^.*(bb_bsc|bsc).*$' b2://var-swingby/mainnet /var/swingby/mainnet > /tmp/re-syncing.log 2> /tmp/re-syncing_err.log &
         fi
 
       register: output
