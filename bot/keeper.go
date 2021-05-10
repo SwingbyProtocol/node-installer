@@ -89,11 +89,11 @@ func (b *Bot) notifyBehindBlocks() {
 	b.mu.Lock()
 	if !b.isStartCheckHeight && b.bestHeight["ETH"] == b.etherScanHeight {
 		b.isStartCheckHeight = true
-		b.SendMsg(b.ID, "Your ETH/BSC is fully synced", false, false)
+		b.SendMsg(b.ID, "Your ETH/BSC chain is fully synced!", false, false)
 		log.Info("Subscribe ETH/BSC chain status")
 	}
-	if b.isStartCheckHeight && b.bestHeight["ETH"]+20 <= b.etherScanHeight {
-		b.SendMsg(b.ID, "Your ETH/BSC synchronization is delayed over 20 blocks", false, false)
+	if b.isStartCheckHeight && b.bestHeight["ETH"]+30 <= b.etherScanHeight {
+		b.SendMsg(b.ID, "Your ETH/BSC synchronization is delayed over 30 blocks", false, false)
 		b.isStartCheckHeight = false
 	}
 	b.mu.Unlock()
@@ -138,7 +138,7 @@ func (b *Bot) checkBlockBooks() {
 	if b.stuckCount["BTC"]%10 == 1 || b.stuckCount["ETH"]%10 == 1 {
 		log.Infof("Blockbooks keeper is online (stuck_count: BTC:%d, ETH:%d)", b.stuckCount["BTC"], b.stuckCount["ETH"])
 	}
-	if b.stuckCount["BTC"] >= 141 || b.stuckCount["ETH"] >= 51 {
+	if b.stuckCount["BTC"] >= 171 || b.stuckCount["ETH"] >= 51 {
 		b.mu.RUnlock()
 		log.Info("Restarting blockbook...")
 		b.restartBlockbooks()
