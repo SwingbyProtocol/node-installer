@@ -526,7 +526,7 @@ BTC: <b>#%d</b> (%.3f%%)
 |- target: <b>[#%d]</b>
 
 [Storage status]
-Available space for /var/swingby: <b>%d GBs</b>
+Available space for /var/swingby: <b>%d GB</b>
 
 After reached 99.99%% of progress,
 You can start deploy infura
