@@ -13,7 +13,7 @@
         rm -f master.tar.gz
 
         cd docker-blockbook-master/deployments/mainnet
-        DIR=/var/swingby docker-compose down
+        DIR=/var/swingby docker-compose rm -sf bitcoind bsc bb_btc bb_bsc
         docker system prune -f
         DIR=/var/swingby ./setup_bsc.sh
         DIR=/var/swingby ./init_bsc.sh

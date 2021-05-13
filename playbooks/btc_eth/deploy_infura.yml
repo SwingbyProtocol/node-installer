@@ -13,7 +13,7 @@
         rm -f master.tar.gz
 
         cd docker-blockbook-master/deployments/mainnet
-        DIR=/var/swingby docker-compose down
+        DIR=/var/swingby docker-compose rm -sf bitcoind geth bb_btc bb_eth
         docker system prune -f
         DIR=/var/swingby docker-compose up -d --build bitcoind geth
         sleep 50
