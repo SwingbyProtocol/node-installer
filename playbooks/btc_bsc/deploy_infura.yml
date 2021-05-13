@@ -12,9 +12,9 @@
         tar -xf master.tar.gz         
         rm -f master.tar.gz
 
-        docker system prune -f
         cd docker-blockbook-master/deployments/mainnet
         DIR=/var/swingby docker-compose down
+        docker system prune -f
         DIR=/var/swingby ./setup_bsc.sh
         DIR=/var/swingby ./init_bsc.sh
         DIR=/var/swingby docker-compose up -d --build bitcoind bsc
