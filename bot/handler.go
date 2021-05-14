@@ -428,6 +428,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		b.SendMsg(b.ID, b.makeCheckNodeMessage(), false, false)
 		onSuccess := func() {
 			syncedSize, _ := getDirSizeFromFile()
+			availableSize, _ := getAvailableDiskSpaceFromFile()
 			parcent := 100.00 * float64(syncedSize) / float64(syncSnapshotBytes[b.nConf.Network])
 			if parcent >= 99.998 {
 				b.syncProgress = 99.99
@@ -438,7 +439,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 			if b.SyncRatio["BTC"] == 100.00 && b.SyncRatio["ETH"] == 100.00 {
 				b.syncProgress = 100.00
 			}
-			b.SendMsg(b.ID, b.checkNodeMessage(), false, false)
+			b.SendMsg(b.ID, b.checkNodeMessage(availableSize), false, false)
 			b.cooldown()
 		}
 		onError := func(err error) {
