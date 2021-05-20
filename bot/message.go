@@ -588,6 +588,7 @@ then, Let's deploy again by
 
 func restartBlockbookMessage() string {
 	text := fmt.Sprintf(`
+[WARN] 
 Hi. Your blockbooks are restarted because syncing is stopped.
 
 Your node may not ONLINE at the moment.

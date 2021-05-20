@@ -89,11 +89,11 @@ func (b *Bot) notifyBehindBlocks() {
 	b.mu.Lock()
 	if !b.isStartCheckHeight && b.bestHeight["ETH"] == b.etherScanHeight {
 		b.isStartCheckHeight = true
-		b.SendMsg(b.ID, "Your ETH/BSC chain is fully synced!", false, false)
+		b.SendMsg(b.ID, "[INFO] Your ETH/BSC chain is fully synced!", false, false)
 		log.Info("Subscribe ETH/BSC chain status")
 	}
 	if b.isStartCheckHeight && b.bestHeight["ETH"]+30 <= b.etherScanHeight {
-		b.SendMsg(b.ID, "Your ETH/BSC synchronization is delayed over 30 blocks", false, false)
+		b.SendMsg(b.ID, "[INFO] Your ETH/BSC synchronization is delayed over 30 blocks", false, false)
 		b.isStartCheckHeight = false
 	}
 	b.mu.Unlock()
