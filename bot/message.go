@@ -401,8 +401,8 @@ Re-syncing infura packages...
 func confirmResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
 <b>This command removes your blockchain data.</b>
-And blockchain data will be rollback to latest snapshot.
-If you sure this, please go ahead /resync_infura
+Blockchain data will be rollback to latest snapshot.
+If you are sure about this, please go ahead /resync_infura
 `)
 	return text
 }
@@ -410,7 +410,7 @@ If you sure this, please go ahead /resync_infura
 func doneResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
 Re-Syncing of the snapshot data....
-(This process may takes long time...)
+(This process may take a long time...)
 You can check the syncing progress by /check_status
 	`)
 	return text
@@ -418,7 +418,7 @@ You can check the syncing progress by /check_status
 
 func errorResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
-Someting wrong. Please kindly check error logs
+Someting is wrong. Please kindly check error logs
 	`)
 	return text
 }
@@ -433,8 +433,8 @@ Installing infura packages...
 func confirmSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
 <b>This command removes your blockchain data.</b>
-And blockchain data will be rollback to latest snapshot.
-If you sure this, please go ahead /setup_infura
+Blockchain data will be rolled back to the latest snapshot.
+If you are sure about this, please go ahead /setup_infura
 `)
 	return text
 }
@@ -442,7 +442,7 @@ If you sure this, please go ahead /setup_infura
 func doneSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
 Syncing of the snapshot data....
-(This process may takes long time...)
+(This process may take a long time...)
 You can check the syncing progress by /check_status
 	`)
 	return text
@@ -450,14 +450,14 @@ You can check the syncing progress by /check_status
 
 func errorSetupInfuraMessage() string {
 	text := fmt.Sprintf(`
-Someting wrong. Please kindly check error logs
+Someting is wrong. Please check error logs
 	`)
 	return text
 }
 
 func rejectDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Syncing progress is not completed yet.
+Syncing is not completed yet.
 You can check the syncing progress by /check_status first.
 `)
 	return text
@@ -465,9 +465,9 @@ You can check the syncing progress by /check_status first.
 
 func confirmDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-This command will restarts geth nodes.
-<b>it may takes a long time to sync blockchain again. </b>
-if you sure this, please go ahead.
+This command will restart geth nodes.
+<b>It may take a long time to sync the blockchain data again.</b>
+If you are sure about this, please go ahead.
 => /deploy_infura
 `)
 	return text
@@ -490,7 +490,7 @@ Status check => /check_status
 
 func errorDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
-Deployment has been rejected. Please kindly check error logs.
+Deployment has been rejected. Please check error logs.
 	`)
 	return text
 }
@@ -503,7 +503,7 @@ NodeIP--<b>%s</b>
 	return text
 }
 
-func (b *Bot) checkNodeMessage() string {
+func (b *Bot) checkNodeMessage(varAvailableBytes int) string {
 	b.mu.RLock()
 	coinBSYmbol := "ETH"
 	nodeVersion := GethLockVersion
@@ -513,6 +513,7 @@ func (b *Bot) checkNodeMessage() string {
 		coinBSYmbol = "BSC"
 		nodeVersion = BSCLockVersion
 	}
+	availableGBs := varAvailableBytes / 1024
 
 	text := fmt.Sprintf(`
 [Syncing status]
@@ -524,6 +525,9 @@ BTC: <b>#%d</b> (%.3f%%)
 %s: <b>#%d</b> (%.3f%%)
 |- target: <b>[#%d]</b>
 
+[Storage status]
+Available space for /var/swingby: <b>%d GB</b>
+
 After reached 99.99%% of progress,
 You can start deploy infura
 /deploy_infura 
@@ -532,7 +536,7 @@ You can start deploy infura
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, nodeVersion, b.validInfura)
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, nodeVersion, b.validInfura)
 	b.mu.RUnlock()
 	return text
 }

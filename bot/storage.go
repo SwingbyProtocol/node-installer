@@ -85,6 +85,18 @@ func getDiskSpaceFromFile() (int, error) {
 	return intNum, nil
 }
 
+func getAvailableDiskSpaceFromFile() (int, error) {
+	path := fmt.Sprintf("/tmp/var_available_size")
+	str, err := ioutil.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	strs := strings.Split(string(str), "\t")
+	//log.Info(strs)
+	intNum, _ := strconv.Atoi(strs[0])
+	return intNum, nil
+}
+
 func getFileSSHKeyfie() (string, error) {
 	path := fmt.Sprintf("%s/ssh_key", DataPath)
 	str, err := ioutil.ReadFile(path)

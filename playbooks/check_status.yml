@@ -29,4 +29,13 @@
 
     - debug: var=output.stdout_lines
 
-  
+    - name: check available disk space
+      shell: |
+        df -mT /var/swingby | awk 'NR>1 { print $5 }'
+      register: output
+    - local_action:
+        module: copy
+        content: "{{ output.stdout }}"
+        dest: "/tmp/var_available_size"
+
+    - debug: var=output.stdout_lines
