@@ -17,7 +17,7 @@ const (
 	Network3        = "tbtc_goerli"
 	Network4        = "tbtc_bsc"
 	GethLockVersion = "Geth/v1.10.1"
-	BSCLockVersion  = "Geth/v1.0.7"
+	BSCLockVersion  = "Geth/v1.1.0-beta"
 	BTCLockVersion  = "210000"
 )
 
