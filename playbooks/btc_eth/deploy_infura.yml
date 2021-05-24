@@ -14,7 +14,7 @@
 
         cd docker-blockbook-master/deployments/mainnet
         DIR=/var/swingby docker-compose rm -sf bitcoind geth bb_btc bb_eth
-        docker system prune -f
+        docker system prune -af
         DIR=/var/swingby docker-compose up -d --build bitcoind geth
         sleep 50
         DIR=/var/swingby docker-compose up -d --build bb_btc bb_eth

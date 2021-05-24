@@ -16,7 +16,7 @@
 
     - debug: var=output.stdout_lines
 
-    - name: check mounth path space
+    - name: check data size of snapshot
       shell: |
         if [ -d "/var/swingby/mainnet" ]; then 
           sh -c "du -bs /var/swingby/mainnet 2> /dev/null" || true

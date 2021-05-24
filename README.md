@@ -6,7 +6,7 @@
 - OS Ubuntu 20.04 LTS
 - CPUs >= 4
 - Memory >= 16GB
-- Disk space on `/var/swingby` >= 1.5TB:ETH, 1.5TB:BSC
+- Disk space on `/var/swingby` >= 1.5TB:ETH, 1.6TB:BSC
 - Swap memory >= 5GB
 - Network bandwidth >= 500Mbps
 

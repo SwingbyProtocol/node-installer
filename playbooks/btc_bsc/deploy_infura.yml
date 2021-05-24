@@ -14,7 +14,7 @@
 
         cd docker-blockbook-master/deployments/mainnet
         DIR=/var/swingby docker-compose rm -sf bitcoind bsc bb_btc bb_bsc
-        docker system prune -f
+        docker system prune -af
         DIR=/var/swingby ./setup_bsc.sh
         DIR=/var/swingby ./init_bsc.sh
         DIR=/var/swingby docker-compose up -d --build bitcoind bsc
