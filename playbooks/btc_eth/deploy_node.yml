@@ -14,7 +14,7 @@
 
     - name: restart swingby node
       shell: |
-        docker image prune -f
+        docker image prune -af
         docker pull swingbylabs/swapd-go:{{TAG}}
         docker run -d --restart unless-stopped \
           --cpus 3.9 \
