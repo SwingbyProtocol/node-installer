@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -53,10 +54,12 @@ func getFileHostfile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	strs := strings.Split(string(str), "]")
-	ipAddr := net.ParseIP(strs[1][1:])
+	ms := string(str)
+	re := regexp.MustCompile(`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}`)
+	ip := re.FindAllString(ms, -1)
+	ipAddr := net.ParseIP(strings.Join(ip, ""))
 	if ipAddr == nil {
-		return "", errors.New("IP addr parse error")
+		return "", errors.New("Can't load Hosts file for IPv4")
 	}
 	return ipAddr.String(), nil
 }

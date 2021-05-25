@@ -164,7 +164,7 @@ func (b *Bot) loadSystemEnv() {
 	}
 	if os.Getenv("IP_ADDR") != "" {
 		b.nodeIP = os.Getenv("IP_ADDR")
-		log.Info("Set IP from ENV params")
+		log.Infof("Set IP from ENV params IPv4: %s", b.nodeIP)
 	}
 	if os.Getenv("CONT_NAME") != "" {
 		b.containerName = os.Getenv("CONT_NAME")
@@ -198,10 +198,11 @@ func (b *Bot) loadAndCreateHostIPAndKeys() error {
 	if err != nil {
 		generateHostsfile(b.nodeIP, "server")
 		host = b.nodeIP
-		log.Infof("File load error. saved new IPv4: %s", b.nodeIP)
+		log.Info(err)
+		log.Infof("Hosts file will be overridden with IPv4: %s", host)
 	}
 	b.nodeIP = host
-	log.Infof("Loaded Hosts from file. IPv4: %s", host)
+	log.Infof("Loaded IP from Hosts file. IPv4: %s", host)
 	// load ssh key file
 	key, err := getFileSSHKeyfie()
 	if err != nil {

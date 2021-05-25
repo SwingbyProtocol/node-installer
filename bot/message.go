@@ -544,7 +544,7 @@ You can install node by
 
 func errorCheckNodeMessage() string {
 	text := fmt.Sprintf(`
-Node data checking is failed, could you try it later.
+Unable to check the node status, please check the logs.
 	`)
 	return text
 }
