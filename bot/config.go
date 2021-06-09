@@ -16,7 +16,7 @@ const (
 	Network2        = "btc_bsc"
 	Network3        = "tbtc_goerli"
 	Network4        = "tbtc_bsc"
-	GethLockVersion = "Geth/v1.10.1"
+	GethLockVersion = "Geth/v1.10.4"
 	BSCLockVersion  = "Geth/v1.1.0-beta"
 	BTCLockVersion  = "210100"
 )
@@ -248,10 +248,10 @@ func (n *NodeConfig) SetNetwork(network string) {
 func (n *NodeConfig) SetGlobalNode() {
 	switch n.Network {
 	case Network1:
-		n.BlockBookBTC = "http://btc-eth-indexer.swingby.network/bb-btc"
+		n.BlockBookBTC = "https://btc-eth-indexer.swingby.network/bb-btc"
 		n.BlockBookBTCWS = "wss://btc-eth-indexer.swingby.network/btc-websocket"
 		n.GethRPC = "http://btc-eth-indexer.swingby.network:8545" // foundation geth_1
-		n.BlockBookETH = "http://btc-eth-indexer.swingby.network/bb-eth"
+		n.BlockBookETH = "https://btc-eth-indexer.swingby.network/bb-eth"
 		n.BlockBookETHWS = "wss://btc-eth-indexer.swingby.network/eth-websocket"
 	case Network2:
 		n.BlockBookBTC = "https://btc-bsc-indexer.swingby.network/bb-btc"
