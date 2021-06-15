@@ -14,8 +14,6 @@ const (
 	DataPath        = "./data"
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
-	Network3        = "tbtc_goerli"
-	Network4        = "tbtc_bsc"
 	GethLockVersion = "Geth/v1.10.4"
 	BSCLockVersion  = "Geth/v1.1.0-beta"
 	BTCLockVersion  = "210100"
@@ -25,8 +23,6 @@ var (
 	Networks = map[string]string{
 		"1": Network1,
 		"2": Network2,
-		"3": Network3,
-		"4": Network4,
 	}
 	WalletContract = map[string]string{
 		Network1: "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e",
@@ -248,17 +244,17 @@ func (n *NodeConfig) SetNetwork(network string) {
 func (n *NodeConfig) SetGlobalNode() {
 	switch n.Network {
 	case Network1:
-		n.BlockBookBTC = "https://btc-eth-indexer.swingby.network/bb-btc"
-		n.BlockBookBTCWS = "wss://btc-eth-indexer.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-eth-indexer.swingby.network:8545" // foundation geth_1
-		n.BlockBookETH = "https://btc-eth-indexer.swingby.network/bb-eth"
+		n.BlockBookBTC = "https://btc-eth-indexer-2.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://btc-eth-indexer-2.swingby.network/btc-websocket"
+		n.GethRPC = "http://btc-eth-indexer-2.swingby.network:8545" // foundation geth_1
+		n.BlockBookETH = "https://btc-eth-indexer-2.swingby.network/bb-eth"
 		n.BlockBookETHWS = "wss://btc-eth-indexer.swingby.network/eth-websocket"
 	case Network2:
-		n.BlockBookBTC = "https://btc-bsc-indexer.swingby.network/bb-btc"
-		n.BlockBookBTCWS = "wss://btc-bsc-indexer.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-bsc-indexer.swingby.network:8575" // foundation bsc_2
-		n.BlockBookETH = "https://btc-bsc-indexer.swingby.network/bb-bsc"
-		n.BlockBookETHWS = "wss://btc-bsc-indexer.swingby.network/bsc-websocket"
+		n.BlockBookBTC = "https://btc-bsc-indexer-2.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://btc-bsc-indexer-2.swingby.network/btc-websocket"
+		n.GethRPC = "http://btc-bsc-indexer-2.swingby.network:8575" // foundation bsc_2
+		n.BlockBookETH = "https://btc-bsc-indexer-2.swingby.network/bb-bsc"
+		n.BlockBookETHWS = "wss://btc-bsc-indexer-2.swingby.network/bsc-websocket"
 	}
 }
 

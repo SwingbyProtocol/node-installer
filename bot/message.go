@@ -6,7 +6,7 @@ func (b *Bot) makeHelloText() string {
 	text := fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-You can install your meta node and manage node via this bot.
+You can setup your node through this bot.
 
 [Setup Node]
 /setup_server_config 
@@ -22,7 +22,7 @@ This Bot: <b>v%s</b>
 		text = fmt.Sprintf(`
 Hello 😊
 This is <b>Swingby node-installer bot</b>
-You can install your Swingby node and manage it via this bot.
+You can setup your node through this bot.
 
 [Setup Node]
 /setup_node 
@@ -235,6 +235,7 @@ Your staking BNB address is:
 now: <b>%s</b>
 
 Could you put your BNB staking address?
+
 [Configuration step 4/4]
 if you want to skip, type 'none'
 	`, b.nConf.StakeAddr)
@@ -310,7 +311,6 @@ func (b *Bot) doneDomainMessage() string {
 	text := fmt.Sprintf(`
 Your subdomain has been attached. 
 Let's access https://%s
-
 	`, b.nConf.Domain)
 	return text
 }

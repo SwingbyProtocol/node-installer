@@ -94,10 +94,6 @@ func (b *Bot) Start() {
 		b.startBBKeeper()
 	}
 
-	if b.nConf.Network == "mainnet_btc_eth" {
-		b.nConf.Network = Network1
-	}
-
 	updates, err := b.bot.GetUpdatesChan(u)
 	if err != nil {
 		log.Error(err)

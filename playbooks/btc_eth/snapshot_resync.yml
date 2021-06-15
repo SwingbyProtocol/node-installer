@@ -8,7 +8,7 @@
     - name: setup infura nodes
       shell: |
         cd docker-blockbook-master/deployments/mainnet
-        DIR=/var/swingby docker-compose down
+        DIR=/var/swingby docker-compose rm -sf bitcoind geth bb_btc bb_eth
 
         killall b2-linux
 
