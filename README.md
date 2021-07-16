@@ -26,7 +26,7 @@ Install steps (Let's execute on your local machine)
 2. Talk to [@BotFather](https://t.me/BotFather) to create new your `telegram bot` and get your `BOT_TOKEN`
 3. Setup your instance on the cloud service provider. (_note: if you haven't SSH key, you can create SSH key pair_)
 ```
-$ ssh-keygen -t rsa -b 4096 -f ssh_key   // (no passphrase)
+$ ssh-keygen -t rsa -b 4096 -f ./data/ssh_key   // (no passphrase)
 ```
 4. Get IP address (v4) and SSH private key for your server.
 5. Store your SSH private key into `data/ssh_key` 
