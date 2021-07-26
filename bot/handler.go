@@ -64,6 +64,19 @@ func (b *Bot) sayHello(chatID int64) {
 		return
 	}
 	b.SendMsg(b.ID, b.makeHelloText(), false, false)
+
+	extVars := map[string]string{
+		"HOST_USER": b.hostUser,
+	}
+	path := fmt.Sprintf("./playbooks/stop_node.yml")
+	onSuccess := func() {
+		b.cooldown()
+
+	}
+	onError := func(err error) {
+		b.cooldown()
+	}
+	b.execAnsible(path, extVars, onSuccess, onError)
 }
 
 func (b *Bot) validateChat(chatID int64) bool {
