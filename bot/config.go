@@ -14,7 +14,7 @@ const (
 	DataPath        = "./data"
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
-	GethLockVersion = "Geth/v1.10.5"
+	GethLockVersion = "Geth/v1.10.6"
 	BSCLockVersion  = "Geth/v1.1.0-beta"
 	BTCLockVersion  = "210100"
 )
