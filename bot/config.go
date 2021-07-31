@@ -244,11 +244,11 @@ func (n *NodeConfig) SetNetwork(network string) {
 func (n *NodeConfig) SetGlobalNode() {
 	switch n.Network {
 	case Network1:
-		n.BlockBookBTC = "https://btc-eth-indexer-2.swingby.network/bb-btc"
-		n.BlockBookBTCWS = "wss://btc-eth-indexer-2.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-eth-indexer-2.swingby.network:8545" // foundation geth_1
-		n.BlockBookETH = "https://btc-eth-indexer-2.swingby.network/bb-eth"
-		n.BlockBookETHWS = "wss://btc-eth-indexer-2.swingby.network/eth-websocket"
+		n.BlockBookBTC = "https://btc-eth-indexer.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://btc-eth-indexer.swingby.network/btc-websocket"
+		n.GethRPC = "http://btc-eth-indexer.swingby.network:8545" // foundation geth_1
+		n.BlockBookETH = "https://btc-eth-indexer.swingby.network/bb-eth"
+		n.BlockBookETHWS = "wss://btc-eth-indexer.swingby.network/eth-websocket"
 	case Network2:
 		n.BlockBookBTC = "https://btc-bsc-indexer-2.swingby.network/bb-btc"
 		n.BlockBookBTCWS = "wss://btc-bsc-indexer-2.swingby.network/btc-websocket"
