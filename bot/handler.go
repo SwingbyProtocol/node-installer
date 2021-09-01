@@ -36,6 +36,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleDeployNodeDebug(cmd)
 	b.handleStopNode(cmd)
 	b.handleGetLogs(cmd)
+	b.handleStakeUpdateNode(cmd)
 
 	b.handleSetupInfura(cmd)
 	b.handleResyncInfura(cmd)
@@ -64,6 +65,7 @@ func (b *Bot) sayHello(chatID int64) {
 		return
 	}
 	b.SendMsg(b.ID, b.makeHelloText(), false, false)
+
 }
 
 func (b *Bot) validateChat(chatID int64) bool {
@@ -618,6 +620,33 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 
 func (b *Bot) handleStopNode(cmd string) {
 	if cmd == "/stop_node" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, b.makeStopNodeMessage(), false, false)
+		path := fmt.Sprintf("./playbooks/stop_node.yml")
+		onSuccess := func() {
+			b.SendMsg(b.ID, b.doneStopNodeMessage(), false, false)
+			b.cooldown()
+
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, b.errorStopNodeMessage(), false, false)
+			b.cooldown()
+		}
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleStakeUpdateNode(cmd string) {
+	if cmd == "/stake_update" {
 		if !b.isRemote {
 			return
 		}
