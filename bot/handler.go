@@ -656,15 +656,15 @@ func (b *Bot) handleStakeUpdateNode(cmd string) {
 		extVars := map[string]string{
 			"HOST_USER": b.hostUser,
 		}
-		b.SendMsg(b.ID, b.makeStopNodeMessage(), false, false)
+		b.SendMsg(b.ID, b.makeUpdateStakeNodeMessage(), false, false)
 		path := fmt.Sprintf("./playbooks/stop_node.yml")
 		onSuccess := func() {
-			b.SendMsg(b.ID, b.doneStopNodeMessage(), false, false)
+			b.SendMsg(b.ID, b.doneUpdateStakeNodeMessage(), false, false)
 			b.cooldown()
 
 		}
 		onError := func(err error) {
-			b.SendMsg(b.ID, b.errorStopNodeMessage(), false, false)
+			b.SendMsg(b.ID, b.errorUpdateStakeNodeMessage(), false, false)
 			b.cooldown()
 		}
 		b.execAnsible(path, extVars, onSuccess, onError)

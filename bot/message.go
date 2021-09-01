@@ -391,6 +391,27 @@ Your Swingby node has been stopped!
 	return text
 }
 
+func (b *Bot) makeUpdateStakeNodeMessage() string {
+	text := fmt.Sprintf(`
+Upgrade your Swingby node.... (v%s)
+	`, b.nodeVersion)
+	return text
+}
+
+func (b *Bot) errorUpdateStakeNodeMessage() string {
+	text := fmt.Sprintf(`
+Upgrade wrong. Please kindly check error logs
+	`)
+	return text
+}
+
+func (b *Bot) doneUpdateStakeNodeMessage() string {
+	text := fmt.Sprintf(`
+Your Swingby node has been upgrade!
+`)
+	return text
+}
+
 func makeResyncInfuraMessage() string {
 	text := fmt.Sprintf(`
 Re-syncing infura packages...
