@@ -661,7 +661,6 @@ func (b *Bot) handleStakeUpdateNode(cmd string) {
 		onSuccess := func() {
 			b.SendMsg(b.ID, b.doneUpdateStakeNodeMessage(), false, false)
 			b.cooldown()
-
 		}
 		onError := func(err error) {
 			b.SendMsg(b.ID, b.errorUpdateStakeNodeMessage(), false, false)
