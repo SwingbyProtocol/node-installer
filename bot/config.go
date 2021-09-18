@@ -244,17 +244,17 @@ func (n *NodeConfig) SetNetwork(network string) {
 func (n *NodeConfig) SetGlobalNode() {
 	switch n.Network {
 	case Network1:
-		n.BlockBookBTC = "https://btc-eth-indexer.swingby.network/bb-btc"
-		n.BlockBookBTCWS = "wss://btc-eth-indexer.swingby.network/btc-websocket"
+		n.BlockBookBTC = "https://indexer.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://indexer.swingby.network/btc-websocket"
 		n.GethRPC = "http://btc-eth-indexer.swingby.network:8545" // foundation geth_1
-		n.BlockBookETH = "https://btc-eth-indexer.swingby.network/bb-eth"
-		n.BlockBookETHWS = "wss://btc-eth-indexer.swingby.network/eth-websocket"
+		n.BlockBookETH = "https://indexer.swingby.network/bb-eth"
+		n.BlockBookETHWS = "wss://indexer.swingby.network/eth-websocket"
 	case Network2:
-		n.BlockBookBTC = "https://btc-bsc-indexer.swingby.network/bb-btc"
-		n.BlockBookBTCWS = "wss://btc-bsc-indexer.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-bsc-indexer-2.swingby.network:8575" // foundation bsc_2
-		n.BlockBookETH = "https://btc-bsc-indexer-2.swingby.network/bb-bsc"
-		n.BlockBookETHWS = "wss://btc-bsc-indexer-2.swingby.network/bsc-websocket"
+		n.BlockBookBTC = "https://indexer.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://indexer.swingby.network/btc-websocket"
+		n.GethRPC = "http://btc-bsc-indexer.swingby.network:8575" // foundation bsc_1
+		n.BlockBookETH = "https://indexer.swingby.network/bb-bsc"
+		n.BlockBookETHWS = "wss://indexer.swingby.network/bsc-websocket"
 	}
 }
 
