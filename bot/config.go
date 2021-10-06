@@ -223,7 +223,6 @@ func (n *NodeConfig) SetNetwork(network string) {
 	n.LPtoken = LPtokenContract[network]
 	n.BootstrapNode = BootstrapNodeMain[network]
 	n.BTCTContract = BTCTContract[network]
-	n.BootstrapNode = BootstrapNodeMain[network]
 	n.StopTrigger = stopTrigger[network]
 	n.EpochBlock = epochBlock[network]
 	n.Threshold = threshold[network]
@@ -246,15 +245,17 @@ func (n *NodeConfig) SetGlobalNode() {
 	case Network1:
 		n.BlockBookBTC = "https://indexer.swingby.network/bb-btc"
 		n.BlockBookBTCWS = "wss://indexer.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-eth-indexer.swingby.network:8545" // foundation geth_1
+		n.GethRPC = "https://indexer.swingby.network/eth-rpc" // foundation geth_1
 		n.BlockBookETH = "https://indexer.swingby.network/bb-eth"
 		n.BlockBookETHWS = "wss://indexer.swingby.network/eth-websocket"
+		n.BootstrapNode = BootstrapNodeMain[Network1]
 	case Network2:
 		n.BlockBookBTC = "https://indexer.swingby.network/bb-btc"
 		n.BlockBookBTCWS = "wss://indexer.swingby.network/btc-websocket"
-		n.GethRPC = "http://btc-bsc-indexer.swingby.network:8575" // foundation bsc_1
+		n.GethRPC = "https://indexer.swingby.network/bsc-rpc" // foundation bsc_1
 		n.BlockBookETH = "https://indexer.swingby.network/bb-bsc"
 		n.BlockBookETHWS = "wss://indexer.swingby.network/bsc-websocket"
+		n.BootstrapNode = BootstrapNodeMain[Network2]
 	}
 }
 

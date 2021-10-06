@@ -65,7 +65,6 @@ func (b *Bot) sayHello(chatID int64) {
 		return
 	}
 	b.SendMsg(b.ID, b.makeHelloText(), false, false)
-
 }
 
 func (b *Bot) validateChat(chatID int64) bool {
