@@ -27,20 +27,24 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 
 	b.handleSetupServer(cmd)
 	b.handleSetupYourBot(cmd)
-
 	b.handleSetupNode(cmd)
+
 	b.handleSetupDomain(cmd)
 	b.handleEnableDomain(cmd)
+	b.handleStopNginx(cmd)
 
 	b.handleDeployNode(cmd)
 	b.handleDeployNodeDebug(cmd)
 	b.handleStopNode(cmd)
+
 	b.handleGetLogs(cmd)
 	b.handleStakeUpdateNode(cmd)
 
 	b.handleSetupInfura(cmd)
 	b.handleResyncInfura(cmd)
+	b.handleRemoveInfura(cmd)
 	b.handleDeployInfura(cmd)
+	b.handleResetGeth(cmd)
 	b.handleSetGlobalInfura(cmd)
 	b.handleSetLocalInfura(cmd)
 
@@ -59,6 +63,7 @@ func (b *Bot) sayHello(chatID int64) {
 	if b.ID == 0 {
 		b.ID = chatID
 		b.SendMsg(b.ID, b.makeHelloText(), false, false)
+		b.SendMsg(b.ID, b.instructionMention(), false, false)
 		return
 	}
 	if !b.validateChat(chatID) {
@@ -342,6 +347,92 @@ func (b *Bot) handleResyncInfura(cmd string) {
 	}
 }
 
+func (b *Bot) handleResetGeth(cmd string) {
+	if cmd == "/reset_geth" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		if !b.isConfirmed["reset_geth"] {
+			b.SendMsg(b.ID, confirmResetGethMessage(), false, false)
+			b.mu.Lock()
+			b.isConfirmed["reset_geth"] = true
+			b.mu.Unlock()
+			go func() {
+				time.Sleep(10 * time.Second)
+				b.mu.Lock()
+				b.isConfirmed["reset_geth"] = false
+				b.mu.Unlock()
+			}()
+			b.cooldown()
+			return
+		}
+		b.mu.Lock()
+		b.isConfirmed["reset_geth"] = false
+		b.mu.Unlock()
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, makeResetGethMessage(), false, false)
+		onSuccess := func() {
+			b.SendMsg(b.ID, doneResetGethMessage(), false, false)
+			b.cooldown()
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, errorResetGethMessage(), false, false)
+			b.cooldown()
+		}
+		path := fmt.Sprintf("./playbooks/%s/reset_geth.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleRemoveInfura(cmd string) {
+	if cmd == "/remove_infura" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		if !b.isConfirmed["remove_infura"] {
+			b.SendMsg(b.ID, confirmRemoveInfuraMessage(), false, false)
+			b.mu.Lock()
+			b.isConfirmed["remove_infura"] = true
+			b.mu.Unlock()
+			go func() {
+				time.Sleep(10 * time.Second)
+				b.mu.Lock()
+				b.isConfirmed["remove_infura"] = false
+				b.mu.Unlock()
+			}()
+			b.cooldown()
+			return
+		}
+		b.mu.Lock()
+		b.isConfirmed["remove_infura"] = false
+		b.mu.Unlock()
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, makeRemoveInfuraMessage(), false, false)
+		onSuccess := func() {
+			b.SendMsg(b.ID, doneRemoveInfuraMessage(), false, false)
+			b.cooldown()
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, errorRemoveInfuraMessage(), false, false)
+			b.cooldown()
+		}
+		path := fmt.Sprintf("./playbooks/%s/remove_infura.yml", b.nConf.Network)
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
 func (b *Bot) handleDeployInfura(cmd string) {
 	if cmd == "/deploy_infura" {
 		if !b.isRemote {
@@ -610,6 +701,33 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 		}
 		onError := func(err error) {
 			b.SendMsg(b.ID, errorDeployNodeMessage(), false, false)
+			b.cooldown()
+		}
+		b.execAnsible(path, extVars, onSuccess, onError)
+		return
+	}
+}
+
+func (b *Bot) handleStopNginx(cmd string) {
+	if cmd == "/stop_nginx" {
+		if !b.isRemote {
+			return
+		}
+		if b.checkProcess() {
+			return
+		}
+		extVars := map[string]string{
+			"HOST_USER": b.hostUser,
+		}
+		b.SendMsg(b.ID, b.makeStopNginxMessage(), false, false)
+		path := fmt.Sprintf("./playbooks/stop_nginx.yml")
+		onSuccess := func() {
+			b.SendMsg(b.ID, b.doneStopNginxMessage(), false, false)
+			b.cooldown()
+
+		}
+		onError := func(err error) {
+			b.SendMsg(b.ID, b.errorStopNginxMessage(), false, false)
 			b.cooldown()
 		}
 		b.execAnsible(path, extVars, onSuccess, onError)

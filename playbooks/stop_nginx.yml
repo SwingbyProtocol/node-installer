@@ -1,0 +1,19 @@
+- name: Stop nginx
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: stop nginx
+      shell: |
+        rm -rf nginx-certbot-master
+        wget -q https://github.com/SwingbyProtocol/nginx-certbot/archive/master.tar.gz
+        tar -xf master.tar.gz  
+        rm master.tar.* 
+        cd nginx-certbot-master
+        DIR=/var/swingby/nginx_data docker-compose down --remove-orphans
+        
+      register: output
+
+    - debug: var=output.stdout_lines

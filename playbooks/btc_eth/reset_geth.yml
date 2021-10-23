@@ -1,0 +1,16 @@
+- name: Reset geth
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Reset geth
+      shell: |
+        cd docker-blockbook-master/deployments/mainnet
+        DIR=/var/swingby docker-compose rm -sf geth
+        rm -rf /var/swingby/mainnet/geth
+        DIR=/var/swingby docker-compose up -d geth
+      register: output
+
+    - debug: var=output.stdout_lines

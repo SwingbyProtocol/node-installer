@@ -31,18 +31,24 @@ You can setup your node through this bot.
 [Deploy Node]
 /deploy_node 
  |- deploy your node
+/stop_node
+ |- stop your node
+
+[Attach Domain]
 /setup_domain 
  |- configure domain
 /enable_domain 
  |- attach domain to your server
-/stop_node
- |- stop your node
+/stop_nginx
+ |- stop nginx.
 
 [Deploy Infura]
 /setup_infura 
  |- setup infura containers
 /resync_infura
  |- re-syncing snapshot
+/remove_infura
+ |- remove infura data
 /deploy_infura 
  |- deploy infura services
 
@@ -59,6 +65,23 @@ Swingby Node: <b>v%s</b>
 Bot: <b>v%s</b>
 	`, b.nodeVersion, b.botVersion)
 	}
+	return text
+}
+
+func (b *Bot) instructionMention() string {
+	text := fmt.Sprint(`
+Pelase confirm these steps before starting this bot
+
+1) check whether you choosed OS <b>Ubuntu 20.04-LTS</b> for your server.
+
+2) check whether the <b>/var/swingby</b> is exist on your server because we will deploy this bot into there.
+
+3) check whether the ssh key is valid <b>(./data/ssh_key)</b> because bot may can't access into your server correctlly.
+you can try this if this problem is exist.
+
+$ chmod 0600 ./data/ssh_key
+
+`)
 	return text
 }
 
@@ -391,6 +414,27 @@ Your Swingby node has been stopped!
 	return text
 }
 
+func (b *Bot) makeStopNginxMessage() string {
+	text := fmt.Sprintf(`
+Stopping your Nginx....
+	`)
+	return text
+}
+
+func (b *Bot) errorStopNginxMessage() string {
+	text := fmt.Sprintf(`
+Something wrong. Please kindly check error logs
+	`)
+	return text
+}
+
+func (b *Bot) doneStopNginxMessage() string {
+	text := fmt.Sprintf(`
+Your Nginx has been stopped!
+`)
+	return text
+}
+
 func (b *Bot) makeUpdateStakeNodeMessage() string {
 	text := fmt.Sprintf(`
 Upgrade your Swingby node.... (v%s)
@@ -438,6 +482,36 @@ You can check the syncing progress by /check_status
 }
 
 func errorResyncInfuraMessage() string {
+	text := fmt.Sprintf(`
+Someting is wrong. Please kindly check error logs
+	`)
+	return text
+}
+
+func makeRemoveInfuraMessage() string {
+	text := fmt.Sprintf(`
+Removing infura packages...
+`)
+	return text
+}
+
+func confirmRemoveInfuraMessage() string {
+	text := fmt.Sprintf(`
+<b>This command removes your blockchain data.</b>
+Blockchain data will be rollback to latest snapshot.
+If you are sure about this, please go ahead /remove_infura
+`)
+	return text
+}
+
+func doneRemoveInfuraMessage() string {
+	text := fmt.Sprintf(`
+Removing dir has been completed. (/var/swingby/mainnet) 
+	`)
+	return text
+}
+
+func errorRemoveInfuraMessage() string {
 	text := fmt.Sprintf(`
 Someting is wrong. Please kindly check error logs
 	`)
@@ -512,6 +586,38 @@ Status check => /check_status
 func errorDeployInfuraMessage() string {
 	text := fmt.Sprintf(`
 Deployment has been rejected. Please check error logs.
+	`)
+	return text
+}
+
+func makeResetGethMessage() string {
+	text := fmt.Sprintf(`
+Removing ETH/BSC data & restarting...
+`)
+	return text
+}
+
+func confirmResetGethMessage() string {
+	text := fmt.Sprintf(`
+<b>This command removes your ETH/BSC blockchain data.</b>
+Blockchain data will be rollback to latest snapshot.
+If you are sure about this, please go ahead /reset_geth
+`)
+	return text
+}
+
+func doneResetGethMessage() string {
+	text := fmt.Sprintf(`
+ETH/BSC data has been removed and ETH/BSC node is restarted.
+(Please wait a few hours to sync up blockchains) 
+Check status again => /check_status
+	`)
+	return text
+}
+
+func errorResetGethMessage() string {
+	text := fmt.Sprintf(`
+Someting is wrong. Please kindly check error logs
 	`)
 	return text
 }
