@@ -151,7 +151,7 @@ func (b *Bot) checkNginxStatus() {
 	if b.nConf.Domain == "" {
 		return
 	}
-	url := fmt.Sprintf("https://%s/bb-btc", b.nConf.Domain)
+	url := fmt.Sprintf("https://%s/bb-btc/api", b.nConf.Domain)
 	res := BlockBook{}
 	err := b.api.GetRequest(url, &res)
 	if err != nil {

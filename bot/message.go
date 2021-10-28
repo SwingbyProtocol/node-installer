@@ -655,7 +655,6 @@ BTC: <b>#%d</b> (%.3f%%)
 [Storage status]
 Available space for /var/swingby:
 <b>~%d GB</b>
-Enabled domain [%t]
 
 After reached 99.99%% of progress,
 You can start deploy infura
@@ -665,7 +664,9 @@ You can start deploy infura
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSymbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, b.isActiveNginx, nodeVersion, b.validInfura)
+
+[Domain status]<b>[%t]</b>
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSymbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, nodeVersion, b.validInfura, b.isActiveNginx)
 	b.mu.RUnlock()
 	return text
 }
