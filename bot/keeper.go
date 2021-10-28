@@ -147,6 +147,25 @@ func (b *Bot) checkBlockBooks() {
 	b.mu.RUnlock()
 }
 
+func (b *Bot) checkNginxStatus() {
+	if b.nConf.Domain == "" {
+		return
+	}
+	url := fmt.Sprintf("https://%s/bb-btc", b.nConf.Domain)
+	res := BlockBook{}
+	err := b.api.GetRequest(url, &res)
+	if err != nil {
+		log.Error("Error: failed to load nginx response from domain based api call")
+		b.mu.Lock()
+		b.isActiveNginx = false
+		b.mu.Unlock()
+		return
+	}
+	b.mu.Lock()
+	b.isActiveNginx = true
+	b.mu.Unlock()
+}
+
 func (b *Bot) restartBlockbooks() {
 	extVars := map[string]string{
 		"HOST_USER": b.hostUser,

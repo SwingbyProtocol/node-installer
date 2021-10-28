@@ -20,6 +20,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 		return
 	}
 	if !b.validateChat(msg.Chat.ID) {
+		log.Info("Msg rejected -- worng chatID")
 		return
 	}
 
@@ -67,6 +68,7 @@ func (b *Bot) sayHello(chatID int64) {
 		return
 	}
 	if !b.validateChat(chatID) {
+		log.Info("Msg rejected -- worng chatID")
 		return
 	}
 	b.SendMsg(b.ID, b.makeHelloText(), false, false)

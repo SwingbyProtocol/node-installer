@@ -632,12 +632,12 @@ NodeIP--<b>%s</b>
 
 func (b *Bot) checkNodeMessage(varAvailableBytes int) string {
 	b.mu.RLock()
-	coinBSYmbol := "ETH"
+	coinBSymbol := "ETH"
 	nodeVersion := GethLockVersion
 	switch b.nConf.Network {
 	case Network1:
 	case Network2:
-		coinBSYmbol = "BSC"
+		coinBSymbol = "BSC"
 		nodeVersion = BSCLockVersion
 	}
 	availableGBs := varAvailableBytes / 1024
@@ -655,6 +655,7 @@ BTC: <b>#%d</b> (%.3f%%)
 [Storage status]
 Available space for /var/swingby:
 <b>~%d GB</b>
+Enabled domain [%t]
 
 After reached 99.99%% of progress,
 You can start deploy infura
@@ -664,7 +665,7 @@ You can start deploy infura
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSYmbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, nodeVersion, b.validInfura)
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSymbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, b.isActiveNginx, nodeVersion, b.validInfura)
 	b.mu.RUnlock()
 	return text
 }

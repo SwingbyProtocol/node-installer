@@ -40,6 +40,7 @@ type Bot struct {
 	etherScanHeight    int64
 	syncProgress       float64
 	isStartCheckHeight bool
+	isActiveNginx      bool
 }
 
 func NewBot(token string) (*Bot, error) {
@@ -107,7 +108,7 @@ func (b *Bot) Start() {
 		if update.Message.From == nil {
 			continue
 		}
-		log.Infof("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		log.Infof("[%s][%d] %s", update.Message.From.UserName, update.Message.Chat.ID, update.Message.Text)
 		b.handleMessage(update.Message)
 	}
 }
@@ -120,6 +121,7 @@ func (b *Bot) startBBKeeper() {
 		for {
 			<-ticker.C
 			b.checkBlockBooks()
+			b.checkNginxStatus()
 			b.checkNewVersion()
 		}
 	}()
@@ -156,7 +158,7 @@ func (b *Bot) loadSystemEnv() {
 		if err == nil {
 			b.ID = int64(intID)
 		}
-		log.Infof("Set ChatID=%d", b.ID)
+		log.Infof("Set ChatID=[%d]", b.ID)
 	}
 	if os.Getenv("IP_ADDR") != "" {
 		b.nodeIP = os.Getenv("IP_ADDR")
