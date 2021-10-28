@@ -33,10 +33,12 @@ You can setup your node through this bot.
 [Infura management]
 /setup_infura [not recommended]
  |- setup infura containers
-/resync_infura
+/resync_infura [not recommended]
  |- re-syncing snapshot
 /remove_infura
  |- remove infura data
+/reset_geth
+ |- remove data (only geth) & restart geth
 /deploy_infura 
  |- deploy infura services
 /set_global_infura
@@ -45,20 +47,20 @@ You can setup your node through this bot.
  |- use local infura
 
 [Node management]
- /deploy_node 
-  |- deploy your node
- /stop_node
-  |- stop your node
- /get_node_logs
-  |- getting the latest logs of node
+/deploy_node 
+ |- deploy your node
+/stop_node
+ |- stop your node
+/get_node_logs
+ |- getting the latest logs of node
  
 [Domain management]
- /setup_domain 
-  |- configure domain
- /enable_domain 
-  |- attach domain to your server
- /stop_nginx
-  |- stop nginx
+/setup_domain 
+ |- configure domain
+/enable_domain 
+ |- attach domain to your server
+/stop_nginx
+ |- stop nginx
 
 [Server management]
 /check_status 
@@ -295,7 +297,7 @@ Congratulations!
 Your Swingby node config has been updated. 
 
 Next step is installing infura package.
-Let's start => /start.
+Let's start => /deploy_infura.
 	`)
 	return text
 }

@@ -71,6 +71,7 @@ func NewBot(token string) (*Bot, error) {
 		isSyncedMempool: make(map[string]bool),
 		SyncRatio:       make(map[string]float64),
 		infuraVersions:  make(map[string]string),
+		isActiveNginx:   "Not yet",
 	}
 	return bot, nil
 }

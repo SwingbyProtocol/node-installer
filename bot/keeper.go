@@ -149,6 +149,9 @@ func (b *Bot) checkBlockBooks() {
 
 func (b *Bot) checkNginxStatus() {
 	if b.nConf.Domain == "" {
+		b.mu.Lock()
+		b.isActiveNginx = "Not yet"
+		b.mu.Unlock()
 		return
 	}
 	url := fmt.Sprintf("https://%s/bb-btc/api", b.nConf.Domain)
