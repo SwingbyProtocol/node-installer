@@ -29,6 +29,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleSetupServer(cmd)
 	b.handleSetupYourBot(cmd)
 	b.handleSetupNode(cmd)
+	b.handleShowMemo(cmd)
 
 	b.handleSetupDomain(cmd)
 	b.handleEnableDomain(cmd)
@@ -215,6 +216,19 @@ func (b *Bot) handleSetupDomain(cmd string) {
 			return
 		}
 		b.Messages[newMsg.MessageID] = "setup_domain"
+		return
+	}
+}
+
+func (b *Bot) handleShowMemo(cmd string) {
+	if cmd == "/show_timelock_memo" {
+		if !b.isRemote {
+			return
+		}
+		_, err := b.SendMsg(b.ID, b.showMemoText(b.nConf.Memo, b.nConf.StakeAddr), true, false)
+		if err != nil {
+			return
+		}
 		return
 	}
 }
@@ -443,11 +457,11 @@ func (b *Bot) handleDeployInfura(cmd string) {
 		if b.checkProcess() {
 			return
 		}
-		if b.syncProgress < 99.99 {
-			b.SendMsg(b.ID, rejectDeployInfuraMessage(), false, false)
-			b.cooldown()
-			return
-		}
+		// if b.syncProgress < 99.99 {
+		// 	b.SendMsg(b.ID, rejectDeployInfuraMessage(), false, false)
+		// 	b.cooldown()
+		// 	return
+		// }
 		if !b.isConfirmed["deploy_infura"] {
 			b.SendMsg(b.ID, confirmDeployInfuraMessage(), false, false)
 			b.mu.Lock()

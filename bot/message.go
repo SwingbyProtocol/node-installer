@@ -8,7 +8,7 @@ Hello 😊
 This is <b>Swingby node-installer bot</b>
 You can setup your node through this bot.
 
-[Setup Node]
+[Setup]
 /setup_server_config 
  |- configure your server
 /setup_your_bot 
@@ -24,26 +24,14 @@ Hello 😊
 This is <b>Swingby node-installer bot</b>
 You can setup your node through this bot.
 
-[Setup Node]
+[Setup]
 /setup_node 
  |- configure your node
+/show_timelock_memo
+ |- view your timelock memo
  
-[Deploy Node]
-/deploy_node 
- |- deploy your node
-/stop_node
- |- stop your node
-
-[Attach Domain]
-/setup_domain 
- |- configure domain
-/enable_domain 
- |- attach domain to your server
-/stop_nginx
- |- stop nginx.
-
-[Deploy Infura]
-/setup_infura 
+[Infura management]
+/setup_infura [not recommended]
  |- setup infura containers
 /resync_infura
  |- re-syncing snapshot
@@ -51,14 +39,32 @@ You can setup your node through this bot.
  |- remove infura data
 /deploy_infura 
  |- deploy infura services
+/set_global_infura
+ |- use foundation infura
+/set_local_infura
+ |- use local infura
 
-[System management]
+[Node management]
+ /deploy_node 
+  |- deploy your node
+ /stop_node
+  |- stop your node
+ /get_node_logs
+  |- getting the latest logs of node
+ 
+[Domain management]
+ /setup_domain 
+  |- configure domain
+ /enable_domain 
+  |- attach domain to your server
+ /stop_nginx
+  |- stop nginx
+
+[Server management]
 /check_status 
  |- checking status of system
 /upgrade_bot 
  |- upgrade bot to latest version 
-/get_node_logs
- |- getting the latest logs of node
 
 [Version]
 Swingby Node: <b>v%s</b>
@@ -272,13 +278,24 @@ OK. Setup your p2p node keys...
 	return text
 }
 
+func (b *Bot) showMemoText(memo string, stakeAddr string) string {
+	text := fmt.Sprintf(`
+timelock_memo:
+
+<b>%s</b>
+
+address: <b>%s</b>
+`, memo, stakeAddr)
+	return text
+}
+
 func doneConfigGenerateText() string {
 	text := fmt.Sprintf(`
 Congratulations!
 Your Swingby node config has been updated. 
 
 Next step is installing infura package.
-Let's start => /setup_infura.
+Let's start => /start.
 	`)
 	return text
 }
@@ -652,6 +669,9 @@ BTC: <b>#%d</b> (%.3f%%)
 %s: <b>#%d</b> (%.3f%%)
 |- target: <b>[#%d]</b>
 
+[Domain status]
+Nginx active: <b>%s</b>
+
 [Storage status]
 Available space for /var/swingby:
 <b>~%d GB</b>
@@ -664,9 +684,7 @@ You can start deploy infura
 After reached 100.00%% of progress,
 You can install node by 
 /deploy_node
-
-[Domain status]<b>[%t]</b>
-`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSymbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, availableGBs, nodeVersion, b.validInfura, b.isActiveNginx)
+`, b.syncProgress, b.infura, b.bestHeight["BTC"], b.SyncRatio["BTC"], coinBSymbol, b.bestHeight["ETH"], b.SyncRatio["ETH"], b.etherScanHeight, b.isActiveNginx, availableGBs, nodeVersion, b.validInfura)
 	b.mu.RUnlock()
 	return text
 }

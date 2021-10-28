@@ -40,7 +40,7 @@ type Bot struct {
 	etherScanHeight    int64
 	syncProgress       float64
 	isStartCheckHeight bool
-	isActiveNginx      bool
+	isActiveNginx      string
 }
 
 func NewBot(token string) (*Bot, error) {

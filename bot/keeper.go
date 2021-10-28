@@ -157,12 +157,12 @@ func (b *Bot) checkNginxStatus() {
 	if err != nil {
 		log.Error("Error: failed to load nginx response from domain based api call")
 		b.mu.Lock()
-		b.isActiveNginx = false
+		b.isActiveNginx = "Not yet"
 		b.mu.Unlock()
 		return
 	}
 	b.mu.Lock()
-	b.isActiveNginx = true
+	b.isActiveNginx = "Yes"
 	b.mu.Unlock()
 }
 
