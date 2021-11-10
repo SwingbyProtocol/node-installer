@@ -102,16 +102,18 @@ func (b *Bot) Start() {
 		return
 	}
 
-	for update := range updates {
-		if update.Message == nil {
-			continue
+	go func() {
+		for update := range updates {
+			if update.Message == nil {
+				continue
+			}
+			if update.Message.From == nil {
+				continue
+			}
+			log.Infof("[%s][%d] %s", update.Message.From.UserName, update.Message.Chat.ID, update.Message.Text)
+			b.handleMessage(update.Message)
 		}
-		if update.Message.From == nil {
-			continue
-		}
-		log.Infof("[%s][%d] %s", update.Message.From.UserName, update.Message.Chat.ID, update.Message.Text)
-		b.handleMessage(update.Message)
-	}
+	}()
 }
 
 func (b *Bot) startBBKeeper() {
@@ -122,18 +124,21 @@ func (b *Bot) startBBKeeper() {
 		for {
 			<-ticker.C
 			b.checkBlockBooks()
+			b.checkStorageSize()
 			b.checkNginxStatus()
 			b.checkNewVersion()
 		}
 	}()
 }
 
-func (b *Bot) checkProcess() bool {
+func (b *Bot) checkProcess(isNotify bool) bool {
 	b.mu.RLock()
 	if b.isLocked {
 		b.mu.RUnlock()
-		text := fmt.Sprintf("Process is already started")
-		b.SendMsg(b.ID, text, false, false)
+		if isNotify {
+			text := fmt.Sprintf("Process is already started, please try again later")
+			b.SendMsg(b.ID, text, false, false)
+		}
 		return true
 	}
 	b.mu.RUnlock()

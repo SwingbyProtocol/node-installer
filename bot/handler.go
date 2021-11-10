@@ -147,7 +147,7 @@ func (b *Bot) handleSetupYourBot(cmd string) {
 			log.Info(err)
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		b.SendMsg(b.ID, makeDeployBotMessage(), false, false)
@@ -243,7 +243,7 @@ func (b *Bot) handleUpgradeBot(cmd string) {
 			log.Info(err)
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		b.SendMsg(b.ID, makeUpgradeBotMessage(), false, false)
@@ -282,7 +282,7 @@ func (b *Bot) handleSetupInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if !b.isConfirmed["setup_infura"] {
@@ -325,7 +325,7 @@ func (b *Bot) handleResyncInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if !b.isConfirmed["resync_infura"] {
@@ -368,7 +368,7 @@ func (b *Bot) handleResetGeth(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if !b.isConfirmed["reset_geth"] {
@@ -411,7 +411,7 @@ func (b *Bot) handleRemoveInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if !b.isConfirmed["remove_infura"] {
@@ -454,7 +454,7 @@ func (b *Bot) handleDeployInfura(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		// if b.syncProgress < 99.99 {
@@ -526,7 +526,7 @@ func (b *Bot) handleCheckStatus(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -560,12 +560,40 @@ func (b *Bot) handleCheckStatus(cmd string) {
 	}
 }
 
+func (b *Bot) autoCheckSpace() {
+	if !b.isRemote {
+		return
+	}
+	if b.checkProcess(false) {
+		return
+	}
+	extVars := map[string]string{
+		"HOST_USER": b.hostUser,
+		"IP_ADDR":   b.nodeIP,
+	}
+	onSuccess := func() {
+		availableSize, _ := getAvailableDiskSpaceFromFile()
+		availableGBs := availableSize / 1024
+		if availableGBs < 50 {
+			b.SendMsg(b.ID, informStorageIssue(), false, false)
+		}
+		b.cooldown()
+	}
+	onError := func(err error) {
+		log.Info(err)
+		b.cooldown()
+	}
+	path := fmt.Sprintf("./playbooks/check_status.yml")
+	b.execAnsible(path, extVars, onSuccess, onError)
+	return
+}
+
 func (b *Bot) handleOpenGethPort(cmd string) {
 	if cmd == "/open_geth_port" {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -598,7 +626,7 @@ func (b *Bot) handleOpenBlockBooksPort(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -631,7 +659,7 @@ func (b *Bot) handleDeployNode(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if b.syncProgress <= 99.99 {
@@ -681,7 +709,7 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		if b.syncProgress <= 99.99 {
@@ -729,7 +757,7 @@ func (b *Bot) handleStopNginx(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -756,7 +784,7 @@ func (b *Bot) handleStopNode(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -783,7 +811,7 @@ func (b *Bot) handleStakeUpdateNode(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{
@@ -823,7 +851,7 @@ func (b *Bot) handleEnableDomain(cmd string) {
 		if !b.isRemote {
 			return
 		}
-		if b.checkProcess() {
+		if b.checkProcess(true) {
 			return
 		}
 		extVars := map[string]string{

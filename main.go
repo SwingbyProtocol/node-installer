@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/SwingbyProtocol/node-installer/bot"
 	log "github.com/sirupsen/logrus"
@@ -18,5 +20,11 @@ func main() {
 		panic(err)
 	}
 	bot.Start()
-	select {}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
+	<-c
+	_, err = bot.SendMsg(bot.ID, "Hey Human! This Bot is down!", false, false)
+	if err != nil {
+		log.Error(err)
+	}
 }

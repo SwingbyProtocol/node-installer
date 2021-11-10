@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var syncNextBlock int64
+
 type BlockRpc struct {
 	Result string `json:"result"`
 }
@@ -32,7 +34,9 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.mu.Unlock()
 		return
 	}
-	b.stuckCount[coin]++
+	if b.bestHeight[coin] != 0 && b.isSyncedMempool[coin] {
+		b.stuckCount[coin]++
+	}
 
 	if res.Backend.Version != "" {
 		b.infuraVersions[coin] = res.Backend.Version
@@ -90,7 +94,7 @@ func (b *Bot) notifyBehindBlocks() {
 	if !b.isStartCheckHeight && b.bestHeight["ETH"] == b.etherScanHeight {
 		b.isStartCheckHeight = true
 		b.SendMsg(b.ID, "[INFO] Your ETH/BSC chain is fully synced!", false, false)
-		log.Info("Subscribe ETH/BSC chain status")
+		log.Info("Subscribe ETH/BSC blockbooks status")
 	}
 	if b.isStartCheckHeight && b.bestHeight["ETH"]+30 <= b.etherScanHeight {
 		b.SendMsg(b.ID, "[INFO] Your ETH/BSC synchronization is delayed over 30 blocks", false, false)
@@ -167,6 +171,18 @@ func (b *Bot) checkNginxStatus() {
 	b.mu.Lock()
 	b.isActiveNginx = "Yes"
 	b.mu.Unlock()
+}
+
+func (b *Bot) checkStorageSize() {
+	if syncNextBlock+1000 < b.etherScanHeight {
+		syncNextBlock = b.etherScanHeight
+		return
+	}
+	if syncNextBlock+checkStorageInterval[b.nConf.Network] < b.etherScanHeight {
+		log.Info("Storage checker is started")
+		b.autoCheckSpace()
+		syncNextBlock = b.etherScanHeight
+	}
 }
 
 func (b *Bot) restartBlockbooks() {

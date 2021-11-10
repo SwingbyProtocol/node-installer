@@ -80,6 +80,10 @@ var (
 		Network1: 1430511,
 		Network2: 1525978,
 	}
+	checkStorageInterval = map[string]int64{
+		Network1: 12000,
+		Network2: 10000,
+	}
 )
 
 const (
