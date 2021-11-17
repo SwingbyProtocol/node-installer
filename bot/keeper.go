@@ -230,6 +230,7 @@ func (b *Bot) checkNewVersion() {
 		return
 	}
 	if v.NodeVersion != nnVersion {
+		log.Info("%s , %s", v.NodeVersion, nnVersion)
 		log.Infof("The new version of node [v%s] is coming!", v.NodeVersion)
 		b.SendMsg(b.ID, upgradeNodeMessage(v.NodeVersion), false, false)
 		b.SetNextVersion(v.BotVersion, v.NodeVersion)

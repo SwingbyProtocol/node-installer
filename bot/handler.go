@@ -254,7 +254,7 @@ func (b *Bot) handleUpgradeBot(cmd string) {
 			contName = "node_installer"
 		}
 		extVars := map[string]string{
-			"TAG":       b.botVersion,
+			"TAG":       b.nextBotVersion,
 			"CONT_NAME": contName,
 			"HOST_USER": b.hostUser,
 			"BOT_TOKEN": b.bot.Token,
