@@ -23,7 +23,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGSTOP)
 	<-c
-	_, err = bot.SendMsg(bot.ID, "Hey Human! This Bot is down!", false, false)
+	_, err = bot.SendMsg(bot.ID, bot.BotDownMessage(), false, false)
 	if err != nil {
 		log.Error(err)
 	}

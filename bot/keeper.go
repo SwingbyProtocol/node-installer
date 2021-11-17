@@ -152,7 +152,7 @@ func (b *Bot) checkBlockBooks() {
 }
 
 func (b *Bot) checkNginxStatus() {
-	if b.nConf.Domain == "" {
+	if b.nConf.Domain == "NOT EXIST" || b.nConf.Domain == "" {
 		b.mu.Lock()
 		b.isActiveNginx = "Not yet"
 		b.mu.Unlock()
@@ -164,7 +164,7 @@ func (b *Bot) checkNginxStatus() {
 	if err != nil {
 		log.Error("Error: failed to load nginx response from domain based api call")
 		b.mu.Lock()
-		b.isActiveNginx = "Not yet"
+		b.isActiveNginx = "Not available"
 		b.mu.Unlock()
 		return
 	}
@@ -174,7 +174,10 @@ func (b *Bot) checkNginxStatus() {
 }
 
 func (b *Bot) checkStorageSize() {
-	if syncNextBlock+1000 < b.etherScanHeight {
+	if b.etherScanHeight == 0 {
+		return
+	}
+	if syncNextBlock == 0 {
 		syncNextBlock = b.etherScanHeight
 		return
 	}
@@ -182,6 +185,8 @@ func (b *Bot) checkStorageSize() {
 		log.Info("Storage checker is started")
 		b.autoCheckSpace()
 		syncNextBlock = b.etherScanHeight
+	} else {
+		log.Infof("Storage checker is skipped (remain %d blocks)", syncNextBlock+checkStorageInterval[b.nConf.Network]-b.etherScanHeight)
 	}
 }
 
@@ -211,23 +216,23 @@ func (b *Bot) checkNewVersion() {
 		log.Info(err)
 		return
 	}
-	bVersion, nVersion := b.Versions()
-	if v.BotVersion != bVersion && v.NodeVersion != nVersion {
-		log.Infof("the new version of bot [v%s] node [v%s] is coming!", v.BotVersion, v.NodeVersion)
+	nbVersion, nnVersion := b.Versions()
+	if v.BotVersion != nbVersion && v.NodeVersion != nnVersion {
+		log.Infof("The new version of bot [v%s] node [v%s] is coming!", v.BotVersion, v.NodeVersion)
 		b.SendMsg(b.ID, upgradeBothMessage(v.BotVersion, v.NodeVersion), false, false)
-		b.SetVersion(v.BotVersion, v.NodeVersion)
+		b.SetNextVersion(v.BotVersion, v.NodeVersion)
 		return
 	}
-	if v.BotVersion != bVersion {
-		log.Infof("the new version of bot [v%s] is coming!", v.BotVersion)
+	if v.BotVersion != nbVersion {
+		log.Infof("The new version of bot [v%s] is coming!", v.BotVersion)
 		b.SendMsg(b.ID, upgradeBotMessage(v.BotVersion), false, false)
-		b.SetVersion(v.BotVersion, nVersion)
+		b.SetNextVersion(v.BotVersion, v.NodeVersion)
 		return
 	}
-	if v.NodeVersion != nVersion {
-		log.Infof("the new version of node [v%s] is coming!", v.NodeVersion)
+	if v.NodeVersion != nnVersion {
+		log.Infof("The new version of node [v%s] is coming!", v.NodeVersion)
 		b.SendMsg(b.ID, upgradeNodeMessage(v.NodeVersion), false, false)
-		b.SetVersion(bVersion, v.NodeVersion)
+		b.SetNextVersion(v.BotVersion, v.NodeVersion)
 		return
 	}
 }

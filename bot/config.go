@@ -14,7 +14,7 @@ const (
 	DataPath        = "./data"
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
-	GethLockVersion = "Geth/v1.10.11"
+	GethLockVersion = "Geth/v1.10.12"
 	BSCLockVersion  = "Geth/v1.1.0-beta"
 	BTCLockVersion  = "210100"
 )
@@ -77,12 +77,12 @@ var (
 		Network2: 1157644652948,
 	}
 	minimumMountPathSizeMiB = map[string]int{
-		Network1: 1430511,
+		Network1: 1, // always use Network2
 		Network2: 1525978,
 	}
 	checkStorageInterval = map[string]int64{
-		Network1: 12000,
-		Network2: 10000,
+		Network1: 10000,
+		Network2: 12000,
 	}
 )
 

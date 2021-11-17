@@ -768,3 +768,10 @@ Please watch node status /check_status
 	`)
 	return text
 }
+
+func (b *Bot) BotDownMessage() string {
+	text := fmt.Sprintf(`
+Hey Human! 
+This Bot is down!`)
+	return text
+}

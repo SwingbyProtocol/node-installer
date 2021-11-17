@@ -20,7 +20,9 @@ type Bot struct {
 	bot                *tgbotapi.BotAPI
 	api                *api.Resolver
 	nodeVersion        string
+	nextNodeVersion    string
 	botVersion         string
+	nextBotVersion     string
 	hostUser           string
 	nodeIP             string
 	containerName      string
@@ -59,7 +61,9 @@ func NewBot(token string) (*Bot, error) {
 		bot:             b,
 		api:             api.NewResolver("", 200),
 		nodeVersion:     ver.NodeVersion,
+		nextNodeVersion: ver.NodeVersion,
 		botVersion:      ver.BotVersion,
+		nextBotVersion:  ver.BotVersion,
 		hostUser:        "root",
 		containerName:   "node_installer",
 		nConf:           NewNodeConfig(),
@@ -261,12 +265,12 @@ func (b *Bot) execAnsible(playbookPath string, extVars map[string]string, onSucc
 func (b *Bot) Versions() (string, string) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	return b.botVersion, b.nodeVersion
+	return b.nextBotVersion, b.nextNodeVersion
 }
 
-func (b *Bot) SetVersion(bV string, nV string) {
+func (b *Bot) SetNextVersion(nbV string, nnV string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.botVersion = bV
-	b.nodeVersion = nV
+	b.nextBotVersion = nbV
+	b.nextNodeVersion = nnV
 }
