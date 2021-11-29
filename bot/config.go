@@ -15,7 +15,7 @@ const (
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
 	GethLockVersion = "Geth/v1.10.12"
-	BSCLockVersion  = "Geth/v1.1.0-beta"
+	BSCLockVersion  = "Geth/v1.1.5"
 	BTCLockVersion  = "210100"
 )
 
