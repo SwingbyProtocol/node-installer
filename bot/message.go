@@ -366,7 +366,7 @@ You subdomain is not attahced. Please kindly check error logs
 func (b *Bot) makeDeployNodeMessage() string {
 	text := fmt.Sprintf(`
 Deploying your Swingby node.... (v%s)
-	`, b.nodeVersion)
+	`, b.nextNodeVersion)
 	return text
 }
 
@@ -694,7 +694,7 @@ You can install node by
 func informStorageIssue() string {
 	text := fmt.Sprintf(`
 [Warning] Hi Human!
-Your free disk space is running low. (<50GB)
+Your free disk space is running low. (<100GB)
 You can check status => /check_status
 You may want to /reset_geth to sync to the latest snapshot. (Takes about 4 hours)
 To keep your node online during this process, you can use these steps:

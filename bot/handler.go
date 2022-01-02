@@ -574,7 +574,7 @@ func (b *Bot) autoCheckSpace() {
 	onSuccess := func() {
 		availableSize, _ := getAvailableDiskSpaceFromFile()
 		availableGBs := availableSize / 1024
-		if availableGBs < 50 {
+		if availableGBs < 100 {
 			b.SendMsg(b.ID, informStorageIssue(), false, false)
 		}
 		b.cooldown()
@@ -681,7 +681,7 @@ func (b *Bot) handleDeployNode(cmd string) {
 		b.nConf.saveConfig()
 		extVars := map[string]string{
 			"HOST_USER":        b.hostUser,
-			"TAG":              b.nodeVersion,
+			"TAG":              b.nextNodeVersion,
 			"NETWORK":          b.nConf.Network,
 			"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 			"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
@@ -729,7 +729,7 @@ func (b *Bot) handleDeployNodeDebug(cmd string) {
 		}
 		extVars := map[string]string{
 			"HOST_USER":        b.hostUser,
-			"TAG":              b.nodeVersion,
+			"TAG":              b.nextNodeVersion,
 			"NETWORK":          b.nConf.Network,
 			"BOOTSTRAP_NODE_1": b.nConf.BootstrapNode[0],
 			"BOOTSTRAP_NODE_2": b.nConf.BootstrapNode[1],
