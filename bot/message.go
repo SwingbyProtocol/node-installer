@@ -694,7 +694,7 @@ You can install node by
 func informStorageIssue() string {
 	text := fmt.Sprintf(`
 [Warning] Hi Human!
-Your free disk space is running low. (<100GB)
+Your free disk space is running low. (<180GB)
 You can check status => /check_status
 You may want to /reset_geth to sync to the latest snapshot. (Takes about 4 hours)
 To keep your node online during this process, you can use these steps:
