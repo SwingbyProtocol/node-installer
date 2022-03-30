@@ -29,7 +29,9 @@ You can setup your node through this bot.
  |- configure your node
 /show_timelock_memo
  |- view your timelock memo
- 
+/show_p2pkey
+ |- view your p2p key for ERC20 staking
+
 [Infura management]
 /setup_infura [not recommended]
  |- setup infura containers
@@ -194,8 +196,7 @@ Please put target network number on following list.
 now: <b>%s</b>
 
 1) BTC --- Ethereum (mainnet)
-2) BTC --- BSC (mainnet)
-
+3) BTC --- ETH (skypool)
 [Configuration step 1/4]
 `, b.nConf.Network)
 	return text
@@ -240,17 +241,23 @@ func (b *Bot) makeStakeAddrText() string {
 OK. Your new p2p node key is generated.
 
 You have to make a stake tx. 
-Following steps:
+Following steps: (legacy)
 1. Setup your BNB wallet: https://www.binance.org/en/create
 2. Access our timelock portal: https://timelock.swingby.network
 3. Make a "timelock" tx with this "description"
 4. Put your "staking" BNB wallet address.
-
 description:
 
 <b>%s</b>
 
 <b>
+
+For migration (Skypool)
+1. Swap BEP20 to ERC20 in https://bridge.swingby.network
+2. do /show_p2pkey
+3. copy that p2pkey
+3. put p2pkey in "Node Stake" view on https://dao.swingby.network 
+
 Note: stake amount is least 50,000 SWINGBYs 
 with over 1 month timelock
 (recommended: at least 3 months)
@@ -265,7 +272,8 @@ Your staking BNB address is:
 
 now: <b>%s</b>
 
-Could you put your BNB staking address?
+Could you put your BNB/ETH staking address?
+for skypool you have to put ETH staking address.
 
 [Configuration step 4/4]
 if you want to skip, type 'none'
@@ -288,6 +296,17 @@ timelock_memo:
 
 address: <b>%s</b>
 `, memo, stakeAddr)
+	return text
+}
+
+func (b *Bot) showP2PKeyText(memo string, stakeAddr string) string {
+	text := fmt.Sprintf(`
+NodeP2PKey:
+
+<b>%s</b>
+
+your ETH addr: <b>%s</b>
+`, memo[0:64], stakeAddr)
 	return text
 }
 
@@ -658,6 +677,7 @@ func (b *Bot) checkNodeMessage(varAvailableBytes int) string {
 	case Network2:
 		coinBSymbol = "BSC"
 		nodeVersion = BSCLockVersion
+	case Network3:
 	}
 	availableGBs := varAvailableBytes / 1024
 

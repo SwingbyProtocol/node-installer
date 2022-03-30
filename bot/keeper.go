@@ -132,6 +132,13 @@ func (b *Bot) checkBlockBooks() {
 		// 	regexp.MustCompile("Geth/v1.0.7").MatchString(b.infuraVersions["ETH"]) {
 		// 	b.validInfura = true
 		// }
+	case Network3:
+		if regexp.MustCompile(BTCLockVersion).MatchString(b.infuraVersions["BTC"]) &&
+			regexp.MustCompile(GethLockVersion).MatchString(b.infuraVersions["ETH"]) {
+			b.validInfura = true
+		} else {
+			b.validInfura = false
+		}
 	default:
 		b.validInfura = false
 	}

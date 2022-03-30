@@ -30,6 +30,7 @@ func (b *Bot) handleMessage(msg *tgbotapi.Message) {
 	b.handleSetupYourBot(cmd)
 	b.handleSetupNode(cmd)
 	b.handleShowMemo(cmd)
+	b.handleShowP2PKey(cmd)
 
 	b.handleSetupDomain(cmd)
 	b.handleEnableDomain(cmd)
@@ -226,6 +227,19 @@ func (b *Bot) handleShowMemo(cmd string) {
 			return
 		}
 		_, err := b.SendMsg(b.ID, b.showMemoText(b.nConf.Memo, b.nConf.StakeAddr), true, false)
+		if err != nil {
+			return
+		}
+		return
+	}
+}
+
+func (b *Bot) handleShowP2PKey(cmd string) {
+	if cmd == "/show_p2pkey" {
+		if !b.isRemote {
+			return
+		}
+		_, err := b.SendMsg(b.ID, b.showP2PKeyText(b.nConf.Memo, b.nConf.RewardAddressETH), true, false)
 		if err != nil {
 			return
 		}

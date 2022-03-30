@@ -1,0 +1,35 @@
+- name: Restart infura
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: download latest docker-blockbook repo && restart infura nodes
+      shell: |
+        rm -rf docker-blockbook-master
+        wget -q https://github.com/SwingbyProtocol/docker-blockbook/archive/master.tar.gz
+        tar -xf master.tar.gz         
+        rm -f master.tar.gz
+
+        cd docker-blockbook-master/deployments/mainnet
+        DIR=/var/swingby docker-compose rm -sf bitcoind geth bb_btc bb_eth
+        docker system prune -af
+        DIR=/var/swingby docker-compose up -d --build bitcoind geth
+        sleep 50
+        DIR=/var/swingby docker-compose up -d --build bb_btc bb_eth
+
+      register: output
+
+    - debug: var=output.stdout_lines
+
+    - name: set iptables
+      shell: |
+        iptables -F DOCKER-USER
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 --match multiport --dport 8545,9130,9131 -j DROP
+        iptables -I DOCKER-USER -p tcp -d 172.17.0.0/24 --match multiport --dport 8067 -j DROP
+        iptables -L DOCKER-USER
+
+      register: output
+
+    - debug: var=output.stdout_lines

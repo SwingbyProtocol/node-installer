@@ -1,0 +1,29 @@
+- name: Resync infura
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: setup infura nodes
+      shell: |
+        cd docker-blockbook-master/deployments/mainnet
+        DIR=/var/swingby docker-compose rm -sf bitcoind geth bb_btc bb_eth
+
+        killall b2-linux
+
+        cd /var/swingby
+        rm -f ./b2-linux
+        wget -q https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-linux
+        chmod +x ./b2-linux
+        ./b2-linux authorize-account 00082ac5807077d0000000004 K000r0mfkimneB/ZOgXCwMVNQtDzWHo
+
+        mkdir -p /var/swingby/mainnet
+
+        if ! pgrep -x "b2-linux" > /dev/null; then
+          nohup ./b2-linux sync --delete --replaceNewer --excludeAllSymlinks --excludeDirRegex '^.*(bb_bsc|bsc).*$' b2://var-swingby/mainnet /var/swingby/mainnet > /tmp/re-syncing.log 2> /tmp/re-syncing_err.log &
+        fi
+
+      register: output
+
+    - debug: var=output.stdout_lines

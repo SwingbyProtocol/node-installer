@@ -14,6 +14,7 @@ const (
 	DataPath        = "./data"
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
+	Network3        = "btc_skypool"
 	GethLockVersion = "Geth/v1.10.15"
 	BSCLockVersion  = "Geth/v1.1.8"
 	BTCLockVersion  = "210100"
@@ -23,18 +24,22 @@ var (
 	Networks = map[string]string{
 		"1": Network1,
 		"2": Network2,
+		"3": Network3,
 	}
 	WalletContract = map[string]string{
 		Network1: "0xbe83f11d3900F3a13d8D12fB62F5e85646cDA45e",
 		Network2: "0xaD22900062e4cd766102A1f33E530F5303fe1aDF",
+		Network3: "0x4A084C0D1f89793Bb57f49b97c4e3a24cA539aAA",
 	}
 	LPtokenContract = map[string]string{
 		Network1: "0x22883a3db06737ece21f479a8009b8b9f22b6cc9",
 		Network2: "0xdBa68BeF9b541999Fd9650FF72C19d5E1ceeCd10",
+		Network3: "0x44a62c7121a64691b61aef669f21c628258e7d52",
 	}
 	BTCTContract = map[string]string{
 		Network1: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
 		Network2: "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+		Network3: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
 	}
 	BootstrapNodeMain = map[string][]string{
 		Network1: {
@@ -47,42 +52,56 @@ var (
 			"51.158.68.138:12125",   // https://irish.zoo.farm
 			"51.159.134.173:12126",  // https://gwaden.yen.farm
 		},
+		Network3: {
+			"5.161.72.251:12121", // https://btc-skypool-1.swingby.network
+			"5.161.72.65:12122",  // https://btc-skypool-2.swingby.network
+			"5.161.70.94:12123",  // https://btc-skypool-3.swingby.network
+		},
 	}
 	stopTrigger = map[string]string{
 		Network1: "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json",
 		Network2: "https://btc-bsc-mainnet.s3-ap-southeast-1.amazonaws.com/platform_status.json",
+		Network3: "https://btc-wbtc-mainnet.s3-ap-southeast-1.amazonaws.com/platform_status.json",
 	}
 	epochBlock = map[string]int{
 		Network1: 3,
 		Network2: 15,
+		Network3: 3,
 	}
 	threshold = map[string]int{
 		Network1: 31,
 		Network2: 31,
+		Network3: 8,
 	}
 	maxShare = map[string]int{
 		Network1: 50,
 		Network2: 50,
+		Network3: 10,
 	}
 	maxNode = map[string]int{
 		Network1: 60,
 		Network2: 60,
+		Network3: 60,
 	}
 	keygenPeer = map[string]int{
 		Network1: 32,
 		Network2: 35,
+		Network3: 10,
 	}
 	syncSnapshotBytes = map[string]int{
 		Network1: 1175750002860,
 		Network2: 1157644652948,
+		Network3: 1175750002860,
 	}
 	minimumMountPathSizeMiB = map[string]int{
 		Network1: 1, // always use Network2
 		Network2: 1525978,
+		Network3: 1,
 	}
 	checkStorageInterval = map[string]int64{
 		Network1: 10000,
 		Network2: 12000,
+		Network3: 10000,
 	}
 )
 
@@ -155,6 +174,8 @@ ws_uri = "**eth_blockbook_ws_endpoint**"
 wallet_contract_addr = "**eth_wallet_contract**"
 lp_token_contract_addr = "**eth_lpt_contract**"
 btc_token_contract_addr = "**btc_token_contract_addr**"
+stake_addr = "**stake_addr**"
+barn_dao_contract_addr = "0xb4200c8c44b05a342a9f7fd0d27647c4bf9533e7"
 
 [bsc_fees]
 miner_fee = 0.000015
@@ -241,6 +262,9 @@ func (n *NodeConfig) SetNetwork(network string) {
 	case Network2:
 		n.CoinA = "BTCB"
 		n.CoinB = "BTC"
+	case Network3:
+		n.CoinA = "WBTC"
+		n.CoinB = "BTC"
 	}
 }
 
@@ -260,6 +284,13 @@ func (n *NodeConfig) SetGlobalNode() {
 		n.BlockBookETH = "https://indexer.swingby.network/bb-bsc"
 		n.BlockBookETHWS = "wss://indexer.swingby.network/bsc-websocket"
 		n.BootstrapNode = BootstrapNodeMain[Network2]
+	case Network3:
+		n.BlockBookBTC = "https://indexer.swingby.network/bb-btc"
+		n.BlockBookBTCWS = "wss://indexer.swingby.network/btc-websocket"
+		n.GethRPC = "https://indexer.swingby.network/eth-rpc" // foundation geth_1
+		n.BlockBookETH = "https://indexer.swingby.network/bb-eth"
+		n.BlockBookETHWS = "wss://indexer.swingby.network/eth-websocket"
+		n.BootstrapNode = BootstrapNodeMain[Network3]
 	}
 }
 
@@ -275,6 +306,10 @@ func (n *NodeConfig) SetLocalNode() {
 		n.GethRPC = BscRPC
 		n.BlockBookETH = BlockBookBSC
 		n.BlockBookETHWS = BlockBookBSCWS
+	case Network3:
+		n.GethRPC = GethRPC
+		n.BlockBookETH = BlockBookETH
+		n.BlockBookETHWS = BlockBookETHWS
 	}
 }
 
@@ -322,9 +357,7 @@ func (n *NodeConfig) storeConfigToml() error {
 	//newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_address_eth**", n.RewardAddressETH)
 
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**rpc_uri_placeholder**", n.BNBSeed)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_tx**", n.StakeTx)
 	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**stake_addr**", n.StakeAddr)
-	newBaseConfig = strings.ReplaceAll(newBaseConfig, "**reward_addr_bnb**", n.RewardAddressBNB)
 
 	newConfigToml := fmt.Sprintf("%s\n", newBaseConfig)
 	if err := ioutil.WriteFile(pConfigFileName, []byte(newConfigToml), os.ModePerm); err != nil {

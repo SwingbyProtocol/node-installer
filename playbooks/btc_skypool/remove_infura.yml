@@ -1,0 +1,16 @@
+- name: Remove infura
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: remove infura
+      shell: |
+        cd docker-blockbook-master/deployments/mainnet
+        DIR=/var/swingby docker-compose down
+        rm -rf /var/swingby/mainnet/*
+
+      register: output
+
+    - debug: var=output.stdout_lines

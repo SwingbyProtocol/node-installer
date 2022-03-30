@@ -1,0 +1,19 @@
+- name: Open geth port
+  hosts: server
+  user: "{{HOST_USER}}"
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Open blockbooks port
+      shell: |
+        iptables -D DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9130 --ctdir ORIGINAL -j ACCEPT
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9130 --ctdir ORIGINAL -j ACCEPT
+
+        iptables -D DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9131 --ctdir ORIGINAL -j ACCEPT
+        iptables -I DOCKER-USER -p tcp -d 10.2.0.0/24 -m conntrack --ctorigdstport 9131 --ctdir ORIGINAL -j ACCEPT
+        iptables -L DOCKER-USER
+
+      register: output
+
+    - debug: var=output.stdout_lines
