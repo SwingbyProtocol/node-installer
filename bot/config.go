@@ -61,7 +61,7 @@ var (
 	stopTrigger = map[string]string{
 		Network1: "https://btc-wbtc-mainnet.s3.eu-central-1.amazonaws.com/platform_status.json",
 		Network2: "https://btc-bsc-mainnet.s3-ap-southeast-1.amazonaws.com/platform_status.json",
-		Network3: "https://btc-wbtc-mainnet.s3-ap-southeast-1.amazonaws.com/platform_status.json",
+		Network3: "https://btc-skypools-mainnet.s3.ap-southeast-1.amazonaws.com/platform_status.json",
 	}
 	epochBlock = map[string]int{
 		Network1: 3,
