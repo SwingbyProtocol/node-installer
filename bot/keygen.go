@@ -17,6 +17,11 @@ func (b *Bot) generateKeys(basePath string) (bool, error) {
 	pDataDirName := fmt.Sprintf("%s/data", basePath)
 	pKeystoreFileName := fmt.Sprintf("%s/keystore.json", pDataDirName)
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
+	input, err := ioutil.ReadFile("./data/btc_eth/data/keystore0.bin")
+	if err == nil {
+		ioutil.WriteFile("./data/btc_skypool/data/keystore0.bin", input, 0600)
+		return true, err
+	}
 	if _, _, err := keystore.LoadOrGenerate(pKeystoreFileName); err != nil {
 		return false, err
 	}

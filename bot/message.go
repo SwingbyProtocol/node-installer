@@ -241,39 +241,33 @@ func (b *Bot) makeStakeAddrText() string {
 OK. Your new p2p node key is generated.
 
 You have to make a stake tx. 
-Following steps: (legacy)
-1. Setup your BNB wallet: https://www.binance.org/en/create
-2. Access our timelock portal: https://timelock.swingby.network
-3. Make a "timelock" tx with this "description"
-4. Put your "staking" BNB wallet address.
-description:
 
-<b>%s</b>
-
-<b>
-
-For migration (Skypool)
-1. Swap BEP20 to ERC20 in https://bridge.swingby.network
+Following steps for Skypool setup/migration
+1. Swap BEP20 SWINGBY to ERC20 in https://bridge.swingby.network
 2. do /show_p2pkey
-3. copy that p2pkey
-3. put p2pkey in "Node Stake" view on https://dao.swingby.network 
+3. copy that NodeP2PKey
+4. put NodeP2PKey in "Node Stake" view on https://dao.swingby.network 
+Tutorial is here
+https://skybridge-docs.swingby.network/swingby-dao/tutorials/bond-metanodes
 
-Note: stake amount is least 50,000 SWINGBYs 
+Note: stake amount is least 175,000 SWINGBYs 
 with over 1 month timelock
 (recommended: at least 3 months)
-</b>
-`, b.nConf.Memo)
+
+`)
 	return text
 }
 
 func (b *Bot) askStakeAddrText() string {
 	text := fmt.Sprintf(`
-Your staking BNB address is:
+Your staking BNB/ETH address is:
 
 now: <b>%s</b>
 
 Could you put your BNB/ETH staking address?
-for skypool you have to put ETH staking address.
+
+<b>[important]</b>
+for skypool you have to put <b>ETH</b> staking address.
 
 [Configuration step 4/4]
 if you want to skip, type 'none'
@@ -383,9 +377,13 @@ You subdomain is not attahced. Please kindly check error logs
 	return text
 }
 func (b *Bot) makeDeployNodeMessage() string {
+	nodeV := b.nextNodeVersion
+	if b.nConf.Network == Network3 {
+		nodeV = "0.1.3-sp"
+	}
 	text := fmt.Sprintf(`
 Deploying your Swingby node.... (v%s)
-	`, b.nextNodeVersion)
+	`, nodeV)
 	return text
 }
 
