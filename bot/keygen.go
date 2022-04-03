@@ -19,6 +19,7 @@ func (b *Bot) generateKeys(basePath string) (bool, error) {
 	_ = os.MkdirAll(pDataDirName, os.ModePerm)
 	input, err := ioutil.ReadFile("./data/btc_eth/data/keystore0.bin")
 	if err == nil {
+		_ = os.MkdirAll("./data/btc_skypool/data", os.ModePerm)
 		ioutil.WriteFile("./data/btc_skypool/data/keystore0.bin", input, 0600)
 		return true, err
 	}

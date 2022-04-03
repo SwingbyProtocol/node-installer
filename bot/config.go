@@ -23,7 +23,6 @@ const (
 var (
 	Networks = map[string]string{
 		"1": Network1,
-		"2": Network2,
 		"3": Network3,
 	}
 	WalletContract = map[string]string{

@@ -197,6 +197,7 @@ now: <b>%s</b>
 
 1) BTC --- Ethereum (mainnet)
 3) BTC --- ETH (skypool)
+
 [Configuration step 1/4]
 `, b.nConf.Network)
 	return text
