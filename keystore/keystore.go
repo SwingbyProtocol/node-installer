@@ -3,17 +3,21 @@ package keystore
 import (
 	"encoding/json"
 	"io/ioutil"
-	"time"
+	"os"
+	"path/filepath"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/perlin-network/noise/edwards25519"
 	"github.com/perlin-network/noise/skademlia"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	FileName = "keystore.json"
-	FilePerm = 0660
+	FileNameLegacy = "keystore.json"
+	FileNameBackup = "keystore0_bak.bin"
+	FileName       = "keystore0.bin"
+	FilePerm       = 0600
 
 	// Skademlia key params
 	DefaultSKademliaC1 = 1
@@ -42,20 +46,103 @@ func NewP2PSaveData(sk edwards25519.PrivateKey, c1 int, c2 int) P2PSaveData {
 	return P2PSaveData{SK: sk, C1: c1, C2: c2}
 }
 
-func WriteToHome(data SaveData, optPath ...string) error {
-	path := ""
+func ReadFromHome(secretHex string, basePath string, optPath ...string) (*SaveData, error) {
+	if legacyFileExists(basePath) {
+		// convert legacy file to the new encrypted format, rm legacy
+		log.Infof("Legacy keystore %s detected; converting to the new format %s and deleting %s.",
+			FileNameLegacy, FileName, FileNameLegacy)
+		data, err := readFromHomeLegacy(basePath, optPath...)
+		if err != nil {
+			return nil, err
+		}
+		if err = WriteToHome(data, secretHex, basePath); err != nil {
+			return nil, err
+		}
+		if err = WriteToHome(data, Path(basePath, FileNameBackup), secretHex); err != nil {
+			return nil, err
+		}
+		oldPath := Path(basePath, FileNameLegacy)
+		if err = os.Remove(oldPath); err != nil {
+			return nil, err
+		}
+		return data, nil
+	}
+	return readFromHomeNew(secretHex, basePath, optPath...)
+}
+
+func WriteToHome(data *SaveData, secretHex string, basePath string, optPath ...string) error {
+	path := Path(basePath)
 	if 0 < len(optPath) {
 		path = optPath[0]
 	}
-	file, err := json.Marshal(data)
+
+	bytes, err := encryptKeyStore(secretHex, data)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, file, FilePerm)
+	return ioutil.WriteFile(path, bytes, FilePerm)
 }
 
-func ReadFromHome(optPath ...string) (*SaveData, error) {
-	path := ""
+func GenerateInHome(secretHex string, basePath string, optPath ...string) error {
+	// if there is a legacy keystore file then load the p2p data from it, otherwise generate from scratch
+	var p2pData P2PSaveData
+	if legacyFileExists(basePath) {
+		// take p2p keys from legacy keystore file
+		legacyData, err2 := readFromHomeLegacy(Path(basePath, FileNameLegacy))
+		if err2 != nil {
+			return err2
+		}
+		p2pData = legacyData.P2pData
+	} else {
+		keys, c1, c2, err2 := generateP2PKeys()
+		if err2 != nil {
+			return err2
+		}
+		p2pData = NewP2PSaveData(keys.PrivateKey(), c1, c2)
+	}
+	saveData := NewSaveData(p2pData, nil, nil) // tss data populated on keygen
+	return WriteToHome(&saveData, secretHex, basePath, optPath...)
+}
+
+func LoadOrGenerate(secretHex string, basePath string) (data *SaveData, generated bool, err error) {
+	ks, err := ReadFromHome(secretHex, basePath)
+	if err != nil {
+		if err = GenerateInHome(secretHex, basePath); err != nil {
+			return nil, false, err
+		}
+		ks, err = ReadFromHome(secretHex, basePath) // ensure that it can be read
+		if err != nil {
+			return nil, false, err
+		}
+		generated = true
+	}
+	return ks, generated, err
+}
+
+func Path(path string, optFileName ...string) string {
+	fileName := FileName
+	if 0 < len(optFileName) {
+		fileName = optFileName[0]
+	}
+	return filepath.Join(path, fileName)
+}
+
+// ----- //
+
+func readFromHomeNew(secretHex string, basePath string, optPath ...string) (*SaveData, error) {
+	path := Path(basePath)
+	if 0 < len(optPath) {
+		path = optPath[0]
+	}
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return decryptKeyStore(secretHex, bytes)
+}
+
+func readFromHomeLegacy(basePath string, optPath ...string) (*SaveData, error) {
+	path := Path(basePath, FileNameLegacy)
 	if 0 < len(optPath) {
 		path = optPath[0]
 	}
@@ -70,41 +157,15 @@ func ReadFromHome(optPath ...string) (*SaveData, error) {
 	return &data, nil
 }
 
-func GenerateInHome(optPath ...string) error {
-	keys, c1, c2, err := generateP2PKeys()
-	if err != nil {
-		return err
+func legacyFileExists(basePath string) bool {
+	if _, err := os.Stat(Path(basePath, FileNameLegacy)); os.IsNotExist(err) {
+		return false
 	}
-	p2pData := NewP2PSaveData(keys.PrivateKey(), c1, c2)
-	tssPreParams, err := keygen.GeneratePreParams(5 * time.Minute)
-	if err != nil {
-		return err
-	}
-	tssSaveData := &keygen.LocalPartySaveData{
-		LocalPreParams: *tssPreParams,
-	}
-	saveData := NewSaveData(p2pData, nil, tssSaveData)
-	return WriteToHome(saveData, optPath...)
-}
-
-func LoadOrGenerate(optPath ...string) (data *SaveData, generated bool, err error) {
-	kstore, err := ReadFromHome(optPath...)
-	if err != nil {
-		if err = GenerateInHome(optPath...); err != nil {
-			return nil, false, err
-		}
-		kstore, err = ReadFromHome(optPath...) // ensure that it can be read
-		if err != nil {
-			return nil, false, err
-		}
-		generated = true
-	}
-	return kstore, generated, err
+	return true
 }
 
 func generateP2PKeys() (keys *skademlia.Keypair, c1, c2 int, err error) {
-	c1 = DefaultSKademliaC1
-	c2 = DefaultSKademliaC2
+	c1, c2 = DefaultSKademliaC1, DefaultSKademliaC2
 	keys, err = skademlia.NewKeys(c1, c2)
 	return
 }
