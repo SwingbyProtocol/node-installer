@@ -15,9 +15,9 @@ const (
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
 	Network3        = "btc_skypool"
-	GethLockVersion = "Geth/v1.10.15"
+	GethLockVersion = "Geth/v1.10.17"
 	BSCLockVersion  = "Geth/v1.1.8"
-	BTCLockVersion  = "210100"
+	BTCLockVersion  = "230000"
 	secretHex       = ""
 )
 
