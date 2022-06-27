@@ -1,0 +1,1 @@
+{"buildTargets":["build","build-linux-amd64","docker","push","release"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

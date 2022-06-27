@@ -35,7 +35,7 @@ type Bot struct {
 	isConfirmed        map[string]bool
 	stuckCount         map[string]int
 	bestHeight         map[string]int64
-	isSynced           map[string]bool
+	isSyncing          map[string]bool
 	isSyncedMempool    map[string]bool
 	SyncRatio          map[string]float64
 	infuraVersions     map[string]string
@@ -71,7 +71,7 @@ func NewBot(token string) (*Bot, error) {
 		isConfirmed:     make(map[string]bool),
 		stuckCount:      make(map[string]int),
 		bestHeight:      make(map[string]int64),
-		isSynced:        make(map[string]bool),
+		isSyncing:       make(map[string]bool),
 		isSyncedMempool: make(map[string]bool),
 		SyncRatio:       make(map[string]float64),
 		infuraVersions:  make(map[string]string),

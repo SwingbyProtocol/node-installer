@@ -34,7 +34,10 @@ func (b *Bot) checkBlockBook(coin string) {
 		b.mu.Unlock()
 		return
 	}
-	if b.bestHeight[coin] != 0 && b.isSyncedMempool[coin] {
+
+	b.isSyncing[coin] = res.BlockBook.InSync
+
+	if b.bestHeight[coin] != 0 && b.isSyncedMempool[coin] && b.isSyncing[coin] {
 		b.stuckCount[coin]++
 	}
 
@@ -44,7 +47,6 @@ func (b *Bot) checkBlockBook(coin string) {
 
 	if b.bestHeight[coin] != res.BlockBook.BestHeight {
 		b.stuckCount[coin] = 0
-		b.isSynced[coin] = res.BlockBook.InSync
 		b.bestHeight[coin] = res.BlockBook.BestHeight
 		if res.BlockBook.BestHeight != 0 && res.Backend.Blocks != 0 {
 			syncRatio := 100 * float64(res.BlockBook.BestHeight) / float64(res.Backend.Blocks)
