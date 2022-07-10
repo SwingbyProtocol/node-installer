@@ -710,25 +710,26 @@ You can install node by
 	return text
 }
 
-func informStorageIssue() string {
+func informStorageIssue(gb int) string {
 	text := fmt.Sprintf(`
 [Warning] Hi Human!
-Your free disk space is running low. (<180GB)
+Your free disk space is running out. (only %dGB reft)
 You can check status => /check_status
-You may want to /reset_geth to sync to the latest snapshot. (Takes about 4 hours)
-To keep your node online during this process, you can use these steps:
+You may want to resync to the latest snapshot. (Takes about 4 hours)
+
+To do re-syncing process
+
+1. /reset_geth
+2. /check_status
+
+if you'd like to use global infura to keep your node online during this process, you can use these steps:
 
 1. /set_global_infura
 2. /deploy_node
-3. /reset_geth
-
-To check your local geth syncing status
-1. /set_local_infura
-2. /check_status
 
 if you have any questions, 
 Please ask communities in #metanodes room in discord!
-`)
+`, gb)
 	return text
 }
 

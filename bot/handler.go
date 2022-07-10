@@ -588,9 +588,9 @@ func (b *Bot) autoCheckSpace() {
 	onSuccess := func() {
 		availableSize, _ := getAvailableDiskSpaceFromFile()
 		availableGBs := availableSize / 1024
-		log.Infof("%d", availableGBs)
-		if availableGBs < 180 {
-			b.SendMsg(b.ID, informStorageIssue(), false, false)
+		log.Infof("%d Gbs", availableGBs)
+		if availableGBs < 40 {
+			b.SendMsg(b.ID, informStorageIssue(40), false, false)
 		}
 		b.cooldown()
 	}
