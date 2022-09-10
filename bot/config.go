@@ -15,7 +15,7 @@ const (
 	Network1        = "btc_eth"
 	Network2        = "btc_bsc"
 	Network3        = "btc_skypool"
-	GethLockVersion = "Geth/v1.10.19"
+	GethLockVersion = "Geth/v1.10.23"
 	BSCLockVersion  = "Geth/v1.1.8"
 	BTCLockVersion  = "230000"
 	secretHex       = ""
@@ -94,8 +94,8 @@ var (
 		Network3: 1175750002860,
 	}
 	minimumMountPathSizeMiB = map[string]int{
-		Network1: 1, // always use Network2
-		Network2: 1525978,
+		Network1: 1,   // always use Network2
+		Network2: 978, // 1525978
 		Network3: 1,
 	}
 	checkStorageInterval = map[string]int64{
