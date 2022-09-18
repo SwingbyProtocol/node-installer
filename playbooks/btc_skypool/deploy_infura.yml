@@ -17,7 +17,9 @@
         docker system prune -af
         DIR=/var/swingby docker-compose up -d --build bitcoind geth
         sleep 50
-        DIR=/var/swingby docker-compose up -d --build bb_btc bb_eth
+        mkdir -p /var/swingby/mainnet/eth2
+        cat /var/swingby/mainnet/geth/geth/jwtsecret > /var/swingby/mainnet/eth2/jwtsecret
+        DIR=/var/swingby docker-compose up -d --build bb_btc bb_eth prysm
 
       register: output
 
