@@ -8,5 +8,5 @@ docker:
 push:
 		docker push swingbylabs/node-installer:latest
 release:
-		docker tag swingbylabs/node-installer:latest swingbylabs/node-installer:1.3.9
-		docker push swingbylabs/node-installer:1.3.9
+		docker tag swingbylabs/node-installer:latest swingbylabs/node-installer:1.3.10
+		docker push swingbylabs/node-installer:1.3.10
